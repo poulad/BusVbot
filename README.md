@@ -5,7 +5,7 @@
 This is an **ASP.NET Core 1.1** web application so you need to [install .NET Core](https://www.microsoft.com/net/download/core#/current).
 
 #### API Token
-Talk to **[BotFather](t.me/botfather)** to get a token from Telegram for your bot.
+Talk to **[BotFather](http://t.me/botfather)** to get a token from Telegram for your bot.
 
 > This token is your bot's secret. Keep it safe and never commit it to git.
 
