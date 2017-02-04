@@ -5,7 +5,7 @@ using NetTelegramBotApi;
 using NetTelegramBotApi.Requests;
 using NetTelegramBotApi.Types;
 using Newtonsoft.Json;
-
+using MyTTCBot.Models;
 namespace MyTTCBot.Controllers
 {
     public class BotController : Controller
@@ -58,6 +58,22 @@ namespace MyTTCBot.Controllers
             {
                 DisableNotification = true,
             });
+        }
+
+        private async Task GetLocalTransit(Update update)
+        {
+            //TODO: Return a message to user to show nearby transit information.
+            return;
+        }
+
+        private async Task GetNextBusTimes(Update update, string busId)
+        {
+            //TODO: Return a message to user to show a couple of times for a bus. User chooses bus id.
+            //for (int i = 0; i < busId.Length; i++)
+            //{
+
+            //}
+            return;
         }
     }
 }
