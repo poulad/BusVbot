@@ -1,11 +1,11 @@
 {
   "iisSettings": {
-    "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
       "applicationUrl": "http://localhost:5000/",
       "sslPort": 0
-    }
+    },
+    "windowsAuthentication": false
   },
   "profiles": {
     "IIS Express": {
@@ -16,11 +16,11 @@
     },
     "MyTTCBot": {
       "commandName": "Project",
-      "launchBrowser": false,
-      "launchUrl": "http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "launchBrowser": false,
+      "launchUrl": "http://localhost:5000"
     }
   }
 }
