@@ -7,6 +7,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{053EEB30-7CD
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyTTCBot", "src\MyTTCBot\MyTTCBot.csproj", "{6BFC9E71-2C14-46E0-97E0-207F8D026F1E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{5892FF9C-B28D-4AD0-A2ED-B435AB406D30}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyTTCBot.Tests", "test\MyTTCBot.Tests\MyTTCBot.Tests.csproj", "{910E86CD-E110-44F4-9BE4-513F0F2392E9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,11 +21,16 @@ Global
 		{6BFC9E71-2C14-46E0-97E0-207F8D026F1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6BFC9E71-2C14-46E0-97E0-207F8D026F1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6BFC9E71-2C14-46E0-97E0-207F8D026F1E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{910E86CD-E110-44F4-9BE4-513F0F2392E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{910E86CD-E110-44F4-9BE4-513F0F2392E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{910E86CD-E110-44F4-9BE4-513F0F2392E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{910E86CD-E110-44F4-9BE4-513F0F2392E9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{6BFC9E71-2C14-46E0-97E0-207F8D026F1E} = {053EEB30-7CD0-427E-9066-A78FA6F489F1}
+		{910E86CD-E110-44F4-9BE4-513F0F2392E9} = {5892FF9C-B28D-4AD0-A2ED-B435AB406D30}
 	EndGlobalSection
 EndGlobal

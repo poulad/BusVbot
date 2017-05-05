@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using MyTTCBot.Commands;
-using MyTTCBot.Services;
 using NetTelegramBotApi;
 using NetTelegramBotApi.Requests;
 using NetTelegramBotApi.Types;

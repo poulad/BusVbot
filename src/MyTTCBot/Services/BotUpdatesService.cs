@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using MyTTCBot.Extensions;
 using MyTTCBot.Managers;
@@ -33,7 +35,10 @@ namespace MyTTCBot.Services
                 IsRunning = true;
 
             Task.Factory.StartNew(GetUpdates)
-                .ContinueWith(task => throw task.Exception.InnerException, TaskContinuationOptions.OnlyOnFaulted)
+                .ContinueWith(task =>
+                {
+                    Debug.WriteLine(task.Exception.InnerExceptions.First().Message);
+                }, TaskContinuationOptions.OnlyOnFaulted)
                 .ConfigureAwait(false);
         }
 
@@ -49,8 +54,15 @@ namespace MyTTCBot.Services
                         continue;
                     }
 
+                    try
+                    {
+                        await _botManager.ProcessMessage(update.Message);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.WriteLine(e.Message);
+                    }
                     _offset = update.UpdateId + 1;
-                    await _botManager.ProcessMessage(update.Message);
                 }
                 await Task.Delay(3000);
             } while (!ShouldStop);

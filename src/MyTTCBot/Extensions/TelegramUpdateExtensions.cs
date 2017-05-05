@@ -6,7 +6,12 @@ namespace MyTTCBot.Extensions
     {
         public static bool IsValid(this Update update)
         {
-            return update?.Message != null;
+            var isValid = false;
+            if (!string.IsNullOrWhiteSpace(update?.Message?.Text))
+            {
+                isValid = true;
+            }
+            return isValid;
         }
     }
 }

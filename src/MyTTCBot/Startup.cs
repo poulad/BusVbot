@@ -35,6 +35,7 @@ namespace MyTTCBot
             services.AddSingleton<IBotUpdatesService, BotUpdatesService>();
             services.AddTransient<IBusCommand, BusCommand>();
             services.AddTransient<INextBusService, NextBusService>();
+            services.AddMemoryCache();
             services.AddMvc();
         }
 
