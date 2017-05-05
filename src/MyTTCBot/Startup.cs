@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MyTTCBot.Commands;
 using MyTTCBot.Controllers;
 using MyTTCBot.Managers;
 using MyTTCBot.Services;
@@ -32,7 +33,8 @@ namespace MyTTCBot
             services.AddSingleton(_ => new TelegramBot(_configuration["ApiToken"]));
             services.AddTransient<IBotManager, BotManager>();
             services.AddSingleton<IBotUpdatesService, BotUpdatesService>();
-
+            services.AddTransient<IBusCommand, BusCommand>();
+            services.AddTransient<INextBusService, NextBusService>();
             services.AddMvc();
         }
 

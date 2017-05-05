@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using MyTTCBot.Commands;
+using MyTTCBot.Services;
 using NetTelegramBotApi;
 using NetTelegramBotApi.Requests;
 using NetTelegramBotApi.Types;
@@ -16,13 +17,13 @@ namespace MyTTCBot.Managers
 
         private readonly IBotCommand[] _commands;
 
-        public BotManager(TelegramBot bot)
+        public BotManager(TelegramBot bot, IBusCommand busCommand)
         {
             _bot = bot;
             _commands = new IBotCommand[]
-            {
+            { // ToDo: Add ICommandsCollection to DI container
                 new StartCommand(_bot),
-                new BusCommand(_bot),
+                busCommand,
             };
         }
 
