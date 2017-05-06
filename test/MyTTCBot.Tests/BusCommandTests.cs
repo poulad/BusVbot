@@ -73,12 +73,74 @@ namespace MyTTCBot.Tests
             // act
             await sut.HandleMessage(_testMessage);
 
-            mockNextBus.Verify(x => x.FindNearestStopId(
+            mockNextBus.Verify(x => x.FindNearestBusStop(
                 It.IsAny<string>(),
                 It.IsAny<BusDirection>(),
                 It.Is<double>(lon => lon.Equals(context.Location.Longitude)),
                 It.Is<double>(lat => lat.Equals(context.Location.Latitude))
                 ));
+        }
+
+        [Fact(DisplayName = "Send nearest bus stop location")]
+        public async Task ShouldSendBusStopLocation()
+        {
+            const float busStopLatitude = 43.7F;
+            const float busStopLongitude = -79.4F;
+            var mockBot = new Mock<IBotService>();
+            var mockNextBus = new Mock<INextBusService>();
+            var cache = new MemoryCache(new MemoryCacheOptions());
+            var userChat = new UserChat(_testMessage.From.Id, _testMessage.Chat.Id);
+            var context = new UserContext
+            {
+                Location = new UserLocation
+                {
+                    Latitude = 43.744,
+                    Longitude = -79.405,
+                }
+            };
+            cache.Set(userChat, context);
+            mockNextBus.Setup(x => x.FindNearestBusStop(
+                It.IsAny<string>(),
+                It.IsAny<BusDirection>(),
+                It.Is<double>(y => y.Equals(context.Location.Longitude)),
+                It.Is<double>(y => y.Equals(context.Location.Latitude)))
+            ).ReturnsAsync(new BusStop
+            {
+                Id = "ID",
+                Latitude = busStopLatitude,
+                Longitude = busStopLongitude,
+                Name = "Bus Stop",
+            });
+            mockBot.Setup(x => x.MakeRequest(It.Is<SendLocation>(y =>
+                y.ReplyToMessageId == _testMessage.MessageId &&
+                y.Latitude.Equals(busStopLatitude) &&
+                y.Longitude.Equals(busStopLongitude)
+            ))).ReturnsAsync(new Message
+            {
+                MessageId = 123,
+                Chat = new Chat
+                {
+                    Id = 234,
+                }
+            });
+
+            IBusCommand sut = new BusCommand(mockBot.Object, mockNextBus.Object, cache);
+
+            // act
+            await sut.HandleMessage(_testMessage);
+
+            mockNextBus.Verify(x => x.FindNearestBusStop(
+                It.IsAny<string>(),
+                It.IsAny<BusDirection>(),
+                It.Is<double>(y => y.Equals(context.Location.Longitude)),
+                It.Is<double>(y => y.Equals(context.Location.Latitude)))
+            );
+
+            mockBot.Verify(x => x.MakeRequest(It.Is<SendLocation>(y =>
+                y.ReplyToMessageId == _testMessage.MessageId &&
+                y.Latitude.Equals(busStopLatitude) &&
+                y.Longitude.Equals(busStopLongitude)
+            )));
         }
     }
 }

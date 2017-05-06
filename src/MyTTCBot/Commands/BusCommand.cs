@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using MyTTCBot.Models;
+using MyTTCBot.Models.NextBus;
 using MyTTCBot.Services;
 using NetTelegramBotApi.Requests;
 using NetTelegramBotApi.Types;
@@ -47,35 +49,18 @@ namespace MyTTCBot.Commands
                 return;
             }
             var busDirection = ParseBusDirection(input.Args[1]);
-            var nearestStopId = await _nextBusService.FindNearestStopId(input.Args[0], busDirection, context.Location.Longitude, context.Location.Latitude)
+            var nearestStop = await _nextBusService.FindNearestBusStop(input.Args[0], busDirection, context.Location.Longitude, context.Location.Latitude)
                 .ConfigureAwait(false);
 
-            var predictionsResponse = await _nextBusService.GetPredictions(input.Args[0], nearestStopId);
-            string replyText;
-            if (predictionsResponse?.Predictions?.Direction?.Prediction == null)
-            {
-                replyText = "__Sorry! Can't find any predictions__";
-            }
-            else
-            {
-                var first = predictionsResponse.Predictions.Direction.Prediction.First();
-                replyText = string.Format("Bus {0}\nComing in `{1}` minutes at `{2}`",
-                    predictionsResponse.Predictions.Direction.Title, first.Minutes, DateTime.Now.AddSeconds(first.Seconds).ToString("h:m"));
-            }
-            var req = new SendMessage(message.Chat.Id, replyText)
-            {
-                ReplyToMessageId = message.MessageId,
-                ParseMode = SendMessage.ParseModeEnum.Markdown,
-            };
-            await _bot.MakeRequest(req)
+            var predictionsResponse = await _nextBusService.GetPredictions(input.Args[0], nearestStop.Id);
+            var locationMessage = await _bot.MakeRequest(
+                new SendLocation(message.Chat.Id, (float)nearestStop.Latitude, (float)nearestStop.Longitude)
+                {
+                    ReplyToMessageId = message.MessageId
+                });
+            var reply = FormatResponse(locationMessage, predictionsResponse?.Predictions?.Direction?.Prediction, predictionsResponse?.Predictions?.Direction?.Title);
+            await _bot.MakeRequest(reply)
                 .ConfigureAwait(false);
-        }
-
-        private static bool ValidateInput(InputCommand input)
-        {
-            var isValid = false;
-            isValid = true;
-            return isValid;
         }
 
         private static BusDirection ParseBusDirection(string input)
@@ -100,6 +85,39 @@ namespace MyTTCBot.Commands
                     break;
             }
             return direction;
+        }
+
+        private static RequestBase<Message> FormatResponse(Message messageInReply, IEnumerable<PredictionsResponse.PredictionsResponsePredictions.PredictionsResponsePredictionsDirection.PredictionsResponsePredictionsDirectionPrediction> predictions, string busTitle)
+        {
+            string replyText;
+
+            if (predictions == null)
+            {
+                replyText = Constants.PredictionNotFoundMessage;
+            }
+            else
+            {
+                var predictionsSchedule = string.Join("\n", predictions.Select(x =>
+                    string.Format(Constants.PredictionsScheduleFormat,
+                    DateTime.Now.AddSeconds(x.Seconds).ToString("hh:mm"), x.Minutes))
+                );
+                replyText = string.Format(Constants.PredictionsMessageFormat, busTitle, predictionsSchedule);
+            }
+            var response = new SendMessage(messageInReply.Chat.Id, replyText)
+            {
+                ReplyToMessageId = messageInReply.MessageId,
+                ParseMode = SendMessage.ParseModeEnum.Markdown,
+            };
+            return response;
+        }
+
+        public static class Constants
+        {
+            public const string PredictionNotFoundMessage = "__Sorry! Can't find any predictions__";
+
+            public const string PredictionsMessageFormat = "Bus {0}:\n\n{1}";
+
+            public const string PredictionsScheduleFormat = "`{0}` __{1} minutes__";
         }
     }
 }

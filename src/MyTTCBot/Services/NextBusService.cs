@@ -37,7 +37,7 @@ namespace MyTTCBot.Services
             return response;
         }
 
-        public async Task<string> FindNearestStopId(string busNumber, BusDirection dir, double longitude, double latitude)
+        public async Task<BusStop> FindNearestBusStop(string busNumber, BusDirection dir, double longitude, double latitude)
         {
             var parameters = new Dictionary<string, object>
             {
@@ -82,7 +82,7 @@ namespace MyTTCBot.Services
                     .Take(3)
                     .ToArray();
 
-                return nearestStops.First().Tag;
+                return (BusStop)nearestStops.First();
             }
             catch (Exception e)
             {

@@ -8,6 +8,6 @@ namespace MyTTCBot.Services
     {
         Task<PredictionsResponse> GetPredictions(string busNumber, string stopId);
 
-        Task<string> FindNearestStopId(string busNumber, BusDirection dir, double longitude, double latitude);
+        Task<BusStop> FindNearestBusStop(string busNumber, BusDirection dir, double longitude, double latitude);
     }
 }
