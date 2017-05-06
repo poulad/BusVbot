@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using MyTTCBot.Extensions;
 using MyTTCBot.Managers;
-using NetTelegramBotApi;
 using NetTelegramBotApi.Requests;
 
 namespace MyTTCBot.Services
@@ -15,13 +14,13 @@ namespace MyTTCBot.Services
 
         public bool IsRunning { get; private set; }
 
-        private readonly TelegramBot _bot;
+        private readonly IBotService _bot;
 
         private readonly IBotManager _botManager;
 
         private long? _offset;
 
-        public BotUpdatesService(TelegramBot bot, IBotManager botManager)
+        public BotUpdatesService(IBotService bot, IBotManager botManager)
         {
             _bot = bot;
             _botManager = botManager;
@@ -46,7 +45,7 @@ namespace MyTTCBot.Services
         {
             do
             {
-                var updates = await _bot.MakeRequestAsync(new GetUpdates { Offset = _offset });
+                var updates = await _bot.MakeRequest(new GetUpdates { Offset = _offset });
                 foreach (var update in updates)
                 {
                     if (!update.IsValid())

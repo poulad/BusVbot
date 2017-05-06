@@ -30,11 +30,16 @@ namespace MyTTCBot
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton(_ => new TelegramBot(_configuration["ApiToken"]));
+            var apiToken = _configuration["ApiToken"];
+            services.AddScoped(_ => new TelegramBot(apiToken));
+            services.AddScoped<IBotService, BotService>();
+
             services.AddTransient<IBotManager, BotManager>();
             services.AddSingleton<IBotUpdatesService, BotUpdatesService>();
-            services.AddTransient<IBusCommand, BusCommand>();
             services.AddTransient<INextBusService, NextBusService>();
+
+            services.AddTransient<IBusCommand, BusCommand>();
+
             services.AddMemoryCache();
             services.AddMvc();
         }
@@ -77,11 +82,11 @@ namespace MyTTCBot
                     });
             });
 
-            var bot = app.ApplicationServices.GetRequiredService<TelegramBot>();
+            var bot = app.ApplicationServices.GetRequiredService<IBotService>();
             if (useWebHook)
             {
                 logger.LogInformation("Setting webhook");
-                var result = bot.MakeRequestAsync(new NetTelegramBotApi.Requests.SetWebhook(webhookRoute))
+                var result = bot.MakeRequest(new NetTelegramBotApi.Requests.SetWebhook(webhookRoute))
                     .Result;
                 if (result)
                     logger.LogInformation("Webhook set successfully");
@@ -91,7 +96,7 @@ namespace MyTTCBot
             else
             {
                 logger.LogInformation("Disabling webhook");
-                var result = bot.MakeRequestAsync(new NetTelegramBotApi.Requests.SetWebhook(string.Empty))
+                var result = bot.MakeRequest(new NetTelegramBotApi.Requests.SetWebhook(string.Empty))
                     .Result;
 
                 if (result)
