@@ -42,7 +42,7 @@ namespace MyTTCBot.Tests
             IBusCommand sut = new BusCommand(mockBot.Object, mockNextBus.Object, cache);
 
             // act
-            await sut.Execute(_testMessage, (InputCommand)_testMessage.Text);
+            await sut.HandleMessage(_testMessage);
 
             mockBot.Verify(x => x.MakeRequest(It.Is<SendMessage>(m =>
                 m.Text == "Send your location"
@@ -51,7 +51,7 @@ namespace MyTTCBot.Tests
         }
 
         [Fact(DisplayName = "Use user location from cache")]
-        public async Task ShouldSaveContextInCache()
+        public async Task ShouldGetUserContextFromCache()
         {
             var mockBot = new Mock<IBotService>();
 
@@ -71,7 +71,7 @@ namespace MyTTCBot.Tests
             IBusCommand sut = new BusCommand(mockBot.Object, mockNextBus.Object, cache);
 
             // act
-            await sut.Execute(_testMessage, (InputCommand)_testMessage.Text);
+            await sut.HandleMessage(_testMessage);
 
             mockNextBus.Verify(x => x.FindNearestStopId(
                 It.IsAny<string>(),

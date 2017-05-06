@@ -9,6 +9,11 @@ using NetTelegramBotApi.Types;
 
 namespace MyTTCBot.Commands
 {
+    public interface IBusCommand : IBotCommand
+    {
+
+    }
+
     public class BusCommand : IBusCommand
     {
         public string Name { get; } = "bus";
@@ -26,8 +31,9 @@ namespace MyTTCBot.Commands
             _cache = cache;
         }
 
-        public async Task Execute(Message message, InputCommand input)
+        public async Task HandleMessage(Message message)
         {
+            var input = (InputCommand)message.Text; // ToDo: Get rid of InputCommand
             var userChat = new UserChat(message.From.Id, message.Chat.Id);
             UserContext context;
             if (!_cache.TryGetValue(userChat, out context))

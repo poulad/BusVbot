@@ -33,12 +33,23 @@ namespace MyTTCBot
             var apiToken = _configuration["ApiToken"];
             services.AddScoped(_ => new TelegramBot(apiToken));
             services.AddScoped<IBotService, BotService>();
-
+            services.AddScoped<IMessageHandlersAccessor, MessageHandlersAccessor>(factory =>
+            {
+                var botCommands = new IBotCommand[]
+                {
+                    factory.GetRequiredService<IStartCommand>(),
+                    factory.GetRequiredService<IBusCommand>(),
+                };
+                return new MessageHandlersAccessor(botCommands, factory.GetRequiredService<ILocationHandler>());
+            });
+            services.AddTransient<IMessageParser, MessageParser>();
             services.AddTransient<IBotManager, BotManager>();
             services.AddSingleton<IBotUpdatesService, BotUpdatesService>();
             services.AddTransient<INextBusService, NextBusService>();
 
+            services.AddTransient<IStartCommand, StartCommand>();
             services.AddTransient<IBusCommand, BusCommand>();
+            services.AddTransient<ILocationHandler, LocationHanlder>();
 
             services.AddMemoryCache();
             services.AddMvc();

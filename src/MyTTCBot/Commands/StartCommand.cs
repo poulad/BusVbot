@@ -5,7 +5,12 @@ using NetTelegramBotApi.Types;
 
 namespace MyTTCBot.Commands
 {
-    public class StartCommand : IBotCommand
+    public interface IStartCommand : IBotCommand
+    {
+
+    }
+
+    public class StartCommand : IStartCommand
     {
         public string Name { get; } = "start";
 
@@ -16,7 +21,7 @@ namespace MyTTCBot.Commands
             _bot = bot;
         }
 
-        public async Task Execute(Message message, InputCommand input)
+        public async Task HandleMessage(Message message)
         {
             await _bot.MakeRequest(new SendMessage(message.Chat.Id, "Welcome!"))
                 .ConfigureAwait(false);

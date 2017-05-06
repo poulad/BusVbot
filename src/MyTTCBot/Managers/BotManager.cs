@@ -1,7 +1,5 @@
-﻿using System;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Threading.Tasks;
-using MyTTCBot.Commands;
 using MyTTCBot.Services;
 using NetTelegramBotApi.Requests;
 using NetTelegramBotApi.Types;
@@ -12,18 +10,14 @@ namespace MyTTCBot.Managers
     {
         private readonly IBotService _bot;
 
+        private readonly IMessageParser _messageParser;
+
         private User _me;
 
-        private readonly IBotCommand[] _commands;
-
-        public BotManager(IBotService bot, IBusCommand busCommand)
+        public BotManager(IBotService bot, IMessageParser messageParser)
         {
             _bot = bot;
-            _commands = new IBotCommand[]
-            { // ToDo: Add ICommandsCollection to DI container
-                new StartCommand(_bot),
-                busCommand,
-            };
+            _messageParser = messageParser;
         }
 
         public async Task<User> GetBotUserInfo()
@@ -38,26 +32,19 @@ namespace MyTTCBot.Managers
 
         public async Task ProcessMessage(Message message)
         {
-            if (message.Text.FirstOrDefault() != '/')
+            try
             {
-                await ProcessNonCommandMessage(message);
-                return;
+                var handler = _messageParser.FindMessageHandler(message);
+                await handler.HandleMessage(message);
             }
-
-            message.Text = message.Text.Remove(0, 1);
-            var commandName = message.Text.Split(' ').FirstOrDefault();
-
-            var command = _commands.FirstOrDefault(x => x.Name.Equals(commandName, StringComparison.OrdinalIgnoreCase));
-            if (command is null)
+            catch (MessageHandlerNotFoundException e)
             {
-                // other type of events
-                return;
+                Debug.WriteLine(e.Message);
+                await AcknowledgeInvalidInput(message);
             }
-
-            await command.Execute(message, (InputCommand)message.Text);
         }
 
-        private async Task ProcessNonCommandMessage(Message message)
+        private async Task AcknowledgeInvalidInput(Message message)
         {
             await _bot.MakeRequest(new SendMessage(message.Chat.Id, "__Invalid command__")
             {

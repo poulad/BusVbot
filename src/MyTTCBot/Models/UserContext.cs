@@ -13,7 +13,16 @@ namespace MyTTCBot.Models
 
         public double Longitude { get; set; }
 
-        public DateTime UpdatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+
+        public static explicit operator UserLocation(NetTelegramBotApi.Types.Location location)
+        {
+            return new UserLocation
+            {
+                Latitude = location.Latitude,
+                Longitude = location.Longitude,
+            };
+        }
     }
 
     public struct UserChat

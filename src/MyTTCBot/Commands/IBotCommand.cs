@@ -1,10 +1,7 @@
-﻿using System.Threading.Tasks;
-using NetTelegramBotApi.Types;
-
-namespace MyTTCBot.Commands
+﻿namespace MyTTCBot.Commands
 {
-    public interface IBotCommand : ICommand
+    public interface IBotCommand : IMessageHandler
     {
-        Task Execute(Message message, InputCommand input);
+        string Name { get; }
     }
 }

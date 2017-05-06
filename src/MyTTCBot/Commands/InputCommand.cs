@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace MyTTCBot.Commands
 {
-    public class InputCommand : ICommand
+    public class InputCommand
     {
         public string Name { get; set; }
 

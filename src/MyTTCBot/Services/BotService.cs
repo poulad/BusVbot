@@ -4,6 +4,11 @@ using NetTelegramBotApi.Requests;
 
 namespace MyTTCBot.Services
 {
+    public interface IBotService
+    {
+        Task<T> MakeRequest<T>(NetTelegramBotApi.Requests.RequestBase<T> request);
+    }
+
     public class BotService : IBotService
     {
         private readonly TelegramBot _bot;
