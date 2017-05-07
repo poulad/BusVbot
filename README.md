@@ -1,5 +1,7 @@
 # myTTCBot
 
+[![Build Status](https://travis-ci.org/pouladpld/myTTCBot.svg?branch=master)](https://travis-ci.org/pouladpld/myTTCBot)
+
 A Telegram chat bot that makes sure you won't miss your bus in Toronto
 
 ## Screenshots

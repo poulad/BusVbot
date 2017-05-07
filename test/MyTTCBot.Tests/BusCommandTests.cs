@@ -54,7 +54,6 @@ namespace MyTTCBot.Tests
         public async Task ShouldGetUserContextFromCache()
         {
             var mockBot = new Mock<IBotService>();
-
             var mockNextBus = new Mock<INextBusService>();
             IMemoryCache cache = new MemoryCache(new MemoryCacheOptions());
             var userChat = new UserChat(_testMessage.From.Id, _testMessage.Chat.Id);
@@ -67,7 +66,21 @@ namespace MyTTCBot.Tests
                 }
             };
             cache.Set(userChat, context);
-
+            var busStop = new BusStop
+            {
+                Id = "bus stop",
+                Name = "Test Bus Stop",
+                Latitude = 43.743,
+                Longitude = -79.406,
+            };
+            mockNextBus.Setup(x => x.FindNearestBusStop(
+                It.IsAny<string>(),
+                It.IsAny<BusDirection>(),
+                It.Is<double>(lon => lon.Equals(context.Location.Longitude)),
+                It.Is<double>(lat => lat.Equals(context.Location.Latitude))
+            )).ReturnsAsync(busStop);
+            mockBot.Setup(x => x.MakeRequest(It.IsAny<SendLocation>()))
+                .ReturnsAsync(_testMessage);
             IBusCommand sut = new BusCommand(mockBot.Object, mockNextBus.Object, cache);
 
             // act
