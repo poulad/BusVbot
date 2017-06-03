@@ -1,30 +1,31 @@
 ﻿using System.Threading.Tasks;
-using MyTTCBot.Services;
+using NetTelegram.Bot.Framework;
+using NetTelegram.Bot.Framework.Abstractions;
 using NetTelegramBotApi.Requests;
 using NetTelegramBotApi.Types;
 
 namespace MyTTCBot.Commands
 {
-    public interface IStartCommand : IBotCommand
+    public class StartCommandArgs : ICommandArgs
     {
-
+        public string RawInput { get; set; }
     }
 
-    public class StartCommand : IStartCommand
+    public class StartCommand : CommandBase<StartCommandArgs>
     {
-        public string Name { get; } = "start";
+        private const string CommandName = "start";
 
-        private readonly IBotService _bot;
-
-        public StartCommand(IBotService bot)
+        public StartCommand()
+            : base(CommandName)
         {
-            _bot = bot;
+
         }
 
-        public async Task HandleMessage(Message message)
+        public override async Task<UpdateHandlingResult> HandleCommand(Update update, StartCommandArgs args)
         {
-            await _bot.MakeRequest(new SendMessage(message.Chat.Id, "Welcome!"))
+            await Bot.MakeRequestAsync(new SendMessage(update.Message.Chat.Id, "Welcome!"))
                 .ConfigureAwait(false);
+            return UpdateHandlingResult.Handled;
         }
     }
 }

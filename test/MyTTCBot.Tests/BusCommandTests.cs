@@ -13,6 +13,7 @@ namespace MyTTCBot.Tests
 {
     public class BusCommandTests
     {
+        /*
         private Message _testMessage;
 
         public BusCommandTests()
@@ -155,5 +156,6 @@ namespace MyTTCBot.Tests
                 y.Longitude.Equals(busStopLongitude)
             )));
         }
+    */
     }
 }
