@@ -30,25 +30,18 @@ namespace MyTTCBot
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var botOptions = new BotOptions<MyTtcBot>
-            {
-                ApiToken = _configuration["ApiToken"],
-                BotUserName = _configuration["BotName"],
-                WebhookUrl = _configuration["WebhookRoute"],
-            };
-
-            services.AddTelegramBot(botOptions)
+            services.AddTelegramBot<MyTtcBot>(_configuration)
                 .AddUpdateHandler<BusCommand>()
                 .AddUpdateHandler<LocationHanlder>()
                 .AddUpdateHandler<HelpCommand>()
                 .AddUpdateHandler<StartCommand>()
                 .Configure();
+
             services.AddTask<BotUpdateGetterTask<MyTtcBot>>();
 
             services.AddTransient<INextBusService, NextBusService>();
 
             services.AddMemoryCache();
-            services.AddMvc();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
