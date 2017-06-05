@@ -1,15 +1,16 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MyTTCBot.Bot;
 using MyTTCBot.Commands;
-using MyTTCBot.Controllers;
-using MyTTCBot.Managers;
 using MyTTCBot.Services;
-using NetTelegramBotApi;
+using NetTelegram.Bot.Framework;
+using RecurrentTasks;
 
 namespace MyTTCBot
 {
@@ -19,58 +20,41 @@ namespace MyTTCBot
 
         public Startup(IHostingEnvironment env)
         {
-            var builder = new ConfigurationBuilder()
+            _configuration = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddEnvironmentVariables("MyTTCBot_")
                 .AddJsonFile("appsettings.json", optional: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true);
-
-            _configuration = builder.Build();
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
+                .Build();
         }
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var apiToken = _configuration["ApiToken"];
-            services.AddScoped(_ => new TelegramBot(apiToken));
-            services.AddScoped<IBotService, BotService>();
-            services.AddScoped<IMessageHandlersAccessor, MessageHandlersAccessor>(factory =>
-            {
-                var botCommands = new IBotCommand[]
-                {
-                    factory.GetRequiredService<IStartCommand>(),
-                    factory.GetRequiredService<IBusCommand>(),
-                };
-                return new MessageHandlersAccessor(botCommands, factory.GetRequiredService<ILocationHandler>());
-            });
-            services.AddTransient<IMessageParser, MessageParser>();
-            services.AddTransient<IBotManager, BotManager>();
-            services.AddSingleton<IBotUpdatesService, BotUpdatesService>();
+            services.AddTelegramBot<MyTtcBot>(_configuration)
+                .AddUpdateHandler<BusCommand>()
+                .AddUpdateHandler<LocationHanlder>()
+                .AddUpdateHandler<HelpCommand>()
+                .AddUpdateHandler<StartCommand>()
+                .Configure();
+
+            services.AddTask<BotUpdateGetterTask<MyTtcBot>>();
+
             services.AddTransient<INextBusService, NextBusService>();
 
-            services.AddTransient<IStartCommand, StartCommand>();
-            services.AddTransient<IBusCommand, BusCommand>();
-            services.AddTransient<ILocationHandler, LocationHanlder>();
-
             services.AddMemoryCache();
-            services.AddMvc();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            var botName = _configuration["BotName"];
-            var apiToken = _configuration["ApiToken"];
-            var useWebHook = bool.Parse(_configuration["UseWebHook"]);
-
-            var webhookRoute = $"{botName.ToLower()}/{apiToken}";
-
             loggerFactory.AddConsole(_configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
-            var logger = loggerFactory.CreateLogger(nameof(Startup));
 
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
                 app.UseBrowserLink();
+
+                app.StartTask<BotUpdateGetterTask<MyTtcBot>>(TimeSpan.FromSeconds(0), TimeSpan.FromSeconds(1));
             }
             else
             {
@@ -79,45 +63,11 @@ namespace MyTTCBot
                     {
                         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                         context.Response.ContentLength = 0;
-                        await context.Response.WriteAsync(string.Empty).ConfigureAwait(false);
+                        await context.Response.WriteAsync(string.Empty)
+                            .ConfigureAwait(false);
                     }));
-            }
 
-            app.UseMvc(routes =>
-            {
-                routes.MapRoute(botName, webhookRoute + "/{action}",
-                    new
-                    {
-                        Controller = nameof(BotController).Replace("Controller", ""),
-                        Action = nameof(BotController.ProcessUpdate)
-                    });
-            });
-
-            var bot = app.ApplicationServices.GetRequiredService<IBotService>();
-            if (useWebHook)
-            {
-                logger.LogInformation("Setting webhook");
-                var result = bot.MakeRequest(new NetTelegramBotApi.Requests.SetWebhook(webhookRoute))
-                    .Result;
-                if (result)
-                    logger.LogInformation("Webhook set successfully");
-                else
-                    logger.LogError("Unable to set webhook");
-            }
-            else
-            {
-                logger.LogInformation("Disabling webhook");
-                var result = bot.MakeRequest(new NetTelegramBotApi.Requests.SetWebhook(string.Empty))
-                    .Result;
-
-                if (result)
-                    logger.LogInformation("Webhook is disabled");
-                else
-                    logger.LogError("Unable to disable webhook");
-
-                logger.LogInformation("Starting update polling service");
-                app.ApplicationServices.GetRequiredService<IBotUpdatesService>().Start();
-                logger.LogInformation("Update polling service is started");
+                app.UseTelegramBotWebhook<MyTtcBot>(true);
             }
         }
     }

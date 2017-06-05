@@ -2,18 +2,15 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using MyTTCBot.Models;
+using NetTelegram.Bot.Framework;
+using NetTelegram.Bot.Framework.Abstractions;
 using NetTelegramBotApi.Types;
 
 namespace MyTTCBot.Commands
 {
-    public interface ILocationHandler : IMessageHandler
+    public class LocationHanlder : UpdateHandlerBase
     {
-
-    }
-
-    public class LocationHanlder : ILocationHandler
-    {
-        public const string LocationRegex = @"geo:([+|-]?\d+(?:.\d+)?),([+|-]?\d+(?:.\d+)?)";
+        public const string OsmAndLocationRegex = @"geo:([+|-]?\d+(?:.\d+)?),([+|-]?\d+(?:.\d+)?)";
 
         private readonly IMemoryCache _cache;
 
@@ -22,11 +19,16 @@ namespace MyTTCBot.Commands
             _cache = cache;
         }
 
-        public Task HandleMessage(Message message)
+        public override bool CanHandleUpdate(IBot bot, Update update)
         {
-            var userChat = new UserChat(message.From.Id, message.Chat.Id);
-            UserContext context;
-            if (!_cache.TryGetValue(userChat, out context))
+            return update.Message.Location != null ||
+                   update.Message.Text?.ToLower().Contains("geo:") == true;
+        }
+
+        public override async Task<UpdateHandlingResult> HandleUpdateAsync(IBot bot, Update update)
+        {
+            var userChat = new UserChat(update.Message.From.Id, update.Message.Chat.Id);
+            if (!_cache.TryGetValue(userChat, out UserContext context))
             {
                 context = new UserContext
                 {
@@ -34,13 +36,13 @@ namespace MyTTCBot.Commands
                 };
             }
 
-            if (message.Location != null)
+            if (update.Message.Location != null)
             {
-                context.Location = (UserLocation)message.Location;
+                context.Location = (UserLocation)update.Message.Location;
             }
             else
             {
-                var match = Regex.Match(message.Text, LocationRegex, RegexOptions.IgnoreCase);
+                var match = Regex.Match(update.Message.Text, OsmAndLocationRegex, RegexOptions.IgnoreCase);
                 context.Location = new UserLocation
                 {
                     Latitude = double.Parse(match.Groups[1].Value),
@@ -49,7 +51,7 @@ namespace MyTTCBot.Commands
             }
 
             _cache.Set(userChat, context);
-            return Task.CompletedTask;
+            return await Task.FromResult(UpdateHandlingResult.Handled);
         }
     }
 }

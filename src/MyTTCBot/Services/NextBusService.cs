@@ -25,15 +25,24 @@ namespace MyTTCBot.Services
         {
             var parameters = new Dictionary<string, object>
             {
-                {"command", "predictions"},
-                { "a", "ttc"},
-                {"r", busNumber },
-                {"s", stopId },
+                { "command", "predictions" },
+                { "a", "ttc" },
+                { "r", busNumber },
+                { "s", stopId },
             };
             var queryString = BuildQueryString(parameters);
             var httpResponse = await _client.GetAsync('?' + queryString);
             var content = await httpResponse.Content.ReadAsStringAsync();
-            var response = JsonConvert.DeserializeObject<PredictionsResponse>(content);
+            PredictionsResponse response;
+            try
+            {
+                response = JsonConvert.DeserializeObject<PredictionsResponse>(content);
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e);
+                throw;
+            }
             return response;
         }
 
