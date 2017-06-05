@@ -54,7 +54,7 @@ namespace MyTTCBot
                 app.UseDeveloperExceptionPage();
                 app.UseBrowserLink();
 
-                app.StartTask<BotUpdateGetterTask<MyTtcBot>>(TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(3));
+                app.StartTask<BotUpdateGetterTask<MyTtcBot>>(TimeSpan.FromSeconds(0), TimeSpan.FromSeconds(1));
             }
             else
             {

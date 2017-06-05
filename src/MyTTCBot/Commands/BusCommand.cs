@@ -127,7 +127,7 @@ namespace MyTTCBot.Commands
                 {
                     ReplyToMessageId = update.Message.MessageId
                 });
-            var reply = FormatResponse(locationMessage, predictionsResponse?.Predictions?.Direction?.Prediction, predictionsResponse?.Predictions?.Direction?.Title);
+            var reply = FormatResponse(locationMessage, predictionsResponse?.Predictions?.Direction?.First().Prediction, predictionsResponse?.Predictions?.Direction?.First().Title);
             await Bot.MakeRequestAsync(reply)
                 .ConfigureAwait(false);
             return UpdateHandlingResult.Handled;
@@ -143,10 +143,22 @@ namespace MyTTCBot.Commands
             }
             else
             {
-                var predictionsSchedule = string.Join("\n", predictions.Select(x =>
-                    string.Format(Constants.PredictionsScheduleFormat,
-                    DateTime.Now.AddSeconds(x.Seconds).ToString("hh:mm"), x.Minutes))
+                var easternTimeZone = TimeZoneInfo.GetSystemTimeZones().Single(x =>
+                        string.Equals(x.Id, "America/Toronto", StringComparison.OrdinalIgnoreCase) || // for GNU/Linux
+                        string.Equals(x.Id, "Eastern Standard Time", StringComparison.OrdinalIgnoreCase) // For windows
                 );
+
+                var predictionsArray = predictions.ToArray();
+                var predictionsSchedule = string.Empty;
+                foreach (var prediction in predictionsArray)
+                {
+                    var utcTime = DateTime.UtcNow.AddSeconds(prediction.Seconds);
+                    var easternTime = TimeZoneInfo.ConvertTime(utcTime, TimeZoneInfo.Utc, easternTimeZone);
+                    var formattedMinutes = prediction.Minutes < 10 ? " " + prediction.Minutes : prediction.Minutes + "";
+                    predictionsSchedule += string.Format(Constants.PredictionsScheduleFormat + '\n',
+                        easternTime, formattedMinutes, prediction.Minutes < 2 ? "" : "s");
+                }
+
                 replyText = string.Format(Constants.PredictionsMessageFormat, busTitle, predictionsSchedule);
             }
             var response = new SendMessage(messageInReply.Chat.Id, replyText)
@@ -163,7 +175,7 @@ namespace MyTTCBot.Commands
 
             public const string PredictionsMessageFormat = "Bus *{0}*:\n\n{1}";
 
-            public const string PredictionsScheduleFormat = "`{0}` __{1} minutes__";
+            public const string PredictionsScheduleFormat = "`{0:hh:mm}` *-* `{1}` minute{2}";
         }
     }
 }
