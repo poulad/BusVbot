@@ -244,5 +244,5 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 
-# Settings for development time
-appsettings.[Dd]evelopment.json
+# Settings for different environments
+appsettings.*.json

@@ -1,0 +1,6 @@
+[submodule "dependencies/NetTelegram.Bot.Framework"]
+	path = dependencies/NetTelegram.Bot.Framework
+	url = https://github.com/pouladpld/NetTelegram.Bot.Framework.git
+[submodule "dependencies/NextBus.NET"]
+	path = dependencies/NextBus.NET
+	url = https://github.com/pouladpld/NextBus.NET.git

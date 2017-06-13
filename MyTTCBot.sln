@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26403.7
+VisualStudioVersion = 15.0.26430.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{053EEB30-7CD0-427E-9066-A78FA6F489F1}"
 EndProject
@@ -9,7 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyTTCBot", "src\MyTTCBot\My
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{5892FF9C-B28D-4AD0-A2ED-B435AB406D30}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyTTCBot.Tests", "test\MyTTCBot.Tests\MyTTCBot.Tests.csproj", "{910E86CD-E110-44F4-9BE4-513F0F2392E9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyTTCBot.Tests", "test\MyTTCBot.Tests\MyTTCBot.Tests.csproj", "{910E86CD-E110-44F4-9BE4-513F0F2392E9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetTelegram.Bot.Framework", "dependencies\NetTelegram.Bot.Framework\src\NetTelegram.Bot.Framework\NetTelegram.Bot.Framework.csproj", "{4694F1AE-BCB4-487B-9A65-4EAC4F601B35}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NextBus.NET", "dependencies\NextBus.NET\src\NextBus.NET\NextBus.NET.csproj", "{1D2A911C-EB54-407A-B4FE-73F91A02773E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,6 +29,14 @@ Global
 		{910E86CD-E110-44F4-9BE4-513F0F2392E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{910E86CD-E110-44F4-9BE4-513F0F2392E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{910E86CD-E110-44F4-9BE4-513F0F2392E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4694F1AE-BCB4-487B-9A65-4EAC4F601B35}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4694F1AE-BCB4-487B-9A65-4EAC4F601B35}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4694F1AE-BCB4-487B-9A65-4EAC4F601B35}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4694F1AE-BCB4-487B-9A65-4EAC4F601B35}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D2A911C-EB54-407A-B4FE-73F91A02773E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D2A911C-EB54-407A-B4FE-73F91A02773E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D2A911C-EB54-407A-B4FE-73F91A02773E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D2A911C-EB54-407A-B4FE-73F91A02773E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -32,5 +44,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{6BFC9E71-2C14-46E0-97E0-207F8D026F1E} = {053EEB30-7CD0-427E-9066-A78FA6F489F1}
 		{910E86CD-E110-44F4-9BE4-513F0F2392E9} = {5892FF9C-B28D-4AD0-A2ED-B435AB406D30}
+		{4694F1AE-BCB4-487B-9A65-4EAC4F601B35} = {053EEB30-7CD0-427E-9066-A78FA6F489F1}
+		{1D2A911C-EB54-407A-B4FE-73F91A02773E} = {053EEB30-7CD0-427E-9066-A78FA6F489F1}
 	EndGlobalSection
 EndGlobal

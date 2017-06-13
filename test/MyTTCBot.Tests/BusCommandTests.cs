@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Moq;
-using MyTTCBot.Commands;
 using MyTTCBot.Models;
 using MyTTCBot.Services;
 using NetTelegramBotApi.Requests;
@@ -13,6 +12,7 @@ namespace MyTTCBot.Tests
 {
     public class BusCommandTests
     {
+        /*
         private Message _testMessage;
 
         public BusCommandTests()
@@ -155,5 +155,6 @@ namespace MyTTCBot.Tests
                 y.Longitude.Equals(busStopLongitude)
             )));
         }
+    */
     }
 }

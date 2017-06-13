@@ -16,7 +16,7 @@ namespace MyTTCBot.Models.NextBus
 
             public string StopTag { get; set; }
 
-            public PredictionsResponsePredictionsDirection Direction { get; set; }
+            public IEnumerable<PredictionsResponsePredictionsDirection> Direction { get; set; }
 
             public class PredictionsResponsePredictionsDirection
             {

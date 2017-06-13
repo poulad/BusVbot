@@ -6,6 +6,7 @@ mono: none
 sudo: required
 dotnet: 1.0.3
 script:
+  - dotnet nuget locals all --clear
   - chmod +x ./scripts/build.sh
   - ./scripts/build.sh
   - chmod +x ./scripts/test.sh
