@@ -25,13 +25,24 @@ namespace MyTTCBot.Services
 
         public async Task<FrequentLocation[]> GetFrequentLocationsFor(UserChat userChat)
         {
+            FrequentLocation[] locations;
+
             var ucContext = await _dbContext.UserChatContexts
                 .Where(c => (UserChat)c == userChat)
                 .Include(c => c.FrequentLocations)
-                .SingleAsync();
+                .SingleOrDefaultAsync();
 
-            return ucContext.FrequentLocations
-                .ToArray();
+            if (ucContext == null)
+            {
+                locations = new FrequentLocation[0];
+            }
+            else
+            {
+                locations = ucContext.FrequentLocations
+                    .ToArray();
+            }
+
+            return locations;
         }
 
         public void AddLocationToCache(UserChat userChat, Location location)
@@ -88,7 +99,12 @@ namespace MyTTCBot.Services
         {
             var ucContext = await _dbContext.UserChatContexts
                 .Include(c => c.FrequentLocations)
-                .SingleAsync(c => (UserChat)c == userChat);
+                .SingleOrDefaultAsync(c => (UserChat)c == userChat);
+
+            if (ucContext is null)
+            {
+                return (false, false);
+            }
 
             var deleted = false;
             FrequentLocation location;
@@ -118,9 +134,16 @@ namespace MyTTCBot.Services
         {
             var ucContext = await _dbContext.UserChatContexts.Where(x => (UserChat)x == userChat)
                 .Include(x => x.FrequentLocations)
-                .SingleAsync();
+                .SingleOrDefaultAsync();
 
-            var location = (Location)ucContext.FrequentLocations.FirstOrDefault(l => l.Name == name);
+            if (ucContext is null)
+            {
+                return (false, null);
+            }
+
+            var location = (Location)ucContext.FrequentLocations
+                .FirstOrDefault(l => l.Name == name);
+
             var exists = location != null;
 
             return (exists, location);
@@ -130,12 +153,12 @@ namespace MyTTCBot.Services
         {
             var ucContext = await _dbContext.UserChatContexts.Where(x => (UserChat)x == userChat)
                 .Include(x => x.FrequentLocations)
-                .SingleAsync();
+                .SingleOrDefaultAsync();
 
-            return ucContext.FrequentLocations.Count;
+            return ucContext?.FrequentLocations.Count ?? 0;
         }
 
-        public async Task SaveFrequentLocationToDatabase(UserChat userChat, Location location, string name)
+        public async Task PersistFrequentLocation(UserChat userChat, Location location, string name)
         {
             var ucContext = await _dbContext.UserChatContexts.Where(x => (UserChat)x == userChat)
                 .Include(x => x.FrequentLocations)

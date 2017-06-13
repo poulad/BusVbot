@@ -2,6 +2,7 @@
 using NetTelegram.Bot.Framework.Abstractions;
 using System.Threading.Tasks;
 using MyTTCBot.Handlers.Commands;
+using MyTTCBot.Models;
 
 namespace MyTTCBot.Services
 {
@@ -14,5 +15,7 @@ namespace MyTTCBot.Services
         CacheUserContext GetOrCreateCachedContext(UserChat userChat);
 
         void CacheContext(UserChat userChat, CacheUserContext context);
+
+        Task<UserChatContext> EnsureUserChatContext(long userId, long chatId);
     }
 }

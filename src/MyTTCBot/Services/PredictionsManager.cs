@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using MyTTCBot.Bot;
 using MyTTCBot.Extensions;
@@ -24,11 +25,17 @@ namespace MyTTCBot.Services
 
         private readonly ILocationsManager _locationsManager;
 
-        public PredictionsManager(ITtcBusService busService, IMemoryCache cache, ILocationsManager locationsManager)
+        private readonly MyTtcDbContext _dbContext;
+
+        public PredictionsManager(ITtcBusService busService,
+            IMemoryCache cache,
+            ILocationsManager locationsManager,
+            MyTtcDbContext dbContext)
         {
             _busService = busService;
             _cache = cache;
             _locationsManager = locationsManager;
+            _dbContext = dbContext;
         }
 
         public async Task TryReplyWithPredictions(IBot bot, UserChat userChat, long replyToMessageId)
@@ -121,6 +128,21 @@ namespace MyTTCBot.Services
         public void CacheContext(UserChat userChat, CacheUserContext context)
         {
             _cache.Set(userChat, context, GetLocationCacheOptions());
+        }
+
+        public async Task<UserChatContext> EnsureUserChatContext(long userId, long chatId)
+        {
+            var ucContext = await _dbContext.UserChatContexts
+                .SingleOrDefaultAsync(x => x.ChatId == chatId && x.UserId == userId);
+
+            if (ucContext == null)
+            {
+                ucContext = new UserChatContext(userId, chatId);
+                _dbContext.UserChatContexts.Add(ucContext);
+                await _dbContext.SaveChangesAsync();
+            }
+
+            return ucContext;
         }
 
         private bool HasEnoughInfoForPrediction(UserChat userChat)

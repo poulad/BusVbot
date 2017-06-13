@@ -22,6 +22,17 @@ namespace MyTTCBot.Models
 
         public List<FrequentLocation> FrequentLocations { get; set; }
 
+        public UserChatContext()
+        {
+
+        }
+
+        public UserChatContext(long userId, long chatId)
+        {
+            UserId = userId;
+            ChatId = chatId;
+        }
+
         public static explicit operator UserChatContext(Update update)
         {
             var uc = new UserChatContext

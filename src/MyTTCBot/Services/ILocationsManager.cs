@@ -22,6 +22,6 @@ namespace MyTTCBot.Services
 
         Task<int> FrequentLocationsCount(UserChat userChat);
 
-        Task SaveFrequentLocationToDatabase(UserChat userChat, Location location, string name);
+        Task PersistFrequentLocation(UserChat userChat, Location location, string name);
     }
 }

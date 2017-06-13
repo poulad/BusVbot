@@ -84,13 +84,13 @@ namespace MyTTCBot.Handlers.Commands
 
             var uc = (UserChat)update;
 
-            // todo ensure userchat exists in db
+            await _predictionsManager.EnsureUserChatContext(uc.UserId, uc.ChatId);
 
             var locationsCount = await _locationsManager.FrequentLocationsCount(uc);
 
             if (locationsCount < CommonConstants.Location.MaxSavedLocations)
             {
-                await _locationsManager.SaveFrequentLocationToDatabase(uc, args.Location, args.Name);
+                await _locationsManager.PersistFrequentLocation(uc, args.Location, args.Name);
 
                 await Bot.MakeRequest(
                     new SendMessage(update.Message.Chat.Id, Constants.LocationSavedMessage)

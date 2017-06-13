@@ -71,10 +71,10 @@ namespace MyTTCBot.Handlers
 
         public static class Constants
         {
-            public const string InvalidSavedLocationMessage = "I don't remember that location❕";
+            public const string InvalidSavedLocationMessage = "I don't remember that location 🙀";
 
-            public const string NoSavedLocationMessage = "You don't have any saved location❕" +
-                                                         "Use /save command to save one";
+            public const string NoSavedLocationMessage = "You don't have any saved location 🐵" +
+                                                         "Use 👉 /save 👈 command to save one";
         }
     }
 }
