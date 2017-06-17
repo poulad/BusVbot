@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using MyTTCBot.Models.Cache;
-using NetTelegramBotApi.Types;
+using Telegram.Bot.Types;
 using NextBus.NET.Models;
 
 namespace MyTTCBot.Services

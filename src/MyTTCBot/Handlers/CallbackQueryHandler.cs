@@ -3,9 +3,9 @@ using MyTTCBot.Bot;
 using MyTTCBot.Extensions;
 using MyTTCBot.Models.Cache;
 using MyTTCBot.Services;
-using NetTelegram.Bot.Framework;
-using NetTelegram.Bot.Framework.Abstractions;
-using NetTelegramBotApi.Types;
+using Telegram.Bot.Framework;
+using Telegram.Bot.Framework.Abstractions;
+using Telegram.Bot.Types;
 
 namespace MyTTCBot.Handlers
 {
@@ -39,7 +39,7 @@ namespace MyTTCBot.Handlers
                     cachedContext.BusCommandArgs.BusDirection = dir;
                 }
 
-                await bot.MakeRequest(new NetTelegramBotApi.Requests.AnswerCallbackQuery(update.CallbackQuery.Id));
+                await bot.Client.AnswerCallbackQueryAsync(update.CallbackQuery.Id);
 
                 await _predictionsManager.TryReplyWithPredictions(bot, uc, update.CallbackQuery.Message.MessageId);
             }

@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using MyTTCBot.Models;
 using MyTTCBot.Models.Cache;
-using NetTelegramBotApi.Types;
+using Telegram.Bot.Types;
 
 namespace MyTTCBot.Services
 {

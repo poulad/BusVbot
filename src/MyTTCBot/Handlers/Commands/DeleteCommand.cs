@@ -1,17 +1,19 @@
-﻿using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using MyTTCBot.Models.Cache;
-using NetTelegram.Bot.Framework;
-using NetTelegram.Bot.Framework.Abstractions;
-using NetTelegramBotApi.Requests;
-using NetTelegramBotApi.Types;
 using MyTTCBot.Services;
+using Telegram.Bot.Framework;
+using Telegram.Bot.Framework.Abstractions;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace MyTTCBot.Handlers.Commands
 {
     public class DeleteCommandArgs : ICommandArgs
     {
         public string RawInput { get; set; }
+
+        public string ArgsInput { get; set; }
 
         public string Name { get; set; }
 
@@ -35,18 +37,13 @@ namespace MyTTCBot.Handlers.Commands
         {
             var args = base.ParseInput(update);
 
-            var matches = Regex.Match(update.Message.Text, Constants.DeleteCommandRegex);
-            if (matches.Success)
+            if (ushort.TryParse(args.ArgsInput, out ushort n))
             {
-                var val = matches.Groups["id"].Value.Trim();
-                if (ushort.TryParse(val, out ushort n))
-                {
-                    args.Number = n;
-                }
-                else
-                {
-                    args.Name = val;
-                }
+                args.Number = n;
+            }
+            else
+            {
+                args.Name = args.ArgsInput;
             }
 
             return args;
@@ -60,11 +57,10 @@ namespace MyTTCBot.Handlers.Commands
 
             if (!args.IsValid)
             {
-                await Bot.MakeRequest(new SendMessage(update.Message.Chat.Id, Constants.DeleteCommandHelpMessage)
-                {
-                    ReplyToMessageId = update.Message.MessageId,
-                    ParseMode = SendMessage.ParseModeEnum.Markdown,
-                });
+                await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id, Constants.DeleteCommandHelpMessage,
+                    ParseMode.Markdown,
+                    replyToMessageId: update.Message.MessageId);
+
                 return UpdateHandlingResult.Handled;
             }
 
@@ -73,26 +69,27 @@ namespace MyTTCBot.Handlers.Commands
             ushort n = args.Number ?? default(ushort);
             var tuple = await _locationsManager.TryRemoveFrequentLocation(uc, (args.Name, n));
 
-            SendMessage request = new SendMessage(update.Message.Chat.Id, string.Empty)
-            {
-                ReplyToMessageId = update.Message.MessageId,
-            };
+            string replyText;
+            ReplyMarkup replyMarkup = null;
 
             if (tuple.Exists && tuple.Removed)
             {
-                request.Text = Constants.LocationRemovedMessage;
-                request.ReplyMarkup = new ReplyKeyboardRemove { RemoveKeyboard = true };
+                replyText = Constants.LocationRemovedMessage;
+                replyMarkup = new ReplyKeyboardRemove { RemoveKeyboard = true };
             }
             else if (tuple.Exists)
             {
-                request.Text = Constants.LocationRemovalFailed;
+                replyText = Constants.LocationRemovalFailed;
             }
             else
             {
-                request.Text = Constants.LocationDoesntExist;
+                replyText = Constants.LocationDoesntExist;
             }
 
-            await Bot.MakeRequest(request);
+            await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id, replyText,
+                ParseMode.Markdown,
+                replyToMessageId: update.Message.MessageId,
+                replyMarkup: replyMarkup);
 
             return UpdateHandlingResult.Handled;
         }
@@ -100,8 +97,6 @@ namespace MyTTCBot.Handlers.Commands
         private static class Constants
         {
             public const string CommandName = "del";
-
-            public const string DeleteCommandRegex = "^/" + CommandName + @"\s+(?<id>.+)";
 
             public const string DeleteCommandHelpMessage = "_Wrong usage of delete command_\n" +
                                                            "Use it such as:\n" +

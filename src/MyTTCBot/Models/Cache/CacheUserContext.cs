@@ -1,5 +1,5 @@
 ﻿using MyTTCBot.Handlers.Commands;
-using NetTelegramBotApi.Types;
+using Telegram.Bot.Types;
 
 namespace MyTTCBot.Models.Cache
 {
@@ -63,13 +63,13 @@ namespace MyTTCBot.Models.Cache
 
             if (update.Message != null)
             {
-                chatId = update.Message.Chat.Id;
-                userId = update.Message.From.Id;
+                chatId = long.Parse(update.Message.Chat.Id); // todo check conversion
+                userId = long.Parse(update.Message.From.Id);
             }
             else if (update.CallbackQuery != null)
             {
-                chatId = update.CallbackQuery.From.Id;
-                userId = update.CallbackQuery.Message.Chat.Id;
+                chatId = long.Parse(update.CallbackQuery.From.Id);
+                userId = long.Parse(update.CallbackQuery.Message.Chat.Id);
             }
 
             return new UserChat(userId, chatId);

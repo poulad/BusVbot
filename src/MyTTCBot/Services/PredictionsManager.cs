@@ -10,10 +10,11 @@ using MyTTCBot.Extensions;
 using MyTTCBot.Handlers.Commands;
 using MyTTCBot.Models;
 using MyTTCBot.Models.Cache;
-using NetTelegram.Bot.Framework.Abstractions;
-using NetTelegramBotApi.Requests;
-using NetTelegramBotApi.Types;
+using Telegram.Bot.Types;
 using NextBus.NET.Models;
+using Telegram.Bot.Framework.Abstractions;
+using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace MyTTCBot.Services
 {
@@ -40,6 +41,8 @@ namespace MyTTCBot.Services
 
         public async Task TryReplyWithPredictions(IBot bot, UserChat userChat, long replyToMessageId)
         {
+            var chatId = new ChatId(userChat.ChatId);
+
             await SendChatAction(bot, userChat.ChatId);
 
             var cachedContext = GetOrCreateCachedContext(userChat);
@@ -48,9 +51,13 @@ namespace MyTTCBot.Services
 
             if (!HasEnoughInfoForPrediction(userChat))
             {
-                var request = await GetPredictionsValidationMessage(userChat, replyToMessageId);
+                var requestTuple = await GetPredictionsValidationMessage(userChat);
 
-                await bot.MakeRequest(request);
+                await bot.Client.SendTextMessageAsync(chatId,
+                    requestTuple.ReplyText,
+                    ParseMode.Markdown,
+                    replyToMessageId: (int)replyToMessageId,
+                    replyMarkup: requestTuple.ReplyMarkup);
 
                 return;
             }
@@ -66,11 +73,9 @@ namespace MyTTCBot.Services
 
                 cachedContext.BusCommandArgs = null;
 
-                await bot.MakeRequest(new SendMessage(userChat.ChatId, replyText)
-                {
-                    ReplyToMessageId = replyToMessageId,
-                    ParseMode = SendMessage.ParseModeEnum.Markdown,
-                });
+                await bot.Client.SendTextMessageAsync(chatId, replyText,
+                    ParseMode.Markdown,
+                    replyToMessageId: (int)replyToMessageId);
 
                 cachedContext.BusCommandArgs = null;
                 CacheContext(userChat, cachedContext);
@@ -155,7 +160,7 @@ namespace MyTTCBot.Services
 
         private async Task SendChatAction(IBot bot, long chatId)
         {
-            await bot.MakeRequest(new SendChatAction(chatId, "find_location"));
+            await bot.Client.SendChatActionAsync(new ChatId(chatId), ChatAction.FindLocation);
         }
 
         private string FormatBusPredictionsReplyText(RoutePrediction[] predictions)
@@ -233,11 +238,9 @@ namespace MyTTCBot.Services
                 var buttons = directions
                     .Skip(i * keysPerRow)
                     .Take(keysPerRow)
-                    .Select(d => new InlineKeyboardButton
-                    {
-                        Text = d.ToString(),
-                        CallbackData = CommonConstants.Direction.DirectionCallbackQueryPrefix + d.ToString()
-                    })
+                    .Select(d => new InlineKeyboardButton(
+                        d.ToString(), CommonConstants.Direction.DirectionCallbackQueryPrefix + d.ToString()
+                    ))
                     .ToArray();
                 keyboard[i] = buttons;
             }
@@ -256,81 +259,7 @@ namespace MyTTCBot.Services
             };
         }
 
-        private async Task SendPredictionsReplyMessages(IBot bot, SendLocation location, SendMessage predictions, bool removeKeyboards = true)
-        {
-            var locationMessage = await bot.MakeRequest(location);
-            predictions.ReplyToMessageId = locationMessage.MessageId;
-            if (removeKeyboards)
-            {
-                predictions.ReplyMarkup = new ReplyKeyboardRemove { RemoveKeyboard = true };
-            }
-            await bot.MakeRequest(predictions);
-        }
-
         private async Task ReplyWithPredictions(IBot bot, UserChat userChat, long replyToMessageId)
-        {
-            var requests = await GetPredictionsReplyMessage(userChat, replyToMessageId);
-            await SendPredictionsReplyMessages(bot, requests.BusStopLocation, requests.Predictions);
-        }
-
-        private async Task<SendMessage> GetPredictionsValidationMessage(UserChat userChat, long replyToMessageId)
-        {
-            var cachedContext = GetOrCreateCachedContext(userChat);
-
-            var replyText = string.Empty;
-            var request = new SendMessage(userChat.ChatId, string.Empty)
-            {
-                ReplyToMessageId = replyToMessageId,
-                ParseMode = SendMessage.ParseModeEnum.Markdown,
-            };
-
-            if (cachedContext.Location is null)
-            {
-                replyText = Constants.ValidationMessages.LocationMissing;
-                var savedLocations = await _locationsManager.GetFrequentLocationsFor(userChat);
-                request.ReplyMarkup = CreateKeyboardMarkupForLocations(savedLocations);
-            }
-            else if (cachedContext.BusCommandArgs is null)
-            {
-                replyText = Constants.ValidationMessages.BusCommandHintMessage;
-            }
-            else if (string.IsNullOrWhiteSpace(cachedContext.BusCommandArgs.BusTag) ||
-                     !Regex.IsMatch(cachedContext.BusCommandArgs.BusTag,
-                         CommonConstants.BusRoute.ValidTtcBusTagRegex, RegexOptions.IgnoreCase)
-            )
-            {
-                replyText = Constants.ValidationMessages.BusTagInvalid;
-            }
-            else if (cachedContext.BusCommandArgs.BusDirection == null)
-            {
-                if (await _busService.RouteExists(cachedContext.BusCommandArgs.BusTag))
-                {
-                    replyText = Constants.ValidationMessages.BusDirectionMissing;
-
-                    var possibleDirections = await _busService.FindDirectionsForRoute(cachedContext.BusCommandArgs.BusTag);
-                    request.ReplyMarkup = CreateInlineKeyboardForDirections(possibleDirections);
-                }
-                else
-                {
-                    replyText = string.Format(Constants.ValidationMessages.BusRouteNotFoundFormat,
-                        cachedContext.BusCommandArgs.BusTag, string.Empty);
-                }
-            }
-            else if (cachedContext.BusCommandArgs.BusTag == null)
-            {
-                replyText = "No bus tag";
-            }
-
-            if (cachedContext.Location != null)
-            {
-                request.ReplyMarkup = request.ReplyMarkup ?? new ReplyKeyboardRemove { RemoveKeyboard = true };
-            }
-
-            request.Text = replyText;
-            return request;
-        }
-
-        private async Task<(SendLocation BusStopLocation, SendMessage Predictions)> GetPredictionsReplyMessage(UserChat userChat, long replyToMessageId)
         {
             var cachedContext = _cache.Get<CacheUserContext>(userChat);
 
@@ -354,18 +283,68 @@ namespace MyTTCBot.Services
                 replyText = string.Format(Constants.PredictionNotFoundMessage, routeTitle);
             }
 
-            var locationReq = new SendLocation(userChat.ChatId, (float)nearestStop.Lat, (float)nearestStop.Lon)
-            {
-                ReplyToMessageId = replyToMessageId,
-            };
+            var chatId = new ChatId(userChat.ChatId); // todo add chatid to userchat
+            var locationMsg = await bot.Client.SendLocationAsync(chatId,
+                (float)nearestStop.Lat,
+                (float)nearestStop.Lon,
+                replyToMessageId: (int)replyToMessageId); // todo change types
 
-            var predictionsReq = new SendMessage(userChat.ChatId, replyText)
-            {
-                ParseMode = SendMessage.ParseModeEnum.Markdown,
-                ReplyMarkup = new ReplyKeyboardRemove { RemoveKeyboard = true },
-            };
+            await bot.Client.SendTextMessageAsync(chatId, replyText,
+                ParseMode.Markdown,
+                replyToMessageId: locationMsg.MessageId,
+                replyMarkup: new ReplyKeyboardRemove { RemoveKeyboard = true });
+        }
 
-            return (locationReq, predictionsReq);
+        private async Task<(string ReplyText, IReplyMarkup ReplyMarkup)> GetPredictionsValidationMessage(UserChat userChat)
+        {
+            var cachedContext = GetOrCreateCachedContext(userChat);
+
+            var replyText = string.Empty;
+            IReplyMarkup markup = null;
+
+            if (cachedContext.Location is null)
+            {
+                replyText = Constants.ValidationMessages.LocationMissing;
+                var savedLocations = await _locationsManager.GetFrequentLocationsFor(userChat);
+                markup = CreateKeyboardMarkupForLocations(savedLocations);
+            }
+            else if (cachedContext.BusCommandArgs is null)
+            {
+                replyText = Constants.ValidationMessages.BusCommandHintMessage;
+            }
+            else if (string.IsNullOrWhiteSpace(cachedContext.BusCommandArgs.BusTag) ||
+                     !Regex.IsMatch(cachedContext.BusCommandArgs.BusTag,
+                         CommonConstants.BusRoute.ValidTtcBusTagRegex, RegexOptions.IgnoreCase)
+            )
+            {
+                replyText = Constants.ValidationMessages.BusTagInvalid;
+            }
+            else if (cachedContext.BusCommandArgs.BusDirection == null)
+            {
+                if (await _busService.RouteExists(cachedContext.BusCommandArgs.BusTag))
+                {
+                    replyText = Constants.ValidationMessages.BusDirectionMissing;
+
+                    var possibleDirections = await _busService.FindDirectionsForRoute(cachedContext.BusCommandArgs.BusTag);
+                    markup = CreateInlineKeyboardForDirections(possibleDirections);
+                }
+                else
+                {
+                    replyText = string.Format(Constants.ValidationMessages.BusRouteNotFoundFormat,
+                        cachedContext.BusCommandArgs.BusTag, string.Empty);
+                }
+            }
+            else if (cachedContext.BusCommandArgs.BusTag == null)
+            {
+                replyText = "No bus tag";
+            }
+
+            if (cachedContext.Location != null)
+            {
+                markup = markup ?? new ReplyKeyboardRemove { RemoveKeyboard = true };
+            }
+
+            return (replyText, markup);
         }
 
         public static class Constants

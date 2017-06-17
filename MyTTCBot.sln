@@ -11,7 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{5892FF9C-B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyTTCBot.Tests", "test\MyTTCBot.Tests\MyTTCBot.Tests.csproj", "{910E86CD-E110-44F4-9BE4-513F0F2392E9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetTelegram.Bot.Framework", "dependencies\NetTelegram.Bot.Framework\src\NetTelegram.Bot.Framework\NetTelegram.Bot.Framework.csproj", "{4694F1AE-BCB4-487B-9A65-4EAC4F601B35}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Telegram.Bot.Framework", "dependencies\Telegram.Bot.Framework\src\Telegram.Bot.Framework\Telegram.Bot.Framework.csproj", "{4694F1AE-BCB4-487B-9A65-4EAC4F601B35}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NextBus.NET", "dependencies\NextBus.NET\src\NextBus.NET\NextBus.NET.csproj", "{1D2A911C-EB54-407A-B4FE-73F91A02773E}"
 EndProject

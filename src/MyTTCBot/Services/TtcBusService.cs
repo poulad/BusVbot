@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MyTTCBot.Extensions;
 using MyTTCBot.Models.Cache;
-using NetTelegramBotApi.Types;
+using Telegram.Bot.Types;
 using NextBus.NET;
 using NextBus.NET.Models;
 

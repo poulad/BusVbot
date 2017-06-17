@@ -1,14 +1,16 @@
 ﻿using System.Threading.Tasks;
-using NetTelegram.Bot.Framework;
-using NetTelegram.Bot.Framework.Abstractions;
-using NetTelegramBotApi.Requests;
-using NetTelegramBotApi.Types;
+using Telegram.Bot.Framework;
+using Telegram.Bot.Framework.Abstractions;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace MyTTCBot.Handlers.Commands
 {
     public class HelpCommandArgs : ICommandArgs
     {
         public string RawInput { get; set; }
+
+        public string ArgsInput { get; set; }
     }
 
     public class HelpCommand : CommandBase<HelpCommandArgs>
@@ -24,12 +26,11 @@ namespace MyTTCBot.Handlers.Commands
         public override async Task<UpdateHandlingResult> HandleCommand(Update update, HelpCommandArgs args)
         {
             var replyText = string.Format(Constants.HelpMessageFormat, ' ' + update.Message.From.FirstName);
-            await Bot.MakeRequest(new SendMessage(update.Message.Chat.Id, replyText)
-            {
-                ReplyToMessageId = update.Message.MessageId,
-                ParseMode = SendMessage.ParseModeEnum.Markdown,
-            })
-                .ConfigureAwait(false);
+
+            await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id, replyText,
+                ParseMode.Markdown,
+                replyToMessageId: update.Message.MessageId);
+
             return UpdateHandlingResult.Handled;
         }
 

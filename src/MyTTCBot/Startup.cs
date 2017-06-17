@@ -13,9 +13,9 @@ using MyTTCBot.Handlers;
 using MyTTCBot.Handlers.Commands;
 using MyTTCBot.Models;
 using MyTTCBot.Services;
-using NetTelegram.Bot.Framework;
 using NextBus.NET;
 using RecurrentTasks;
+using Telegram.Bot.Framework;
 
 namespace MyTTCBot
 {

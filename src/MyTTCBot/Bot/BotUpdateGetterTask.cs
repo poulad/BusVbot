@@ -2,8 +2,8 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using NetTelegram.Bot.Framework.Abstractions;
 using RecurrentTasks;
+using Telegram.Bot.Framework.Abstractions;
 
 namespace MyTTCBot.Bot
 {

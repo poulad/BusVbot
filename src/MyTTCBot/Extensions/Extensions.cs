@@ -1,5 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using MyTTCBot.Models.Cache;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace MyTTCBot.Extensions
 {
@@ -41,6 +43,46 @@ namespace MyTTCBot.Extensions
         public static bool IsValidBusTagRegex(this string value) // todo Remove
         {
             return Regex.IsMatch(value, @"^\d{1,3}[a-z]?$", RegexOptions.IgnoreCase);
+        }
+
+        public static ChatId GetChatId(this Update update)
+        {
+            ChatId chatId;
+
+            switch (update.Type)
+            {
+                case UpdateType.MessageUpdate:
+                    chatId = update.Message.Chat.Id;
+                    break;
+                case UpdateType.ChannelPost:
+                    chatId = update.ChannelPost.Chat.Id;
+                    break;
+                default:
+                    chatId = null;
+                    break;
+            }
+
+            return chatId;
+        }
+
+        public static int GetMessageId(this Update update)
+        {
+            int msgId;
+
+            switch (update.Type)
+            {
+                case UpdateType.MessageUpdate:
+                    msgId = update.Message.MessageId;
+                    break;
+                case UpdateType.ChannelPost:
+                    msgId = update.ChannelPost.MessageId;
+                    break;
+                default:
+                    msgId = default(int);
+                    break;
+            }
+
+            return msgId;
         }
     }
 }

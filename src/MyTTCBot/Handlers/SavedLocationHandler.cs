@@ -2,10 +2,11 @@
 using MyTTCBot.Bot;
 using MyTTCBot.Models.Cache;
 using MyTTCBot.Services;
-using NetTelegram.Bot.Framework;
-using NetTelegram.Bot.Framework.Abstractions;
-using NetTelegramBotApi.Requests;
-using NetTelegramBotApi.Types;
+using Telegram.Bot.Framework;
+using Telegram.Bot.Framework.Abstractions;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace MyTTCBot.Handlers
 {
@@ -59,18 +60,17 @@ namespace MyTTCBot.Handlers
                     replyText = Constants.NoSavedLocationMessage;
                 }
 
-                await bot.MakeRequest(
-                    new SendMessage(update.Message.Chat.Id, replyText)
-                    {
-                        ReplyToMessageId = update.Message.MessageId,
-                        ReplyMarkup = new ReplyKeyboardRemove { RemoveKeyboard = true },
-                    });
+                await bot.Client.SendTextMessageAsync(update.Message.Chat.Id,
+                    replyText,
+                    ParseMode.Markdown,
+                    replyToMessageId: update.Message.MessageId,
+                    replyMarkup: new ReplyKeyboardRemove { RemoveKeyboard = true });
             }
             return UpdateHandlingResult.Handled;
         }
 
         public static class Constants
-        {
+        { // ToDo: check and remove
             public const string InvalidSavedLocationMessage = "I don't remember that location 🙀";
 
             public const string NoSavedLocationMessage = "You don't have any saved location 🐵" +

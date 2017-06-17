@@ -1,14 +1,15 @@
 ﻿using System.Threading.Tasks;
-using NetTelegram.Bot.Framework;
-using NetTelegram.Bot.Framework.Abstractions;
-using NetTelegramBotApi.Requests;
-using NetTelegramBotApi.Types;
+using Telegram.Bot.Types;
+using Telegram.Bot.Framework;
+using Telegram.Bot.Framework.Abstractions;
 
 namespace MyTTCBot.Handlers.Commands
 {
     public class StartCommandArgs : ICommandArgs
     {
         public string RawInput { get; set; }
+
+        public string ArgsInput { get; set; }
     }
 
     public class StartCommand : CommandBase<StartCommandArgs>
@@ -23,8 +24,7 @@ namespace MyTTCBot.Handlers.Commands
 
         public override async Task<UpdateHandlingResult> HandleCommand(Update update, StartCommandArgs args)
         {
-            await Bot.MakeRequest(new SendMessage(update.Message.Chat.Id, "Welcome!"))
-                .ConfigureAwait(false);
+            await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id, "Welcome!");
             return UpdateHandlingResult.Handled;
         }
     }

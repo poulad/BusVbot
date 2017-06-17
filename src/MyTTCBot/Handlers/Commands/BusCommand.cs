@@ -2,17 +2,19 @@
 using System.Threading.Tasks;
 using MyTTCBot.Models.Cache;
 using MyTTCBot.Services;
-using NetTelegram.Bot.Framework;
-using NetTelegram.Bot.Framework.Abstractions;
-using NetTelegramBotApi.Types;
 using MyTTCBot.Bot;
-using NetTelegramBotApi.Requests;
+using Telegram.Bot.Framework;
+using Telegram.Bot.Framework.Abstractions;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace MyTTCBot.Handlers.Commands
 {
     public class BusCommandArgs : ICommandArgs
     {
         public string RawInput { get; set; }
+
+        public string ArgsInput { get; set; }
 
         public string BusTag { get; set; }
 
@@ -42,12 +44,11 @@ namespace MyTTCBot.Handlers.Commands
         {
             if (string.IsNullOrWhiteSpace(args.BusTag))
             {
-                await Bot.MakeRequest(
-                    new SendMessage(update.Message.Chat.Id, Constants.InvalidArgumentsMessage)
-                    {
-                        ReplyToMessageId = update.Message.MessageId,
-                        ParseMode = SendMessage.ParseModeEnum.Markdown,
-                    });
+                await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id,
+                    Constants.InvalidArgumentsMessage,
+                    ParseMode.Markdown,
+                    replyToMessageId: update.Message.MessageId);
+
                 return UpdateHandlingResult.Handled;
             }
 

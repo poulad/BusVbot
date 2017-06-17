@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-using NetTelegramBotApi.Types;
+using Telegram.Bot.Types;
 
 namespace MyTTCBot.Models
 {
@@ -37,8 +37,8 @@ namespace MyTTCBot.Models
         {
             var uc = new UserChatContext
             {
-                UserId = update.Message.From.Id,
-                ChatId = update.Message.Chat.Id,
+                UserId = long.Parse(update.Message.From.Id),
+                ChatId = long.Parse(update.Message.Chat.Id),
             };
             return uc;
         }

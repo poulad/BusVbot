@@ -1,8 +1,8 @@
 ﻿using MyTTCBot.Models.Cache;
-using NetTelegram.Bot.Framework.Abstractions;
 using System.Threading.Tasks;
 using MyTTCBot.Handlers.Commands;
 using MyTTCBot.Models;
+using Telegram.Bot.Framework.Abstractions;
 
 namespace MyTTCBot.Services
 {
