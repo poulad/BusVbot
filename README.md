@@ -38,7 +38,14 @@ At minimum, put the _bot name_ and _API token_ values in that file.
 Run Postgres database in a docker container:
 
 ```bash
+# create and start the container
 docker run --name myttcbot-postgres -p 5432:5432 -e POSTGRES_USER=myttcbot -e POSTGRES_PASSWORD=password -d postgres
+
+# start the container
+docker start myttcbot-postgres
+
+# connect and query the database
+docker run -it --rm --link myttcbot-postgres:postgres -e PGPASSWORD=password postgres psql -h postgres -U myttcbot
 ```
 
 By running the app in VS without webhooks, bot starts getting updates and processing them. If webhooks are enabled, navigate to [http://localhost:5000/botname/apitoken/me](http://localhost:5000/botname/apitoken/me) and see the bot in action.

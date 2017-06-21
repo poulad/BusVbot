@@ -29,6 +29,7 @@ namespace MyTTCBot.Models
         [Column("lon")]
         public double Longitude { get; set; }
 
+        [Required]
         [Column("created_at")]
         public DateTime CreatedAt { get; set; }
 

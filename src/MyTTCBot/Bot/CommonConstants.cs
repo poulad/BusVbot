@@ -20,5 +20,25 @@
         {
             public const string ValidTtcBusTagRegex = @"^\d{1,3}[a-z]?$";
         }
+
+        public static class FlagEmojis
+        {
+            public const string Canada = "🇨🇦";
+
+            public const string UnitedStates = "🇺🇸";
+        }
+
+        public static class CallbackQueries
+        {
+            public const string CountryPrefix = "c:";
+
+            public const string RegionPrefix = "r:";
+
+            public const string AgencyPrefix = "a:";
+
+            public const string BackToCountries = "_c";
+
+            public const string BackToRegions = "_r_" + CountryPrefix;
+        }
     }
 }

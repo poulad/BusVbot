@@ -8,8 +8,11 @@ namespace MyTTCBot.Models.Cache
         public Location Location { get; set; }
 
         public BusCommandArgs BusCommandArgs { get; set; }
+
+        public bool ProfileSetupInstructionsSent { get; set; }
     }
 
+    // todo move to its own file
     public struct UserChat
     {
         public readonly long UserId;
@@ -20,6 +23,12 @@ namespace MyTTCBot.Models.Cache
         {
             UserId = userId;
             ChatId = chatId;
+        }
+
+        public UserChat(long userId, ChatId chatId)
+        {
+            UserId = userId;
+            ChatId = long.Parse(chatId);
         }
 
         public bool Equals(UserChat other)
@@ -60,7 +69,8 @@ namespace MyTTCBot.Models.Cache
         public static explicit operator UserChat(Update update)
         {
             long chatId = 0, userId = 0;
-
+            // todo use UpdateType enum instead
+            
             if (update.Message != null)
             {
                 chatId = long.Parse(update.Message.Chat.Id); // todo check conversion

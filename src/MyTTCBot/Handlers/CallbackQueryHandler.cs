@@ -24,7 +24,7 @@ namespace MyTTCBot.Handlers
         }
 
         public override async Task<UpdateHandlingResult> HandleUpdateAsync(IBot bot, Update update)
-        {
+        {// todo move these callback queries to their own handler class
             var uc = (UserChat)update;
             if (update.CallbackQuery.Data.StartsWith(CommonConstants.Direction.DirectionCallbackQueryPrefix))
             {

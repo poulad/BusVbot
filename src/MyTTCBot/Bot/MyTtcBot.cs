@@ -24,29 +24,10 @@ namespace MyTTCBot.Bot
                 replyToMessageId: update.GetMessageId());
         }
 
-        public override async Task HandleFaultedUpdate(Update update, Exception exception)
+        public override Task HandleFaultedUpdate(Update update, Exception exception)
         {
-            int msgId;
-            ChatId chatId;
-
-            if (update.Message != null)
-            {
-                chatId = update.Message.Chat.Id;
-                msgId = update.Message.MessageId;
-            }
-            else if (update.CallbackQuery?.Message != null)
-            {
-                chatId = update.CallbackQuery.Message.Chat.Id;
-                msgId = update.CallbackQuery.Message.MessageId;
-            }
-            else
-            {
-                Debug.WriteLine(exception);
-                throw exception;
-            }
-
-            await Client.SendTextMessageAsync(chatId, "An error occured! Please report",
-                replyToMessageId: msgId);
+            Debug.WriteLine(exception);
+            return Task.CompletedTask;
         }
 
         public static class Constants

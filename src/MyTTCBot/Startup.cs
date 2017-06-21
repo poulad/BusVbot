@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MyTTCBot.Bot;
+using MyTTCBot.Data;
 using MyTTCBot.Handlers;
 using MyTTCBot.Handlers.Commands;
 using MyTTCBot.Models;
@@ -44,6 +45,8 @@ namespace MyTTCBot
             }
 
             services.AddTelegramBot<MyTtcBot>(_configuration)
+                .AddUpdateHandler<ChannelMessageHandler>()
+                .AddUpdateHandler<UserProfileSetupHandler>()
                 .AddUpdateHandler<BusCommand>()
                 .AddUpdateHandler<LocationHanlder>()
                 .AddUpdateHandler<CallbackQueryHandler>()
@@ -59,12 +62,13 @@ namespace MyTTCBot
             services.AddTransient<ILocationsManager, LocationsManager>();
             services.AddTransient<IPredictionsManager, PredictionsManager>();
 
-            services.AddTransient<INextBusDataParser, NextBusDataParser>();
-            services.AddTransient<INextBusHttpClient, NextBusHttpClient>();
             services.AddTransient<INextBusClient, NextBusClient>();
             services.AddTransient<ITtcBusService, TtcBusService>();
+            services.AddTransient<UserContextManager>();
 
             services.AddMemoryCache();
+
+            services.AddScoped<DataSeeder>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
@@ -76,6 +80,8 @@ namespace MyTTCBot
             {
                 app.UseDeveloperExceptionPage();
                 app.UseBrowserLink();
+
+                app.EnsureDatabaseSeededAsync().Wait();
 
                 app.StartTask<BotUpdateGetterTask<MyTtcBot>>(TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(1));
             }

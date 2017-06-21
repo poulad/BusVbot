@@ -17,8 +17,17 @@ namespace MyTTCBot.Models
         [Column("chat_id")]
         public long ChatId { get; set; }
 
+        [Column("agency_id")]
+        public int AgencyId { get; set; }
+
+        [ForeignKey(nameof(AgencyId))]
+        public Agency Agency { get; set; }
+
         [Column("created_at")]
         public DateTime CreatedAt { get; set; }
+
+        [Column("modified_at")]
+        public DateTime? ModifiedAt { get; set; }
 
         public List<FrequentLocation> FrequentLocations { get; set; }
 
@@ -31,6 +40,12 @@ namespace MyTTCBot.Models
         {
             UserId = userId;
             ChatId = chatId;
+        }
+
+        public UserChatContext(long userId, ChatId chatId)
+        {
+            UserId = userId;
+            ChatId = long.Parse(chatId);
         }
 
         public static explicit operator UserChatContext(Update update)
