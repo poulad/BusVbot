@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MyTTCBot.Models
 {
-    [Table("agency")]
-    public class Agency
+    [Table("transit_agency")]
+    public class TransitAgency
     {
         [Key]
         [Column("id")]
@@ -58,21 +59,9 @@ namespace MyTTCBot.Models
         [Column("modified_at")]
         public DateTime? ModifiedAt { get; set; }
 
-        public static explicit operator NextBus.NET.Models.Agency(Agency agency)
-        {
-            if (agency is null)
-                return null;
+        public List<AgencyRoute> Routes { get; set; }
 
-            return new NextBus.NET.Models.Agency
-            {
-                Tag = agency.Tag,
-                Title = agency.Title,
-                ShortTitle = agency.ShortTitle,
-                RegionTitle = agency.Region,
-            };
-        }
-
-        public static explicit operator Agency(NextBus.NET.Models.Agency nxbAgency)
+        public static explicit operator TransitAgency(NextBus.NET.Models.Agency nxbAgency)
         {
             if (nxbAgency is null)
                 return null;
@@ -90,13 +79,14 @@ namespace MyTTCBot.Models
                     break;
             }
 
-            return new Agency
+            return new TransitAgency
             {
                 Tag = nxbAgency.Tag,
                 Title = nxbAgency.Title,
                 ShortTitle = string.IsNullOrWhiteSpace(nxbAgency.ShortTitle) ? null : nxbAgency.ShortTitle,
                 Region = nxbAgency.RegionTitle,
                 Country = country,
+                CreatedAt = DateTime.Now,
             };
         }
     }

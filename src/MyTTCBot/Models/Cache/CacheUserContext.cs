@@ -70,7 +70,7 @@ namespace MyTTCBot.Models.Cache
         {
             long chatId = 0, userId = 0;
             // todo use UpdateType enum instead
-            
+
             if (update.Message != null)
             {
                 chatId = long.Parse(update.Message.Chat.Id); // todo check conversion
@@ -86,7 +86,7 @@ namespace MyTTCBot.Models.Cache
         }
     }
 
-    public enum BusDirection
+    public enum TtcBusDirection
     {
         North,
         East,

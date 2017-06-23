@@ -36,7 +36,7 @@ namespace MyTTCBot.Handlers
 
                 if (cachedContext.BusCommandArgs != null)
                 {
-                    cachedContext.BusCommandArgs.BusDirection = dir;
+                    cachedContext.BusCommandArgs.TtcBusDirection = dir;
                 }
 
                 await bot.Client.AnswerCallbackQueryAsync(update.CallbackQuery.Id);

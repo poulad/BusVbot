@@ -63,7 +63,7 @@ namespace MyTTCBot
             services.AddTransient<IPredictionsManager, PredictionsManager>();
 
             services.AddTransient<INextBusClient, NextBusClient>();
-            services.AddTransient<ITtcBusService, TtcBusService>();
+            services.AddTransient<IBusService, BusService>();
             services.AddTransient<UserContextManager>();
 
             services.AddMemoryCache();

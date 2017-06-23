@@ -18,11 +18,11 @@ namespace MyTTCBot.Handlers.Commands
 
         public string BusTag { get; set; }
 
-        public BusDirection? BusDirection { get; set; }
+        public TtcBusDirection? TtcBusDirection { get; set; }
 
         public bool IsValid => !((string.IsNullOrWhiteSpace(BusTag)
             || Regex.IsMatch(BusTag, CommonConstants.BusRoute.ValidTtcBusTagRegex, RegexOptions.IgnoreCase)) &&
-                               BusDirection == null);
+                               TtcBusDirection == null);
     }
 
     public class BusCommand : CommandBase<BusCommandArgs>
@@ -57,7 +57,7 @@ namespace MyTTCBot.Handlers.Commands
             var cachedContext = _predictionsManager.GetOrCreateCachedContext(uc);
 
             args.BusTag = args.BusTag ?? cachedContext.BusCommandArgs?.BusTag;
-            args.BusDirection = args.BusDirection ?? cachedContext.BusCommandArgs?.BusDirection;
+            args.TtcBusDirection = args.TtcBusDirection ?? cachedContext.BusCommandArgs?.TtcBusDirection;
 
             cachedContext.BusCommandArgs = args;
 

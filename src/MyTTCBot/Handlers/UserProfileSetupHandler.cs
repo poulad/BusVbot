@@ -30,14 +30,22 @@ namespace MyTTCBot.Handlers
         public bool CanHandleUpdate(IBot bot, Update update)
         {
             bool canHandle = true;
-            string msgTxt = update.Message?.Text;
 
-            if (!string.IsNullOrWhiteSpace(msgTxt))
+            if (update.Type == UpdateType.CallbackQueryUpdate)
             {
-                bool isGlobalCommand = Regex.IsMatch(msgTxt, @"^/(?:start|help)", RegexOptions.IgnoreCase);
-                if (isGlobalCommand)
+                canHandle = update.CallbackQuery.Data
+                    .StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.UserProfileSetupPrefix);
+            }
+            else if (update.Type == UpdateType.MessageUpdate)
+            {
+                string msgTxt = update.Message.Text;
+                if (!string.IsNullOrWhiteSpace(msgTxt))
                 {
-                    canHandle = false;
+                    bool isGlobalCommand = Regex.IsMatch(msgTxt, @"^/(?:start|help)", RegexOptions.IgnoreCase);
+                    if (isGlobalCommand)
+                    {
+                        canHandle = false;
+                    }
                 }
             }
 
@@ -76,29 +84,29 @@ namespace MyTTCBot.Handlers
                 return UpdateHandlingResult.Handled;
             }
 
-            if (query.StartsWith(CommonConstants.CallbackQueries.CountryPrefix))
+            if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.CountryPrefix))
             {
-                string country = query.TrimStart(CommonConstants.CallbackQueries.CountryPrefix.ToCharArray());
+                string country = query.TrimStart(CommonConstants.CallbackQueries.UserProfileSetup.CountryPrefix.ToCharArray());
                 await _userContextManager.ReplyQueryWithRegionsForCountry(bot, update, country);
             }
-            else if (query.StartsWith(CommonConstants.CallbackQueries.RegionPrefix))
+            else if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.RegionPrefix))
             {
-                string region = query.Replace(CommonConstants.CallbackQueries.RegionPrefix, string.Empty);
+                string region = query.Replace(CommonConstants.CallbackQueries.UserProfileSetup.RegionPrefix, string.Empty);
                 await _userContextManager.ReplyQueryWithAgenciesForRegion(bot, update, region);
             }
-            else if (query.StartsWith(CommonConstants.CallbackQueries.AgencyPrefix))
+            else if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.AgencyPrefix))
             {
-                string agencyIdStr = query.Replace(CommonConstants.CallbackQueries.AgencyPrefix, string.Empty);
+                string agencyIdStr = query.Replace(CommonConstants.CallbackQueries.UserProfileSetup.AgencyPrefix, string.Empty);
                 int agencyId = int.Parse(agencyIdStr);
                 await _userContextManager.ReplyWithSettingUserAgency(bot, update, agencyId);
             }
-            else if (query.StartsWith(CommonConstants.CallbackQueries.BackToCountries))
+            else if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.BackToCountries))
             {
                 await _userContextManager.ReplyQueryWithCountries(bot, update);
             }
-            else if (query.StartsWith(CommonConstants.CallbackQueries.BackToRegions))
+            else if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix))
             {
-                string country = query.Replace(CommonConstants.CallbackQueries.BackToRegions, string.Empty);
+                string country = query.Replace(CommonConstants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix, string.Empty);
                 await _userContextManager.ReplyQueryWithRegionsForCountry(bot, update, country);
             }
 

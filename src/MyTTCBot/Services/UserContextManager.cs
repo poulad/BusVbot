@@ -113,7 +113,7 @@ namespace MyTTCBot.Services
             var chatId = update.GetChatId();
             var msgId = update.GetMessageId();
             
-            string country = await _dbContext.Agencies
+            string country = await _dbContext.TransitAgencies
                 .Where(a => a.Region == region)
                 .Select(a => a.Country)
                 .FirstAsync();
@@ -135,9 +135,9 @@ namespace MyTTCBot.Services
 
             await bot.Client.DeleteMessageAsync(chatId, msgId);
 
-            Agency agency = await _dbContext.Agencies.SingleAsync(a => a.Id == agencyId);
+            TransitAgency transitAgency = await _dbContext.TransitAgencies.SingleAsync(a => a.Id == agencyId);
 
-            await bot.Client.SendTextMessageAsync(chatId, string.Format("Great! Your agency is set to:\n*{0}*", agency.Title),
+            await bot.Client.SendTextMessageAsync(chatId, string.Format("Great! Your agency is set to:\n*{0}*", transitAgency.Title),
                 ParseMode.Markdown,
                 replyMarkup: new ReplyKeyboardRemove());
         }
@@ -192,7 +192,7 @@ namespace MyTTCBot.Services
 
         private async Task<IReplyMarkup> GetCountriesReplyMarkup()
         {
-            string[] countries = await _dbContext.Agencies
+            string[] countries = await _dbContext.TransitAgencies
                 .Select(a => a.Country)
                 .Distinct()
                 .OrderBy(c => c)
@@ -203,7 +203,7 @@ namespace MyTTCBot.Services
             {
                 string country = countries[i];
                 string flag = country.FindCountryFlagEmoji();
-                inlineKeys[i] = new InlineKeyboardButton($"{flag} {country}", CommonConstants.CallbackQueries.CountryPrefix + country);
+                inlineKeys[i] = new InlineKeyboardButton($"{flag} {country}", CommonConstants.CallbackQueries.UserProfileSetup.CountryPrefix + country);
             }
 
             IReplyMarkup inlineMarkup = new InlineKeyboardMarkup(new[] { inlineKeys });
@@ -212,7 +212,7 @@ namespace MyTTCBot.Services
 
         private async Task<IReplyMarkup> GetRegionsReplyMarkupForCountry(string country)
         {
-            string[] regions = await _dbContext.Agencies
+            string[] regions = await _dbContext.TransitAgencies
                 .Where(a => a.Country == country)
                 .Select(a => a.Region)
                 .Distinct()
@@ -223,7 +223,7 @@ namespace MyTTCBot.Services
             var inlineKeys = new InlineKeyboardButton[regions.Length + navigationKeysCount][];
             inlineKeys[0] = new[]
             {
-                new InlineKeyboardButton("🌐 Back to countries", CommonConstants.CallbackQueries.BackToCountries),
+                new InlineKeyboardButton("🌐 Back to countries", CommonConstants.CallbackQueries.UserProfileSetup.BackToCountries),
             };
 
             for (int i = 0; i < regions.Length; i++)
@@ -231,7 +231,7 @@ namespace MyTTCBot.Services
                 string region = regions[i];
                 inlineKeys[i + navigationKeysCount] = new[]
                 {
-                    new InlineKeyboardButton(region, CommonConstants.CallbackQueries.RegionPrefix + region),
+                    new InlineKeyboardButton(region, CommonConstants.CallbackQueries.UserProfileSetup.RegionPrefix + region),
                 };
             }
 
@@ -241,7 +241,7 @@ namespace MyTTCBot.Services
 
         private async Task<IReplyMarkup> GetAgenciesReplyMarkupForRegion(string country, string region)
         {
-            var agencies = await _dbContext.Agencies
+            var agencies = await _dbContext.TransitAgencies
                 .Where(a => a.Region == region)
                 .Select(a => new { a.Title, a.Id })
                 .OrderBy(a => a.Title)
@@ -251,7 +251,7 @@ namespace MyTTCBot.Services
             var inlineKeys = new InlineKeyboardButton[agencies.Length + navigationKeysCount][];
             inlineKeys[0] = new[]
             {
-                new InlineKeyboardButton("🌐 Back to regions", CommonConstants.CallbackQueries.BackToRegions + country),
+                new InlineKeyboardButton("🌐 Back to regions", CommonConstants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix + country),
             };
 
             for (int i = 0; i < agencies.Length; i++)
@@ -259,7 +259,7 @@ namespace MyTTCBot.Services
                 var agency = agencies[i];
                 inlineKeys[i + navigationKeysCount] = new[]
                 {
-                    new InlineKeyboardButton(agency.Title, CommonConstants.CallbackQueries.AgencyPrefix + agency.Id),
+                    new InlineKeyboardButton(agency.Title, CommonConstants.CallbackQueries.UserProfileSetup.AgencyPrefix + agency.Id),
                 };
             }
 

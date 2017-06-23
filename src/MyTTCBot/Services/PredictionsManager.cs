@@ -20,7 +20,7 @@ namespace MyTTCBot.Services
 {
     public class PredictionsManager : IPredictionsManager
     {
-        private readonly ITtcBusService _busService;
+        private readonly IBusService _busService;
 
         private readonly IMemoryCache _cache;
 
@@ -28,7 +28,7 @@ namespace MyTTCBot.Services
 
         private readonly MyTtcDbContext _dbContext;
 
-        public PredictionsManager(ITtcBusService busService,
+        public PredictionsManager(IBusService busService,
             IMemoryCache cache,
             ILocationsManager locationsManager,
             MyTtcDbContext dbContext)
@@ -62,14 +62,16 @@ namespace MyTTCBot.Services
                 return;
             }
 
-            var busDir = cachedContext.BusCommandArgs.BusDirection ?? default(BusDirection);
-            var routeExists = await _busService.RouteExists(cachedContext.BusCommandArgs.BusTag, busDir);
+            string agencyTag = await GetAgencyTagForUserChat(userChat.UserId, userChat.ChatId);
+
+            var busDir = cachedContext.BusCommandArgs.TtcBusDirection ?? default(TtcBusDirection);
+            var routeExists = await _busService.RouteExists(agencyTag, cachedContext.BusCommandArgs.BusTag, busDir);
 
             if (!routeExists)
             {
                 var replyText = string.Format(Constants.ValidationMessages.BusRouteNotFoundFormat,
                     cachedContext.BusCommandArgs.BusTag,
-                    cachedContext.BusCommandArgs.BusDirection);
+                    cachedContext.BusCommandArgs.TtcBusDirection);
 
                 cachedContext.BusCommandArgs = null;
 
@@ -105,7 +107,7 @@ namespace MyTTCBot.Services
             if (tokens.Length == 3)
             {
                 args.BusTag = tokens[1];
-                args.BusDirection = tokens[2].ParseBusDirectionOrNull();
+                args.TtcBusDirection = tokens[2].ParseBusDirectionOrNull();
             }
             else if (tokens.Length == 2)
             {
@@ -225,7 +227,7 @@ namespace MyTTCBot.Services
             };
         }
 
-        private static InlineKeyboardMarkup CreateInlineKeyboardForDirections(IReadOnlyCollection<BusDirection> directions)
+        private static InlineKeyboardMarkup CreateInlineKeyboardForDirections(IReadOnlyCollection<TtcBusDirection> directions)
         {
             const int keysPerRow = 2;
 
@@ -264,12 +266,13 @@ namespace MyTTCBot.Services
             var cachedContext = _cache.Get<CacheUserContext>(userChat);
 
             var busTag = cachedContext.BusCommandArgs.BusTag;
-            var direction = cachedContext.BusCommandArgs.BusDirection ?? default(BusDirection);
+            var direction = cachedContext.BusCommandArgs.TtcBusDirection ?? default(TtcBusDirection);
 
+            string agencyTag = await GetAgencyTagForUserChat(userChat.UserId, userChat.ChatId);
             var nearestStop =
-                await _busService.FindNearestBusStop(busTag, direction, cachedContext.Location);
+                await _busService.FindNearestBusStop(agencyTag, busTag, direction, cachedContext.Location);
 
-            var predictions = await _busService.GetPredictionsForRoute(nearestStop.Tag, busTag);
+            var predictions = await _busService.GetPredictionsForRoute(agencyTag, nearestStop.Tag, busTag);
 
             string replyText;
 
@@ -319,13 +322,15 @@ namespace MyTTCBot.Services
             {
                 replyText = Constants.ValidationMessages.BusTagInvalid;
             }
-            else if (cachedContext.BusCommandArgs.BusDirection == null)
+            else if (cachedContext.BusCommandArgs.TtcBusDirection == null)
             {
-                if (await _busService.RouteExists(cachedContext.BusCommandArgs.BusTag))
+                string agencyTag = await GetAgencyTagForUserChat(userChat.UserId, userChat.ChatId);
+
+                if (await _busService.RouteExists(agencyTag, cachedContext.BusCommandArgs.BusTag))
                 {
                     replyText = Constants.ValidationMessages.BusDirectionMissing;
 
-                    var possibleDirections = await _busService.FindDirectionsForRoute(cachedContext.BusCommandArgs.BusTag);
+                    var possibleDirections = await _busService.FindDirectionsForRoute(agencyTag, cachedContext.BusCommandArgs.BusTag);
                     markup = CreateInlineKeyboardForDirections(possibleDirections);
                 }
                 else
@@ -345,6 +350,15 @@ namespace MyTTCBot.Services
             }
 
             return (replyText, markup);
+        }
+
+        private async Task<string> GetAgencyTagForUserChat(long userId, long chatId)
+        {
+            var query = from uc in _dbContext.UserChatContexts
+                        where uc.UserId == userId && uc.ChatId == chatId
+                        select uc.TransitAgency.Tag;
+            string tag = await query.SingleAsync();
+            return tag;
         }
 
         public static class Constants

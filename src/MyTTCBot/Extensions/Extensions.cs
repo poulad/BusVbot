@@ -7,30 +7,30 @@ namespace MyTTCBot.Extensions
 {
     internal static class Extensions
     {
-        public static BusDirection? ParseBusDirectionOrNull(this string value)
+        public static TtcBusDirection? ParseBusDirectionOrNull(this string value)
         {
             if (value is null)
                 return null;
 
-            BusDirection? dir;
+            TtcBusDirection? dir;
 
             switch (value.ToUpper())
             {
                 case "NORTH":
                 case "N":
-                    dir = BusDirection.North;
+                    dir = TtcBusDirection.North;
                     break;
                 case "EAST":
                 case "E":
-                    dir = BusDirection.East;
+                    dir = TtcBusDirection.East;
                     break;
                 case "SOUTH":
                 case "S":
-                    dir = BusDirection.South;
+                    dir = TtcBusDirection.South;
                     break;
                 case "WEST":
                 case "W":
-                    dir = BusDirection.West;
+                    dir = TtcBusDirection.West;
                     break;
                 default:
                     dir = null;
@@ -54,6 +54,9 @@ namespace MyTTCBot.Extensions
                     break;
                 case UpdateType.CallbackQueryUpdate:
                     chatId = update.CallbackQuery.Message.Chat.Id;
+                    break;
+                case UpdateType.EditedMessage:
+                    chatId = update.EditedMessage.Chat.Id;
                     break;
                 default:
                     chatId = null;

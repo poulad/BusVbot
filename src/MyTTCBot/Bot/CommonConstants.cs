@@ -30,15 +30,20 @@
 
         public static class CallbackQueries
         {
-            public const string CountryPrefix = "c:";
+            public static class UserProfileSetup
+            {
+                public const string UserProfileSetupPrefix = "ups/";
 
-            public const string RegionPrefix = "r:";
+                public const string CountryPrefix = UserProfileSetupPrefix + "c:"; // ups/c:{country}
 
-            public const string AgencyPrefix = "a:";
+                public const string RegionPrefix = UserProfileSetupPrefix + "r:"; // ups/r:{name}
 
-            public const string BackToCountries = "_c";
+                public const string AgencyPrefix = UserProfileSetupPrefix + "a:"; // ups/a:{id}
 
-            public const string BackToRegions = "_r_" + CountryPrefix;
+                public const string BackToRegionsForCountryPrefix = UserProfileSetupPrefix + "r/c:"; // ups/r/c:{country}
+
+                public const string BackToCountries = UserProfileSetupPrefix + "c"; // ups/c
+            }
         }
     }
 }

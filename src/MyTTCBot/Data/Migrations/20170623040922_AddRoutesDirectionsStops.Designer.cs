@@ -8,9 +8,10 @@ using MyTTCBot.Models;
 namespace MyTTCBot.Data.Migrations
 {
     [DbContext(typeof(MyTtcDbContext))]
-    partial class MyTtcDbContextModelSnapshot : ModelSnapshot
+    [Migration("20170623040922_AddRoutesDirectionsStops")]
+    partial class AddRoutesDirectionsStops
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
             modelBuilder
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn)

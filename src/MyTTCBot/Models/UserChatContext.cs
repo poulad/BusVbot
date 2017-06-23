@@ -21,7 +21,7 @@ namespace MyTTCBot.Models
         public int AgencyId { get; set; }
 
         [ForeignKey(nameof(AgencyId))]
-        public Agency Agency { get; set; }
+        public TransitAgency TransitAgency { get; set; }
 
         [Column("created_at")]
         public DateTime CreatedAt { get; set; }
