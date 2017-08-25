@@ -9,7 +9,7 @@ set -e
 
 echo "## Start test.."
 
-dotnet test "$rootdir/test/MyTTCBot.Tests/MyTTCBot.Tests.csproj" --configuration Release --list-tests
-dotnet test "$rootdir/test/MyTTCBot.Tests/MyTTCBot.Tests.csproj" --configuration Release
+dotnet test "$rootdir/test/BusVbot.Tests/BusVbot.Tests.csproj" --configuration Release --list-tests
+dotnet test "$rootdir/test/BusVbot.Tests/BusVbot.Tests.csproj" --configuration Release
 
 echo "#> test completed"
