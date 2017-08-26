@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using BusVbot.Models;
-using NetTelegramBotApi.Types;
 using Xunit;
 
 namespace BusVbot.Tests

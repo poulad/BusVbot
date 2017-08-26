@@ -246,3 +246,6 @@ ModelManifest.xml
 
 # Settings for different environments
 appsettings.*.json
+
+# Rider IDE
+.idea/
