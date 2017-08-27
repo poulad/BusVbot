@@ -59,6 +59,7 @@ namespace BusVbot
                 .AddUpdateHandler<UserProfileSetupHandler>()
                 /* Other handlers: */
                 .AddUpdateHandler<BusCommand>()
+                .AddUpdateHandler<BusDirectionCallbackQueryHandler>()
                 .AddUpdateHandler<LocationHanlder>()
                 .AddUpdateHandler<SaveCommand>()
                 .AddUpdateHandler<SavedLocationHandler>()

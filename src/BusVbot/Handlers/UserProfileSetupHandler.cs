@@ -17,58 +17,35 @@ namespace BusVbot.Handlers
             _userContextManager = userContextManager;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="bot"></param>
-        /// <param name="update"></param>
-        /// <returns></returns>
-        /// <remarks>
-        /// Skips handling global commands such as `/help` because they do not need any profile setup
-        /// </remarks>
-        public bool CanHandleUpdate(IBot bot, Update update)
-        {
-            bool canHandle;
-            switch (update.Type)
-            {
-                case UpdateType.CallbackQueryUpdate:
-                    canHandle = update.CallbackQuery.Data
-                        .StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.UserProfileSetupPrefix);
-                    break;
-                default:
-                    canHandle = true;
-                    break;
-            }
-            return canHandle;
-        }
+        public bool CanHandleUpdate(IBot bot, Update update) => true;
 
         public async Task<UpdateHandlingResult> HandleUpdateAsync(IBot bot, Update update)
         {
+            var userChat = (UserChat) update;
+
+            var userTuple = await _userContextManager.TryGetUserContextAsync(userChat);
+            if (userTuple.Exists)
+            {
+                return UpdateHandlingResult.Continue;
+            }
+
             if (update.Type == UpdateType.CallbackQueryUpdate)
             {
                 string callbackQuery = update.CallbackQuery.Data;
                 return HandleCallbackQuery(bot, update, callbackQuery).Result;
             }
 
-            var userChat = (UserChat) update;
-
-            var userTuple = await _userContextManager.TryGetUserContext(userChat);
-            if (userTuple.Exists)
-            {
-                return UpdateHandlingResult.Continue;
-            }
-
-            bool shouldSend = await _userContextManager.ShouldSendInstructionsTo(userChat);
+            bool shouldSend = await _userContextManager.ShouldSendInstructionsToAsync(userChat);
             if (shouldSend)
             {
-                await _userContextManager.ReplyWithSetupInstructions(bot, update);
+                await _userContextManager.ReplyWithSetupInstructionsAsync(bot, update);
             }
             return UpdateHandlingResult.Handled;
         }
 
         public async Task<UpdateHandlingResult> HandleCallbackQuery(IBot bot, Update update, string query)
         {
-            if (await _userContextManager.TryReplyIfOldSetupInstructionMessage(bot, update))
+            if (await _userContextManager.TryReplyIfOldSetupInstructionMessageAsync(bot, update))
             {
                 return UpdateHandlingResult.Handled;
             }
@@ -77,31 +54,31 @@ namespace BusVbot.Handlers
             {
                 string country =
                     query.TrimStart(CommonConstants.CallbackQueries.UserProfileSetup.CountryPrefix.ToCharArray());
-                await _userContextManager.ReplyQueryWithRegionsForCountry(bot, update, country);
+                await _userContextManager.ReplyQueryWithRegionsForCountryAsync(bot, update, country);
             }
             else if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.RegionPrefix))
             {
                 string region = query.Replace(CommonConstants.CallbackQueries.UserProfileSetup.RegionPrefix,
                     string.Empty);
-                await _userContextManager.ReplyQueryWithAgenciesForRegion(bot, update, region);
+                await _userContextManager.ReplyQueryWithAgenciesForRegionAsync(bot, update, region);
             }
             else if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.AgencyPrefix))
             {
                 string agencyIdStr = query.Replace(CommonConstants.CallbackQueries.UserProfileSetup.AgencyPrefix,
                     string.Empty);
                 int agencyId = int.Parse(agencyIdStr);
-                await _userContextManager.ReplyWithSettingUserAgency(bot, update, agencyId);
+                await _userContextManager.ReplyWithSettingUserAgencyAsync(bot, update, agencyId);
             }
             else if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.BackToCountries))
             {
-                await _userContextManager.ReplyQueryWithCountries(bot, update);
+                await _userContextManager.ReplyQueryWithCountriesAsync(bot, update);
             }
             else if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix))
             {
                 string country =
                     query.Replace(CommonConstants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix,
                         string.Empty);
-                await _userContextManager.ReplyQueryWithRegionsForCountry(bot, update, country);
+                await _userContextManager.ReplyQueryWithRegionsForCountryAsync(bot, update, country);
             }
 
             return UpdateHandlingResult.Handled;

@@ -7,6 +7,6 @@ namespace BusVbot.Services
     {
         CacheUserContext this[UserChat userChat] { get; set; }
 
-        Task<CacheUserContext> GetCachedContext(UserChat userchat);
+        Task<CacheUserContext> GetCachedContextAsync(UserChat userchat);
     }
 }

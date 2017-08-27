@@ -50,6 +50,7 @@ namespace BusVbot.Services
                 return false;
             }
 
+            // ToDo Try to use specific agency's parser
             bool routeValid = _agencyServiceAccessor.DefaultDataParser.TryParseToRouteTag(routeTag).Success;
 
             return routeValid;
@@ -57,7 +58,7 @@ namespace BusVbot.Services
 
         public async Task<string> GetSampleRouteTextAsync(UserChat userchat)
         {
-            var cachedcontext = await _cachingService.GetCachedContext(userchat);
+            var cachedcontext = await _cachingService.GetCachedContextAsync(userchat);
 
             IAgencyDataParser dataParser = _agencyServiceAccessor.DataParsers
                 .SingleOrDefault(p => p.AgencyTag == cachedcontext.AgencyTag);
@@ -73,7 +74,7 @@ namespace BusVbot.Services
 
             await SendChatAction(bot, userchat.ChatId);
 
-            var cachedContext = await _cachingService.GetCachedContext(userchat);
+            var cachedContext = await _cachingService.GetCachedContextAsync(userchat);
 
             #region Validations
 
@@ -177,14 +178,14 @@ namespace BusVbot.Services
 
         public async Task<(string RouteTag, string Direction)> GetCachedRouteDirectionAsync(UserChat userchat)
         {
-            var cachedContext = await _cachingService.GetCachedContext(userchat);
+            var cachedContext = await _cachingService.GetCachedContextAsync(userchat);
 
             return (cachedContext.BusCommandArgs?.RouteTag, cachedContext.BusCommandArgs?.DirectionName);
         }
 
         public async Task CacheRouteDirectionAsync(UserChat userchat, string routeTag, string direction)
         {
-            var cachedContext = await _cachingService.GetCachedContext(userchat);
+            var cachedContext = await _cachingService.GetCachedContextAsync(userchat);
 
             cachedContext.BusCommandArgs = cachedContext.BusCommandArgs ?? new BusCommandArgs();
 
@@ -204,7 +205,7 @@ namespace BusVbot.Services
         private async Task<(string ReplyText, IReplyMarkup ReplyMarkup)>
             CreateInstructionMessageForMissingInfo(UserChat userchat)
         {
-            var cachedContext = await _cachingService.GetCachedContext(userchat);
+            var cachedContext = await _cachingService.GetCachedContextAsync(userchat);
 
             var result = (ReplyText: string.Empty, ReplyMarkup: default(IReplyMarkup));
 

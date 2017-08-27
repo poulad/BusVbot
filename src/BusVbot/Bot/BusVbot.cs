@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 using BusVbot.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Telegram.Bot.Framework;
 using Telegram.Bot.Types;
@@ -11,14 +12,17 @@ namespace BusVbot.Bot
 {
     public class BusVbot : BotBase<BusVbot>
     {
-        public BusVbot(IOptions<BotOptions<BusVbot>> botOptions)
+        private readonly ILogger<BusVbot> _logger;
+
+        public BusVbot(IOptions<BotOptions<BusVbot>> botOptions, ILogger<BusVbot> logger)
             : base(botOptions)
         {
-
+            _logger = logger;
         }
 
         public override async Task HandleUnknownUpdate(Update update)
         {
+            _logger.LogInformation($"Unable to handle command of type {update.Type}.");
             await Client.SendTextMessageAsync(update.GetChatId(), Constants.InvalidCommandMessage,
                 ParseMode.Markdown,
                 replyToMessageId: update.GetMessageId());

@@ -180,7 +180,7 @@ namespace BusVbot.Services
                 .Select(l => new
                 {
                     FrequentLocation = l,
-                    Distance = GetPointsDistance((Location) l, location)
+                    Distance = GetLocationsDistance((Location) l, location)
                 })
                 .Where(l => l.Distance < 0.001)
                 .OrderBy(l => l.Distance)
@@ -197,7 +197,7 @@ namespace BusVbot.Services
             };
         }
 
-        private static double GetPointsDistance(Location location1, Location location2)
+        private static double GetLocationsDistance(Location location1, Location location2)
         {
             var distance = Math.Sqrt(
                 Math.Pow(location1.Latitude - location2.Latitude, 2) +

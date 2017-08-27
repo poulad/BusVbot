@@ -36,7 +36,7 @@ namespace BusVbot.Services
             }
         }
 
-        public async Task<CacheUserContext> GetCachedContext(UserChat userchat)
+        public async Task<CacheUserContext> GetCachedContextAsync(UserChat userchat)
         {
             CacheUserContext cacheContext = this[userchat];
             cacheContext = cacheContext ?? new CacheUserContext();

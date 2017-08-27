@@ -27,7 +27,7 @@ namespace BusVbot.Services
             _cache = cache;
         }
 
-        public async Task<(bool Exists, UserChatContext UserContext)> TryGetUserContext(UserChat userChat)
+        public async Task<(bool Exists, UserChatContext UserContext)> TryGetUserContextAsync(UserChat userChat)
         {
             // ToDo make sure the cached context stays in sync with remove/update of UserChatContext
             var cacheContext = GetOrCreateCacheEntryFor(userChat);
@@ -41,13 +41,13 @@ namespace BusVbot.Services
             return (cacheContext.UserChatContext != null, cacheContext.UserChatContext);
         }
 
-        public async Task<bool> ReplyWithSetupInstructionsIfNotAlreadySet(IBot bot, Update update)
+        public async Task<bool> ReplyWithSetupInstructionsIfNotAlreadySetAsync(IBot bot, Update update)
         {
             var userChat = (UserChat) update;
 
-            if (await ShouldSendInstructionsTo(userChat))
+            if (await ShouldSendInstructionsToAsync(userChat))
             {
-                await ReplyWithSetupInstructions(bot, update);
+                await ReplyWithSetupInstructionsAsync(bot, update);
                 return true;
             }
             else
@@ -65,9 +65,9 @@ namespace BusVbot.Services
         /// <remarks>
         /// Sends two consecutive messages so it can set both InlineButton and KeyboardButton reply markups
         /// </remarks>
-        public async Task ReplyWithSetupInstructions(IBot bot, Update update)
+        public async Task ReplyWithSetupInstructionsAsync(IBot bot, Update update)
         {
-            IReplyMarkup inlineMarkup = await GetCountriesReplyMarkup();
+            IReplyMarkup inlineMarkup = await GetCountriesReplyMarkupAsync();
 
             IReplyMarkup keyboardMarkup = new ReplyKeyboardMarkup(new[]
             {
@@ -90,32 +90,32 @@ namespace BusVbot.Services
             cacheContext.ProfileSetupInstructionsSent = true;
         }
 
-        public async Task ReplyQueryWithCountries(IBot bot, Update update)
+        public async Task ReplyQueryWithCountriesAsync(IBot bot, Update update)
         {
             var chatId = update.GetChatId();
             var msgId = update.GetMessageId();
 
-            IReplyMarkup replyMarkup = await GetCountriesReplyMarkup();
+            IReplyMarkup replyMarkup = await GetCountriesReplyMarkupAsync();
 
             await bot.Client.EditMessageTextAsync(chatId, msgId, Constants.CountryMessage,
                 replyMarkup: replyMarkup);
         }
 
-        public async Task ReplyQueryWithRegionsForCountry(IBot bot, Update update, string country)
+        public async Task ReplyQueryWithRegionsForCountryAsync(IBot bot, Update update, string country)
         {
             var chatId = update.GetChatId();
             var msgId = update.GetMessageId();
 
             await bot.Client.DeleteMessageAsync(chatId, msgId);
 
-            IReplyMarkup replyMarkup = await GetRegionsReplyMarkupForCountry(country);
+            IReplyMarkup replyMarkup = await GetRegionsReplyMarkupForCountryAsync(country);
 
             await bot.Client.SendTextMessageAsync(chatId, $"Select a region in *{country}*",
                 ParseMode.Markdown,
                 replyMarkup: replyMarkup);
         }
 
-        public async Task ReplyQueryWithAgenciesForRegion(IBot bot, Update update, string region)
+        public async Task ReplyQueryWithAgenciesForRegionAsync(IBot bot, Update update, string region)
         {
             var chatId = update.GetChatId();
             var msgId = update.GetMessageId();
@@ -125,20 +125,20 @@ namespace BusVbot.Services
                 .Select(a => a.Country)
                 .FirstAsync();
 
-            IReplyMarkup replyMarkup = await GetAgenciesReplyMarkupForRegion(country, region);
+            IReplyMarkup replyMarkup = await GetAgenciesReplyMarkupForRegionAsync(country, region);
 
             await bot.Client.EditMessageTextAsync(chatId, msgId, $"Select an agency in *{region}*",
                 ParseMode.Markdown,
                 replyMarkup: replyMarkup);
         }
 
-        public async Task ReplyWithSettingUserAgency(IBot bot, Update update, int agencyId)
+        public async Task ReplyWithSettingUserAgencyAsync(IBot bot, Update update, int agencyId)
         {
             UserChat userChat = (UserChat) update;
             var chatId = update.GetChatId();
             int msgId = update.GetMessageId();
 
-            await PersistNewUser(chatId, userChat.UserId, agencyId);
+            await PersistNewUserAsync(chatId, userChat.UserId, agencyId);
 
             await bot.Client.DeleteMessageAsync(chatId, msgId);
 
@@ -150,7 +150,7 @@ namespace BusVbot.Services
                 replyMarkup: new ReplyKeyboardRemove());
         }
 
-        public async Task<bool> ShouldSendInstructionsTo(UserChat userChat)
+        public async Task<bool> ShouldSendInstructionsToAsync(UserChat userChat)
         {
             bool shouldSend;
 
@@ -170,13 +170,13 @@ namespace BusVbot.Services
             return shouldSend;
         }
 
-        public async Task<bool> TryReplyIfOldSetupInstructionMessage(IBot bot, Update update)
+        public async Task<bool> TryReplyIfOldSetupInstructionMessageAsync(IBot bot, Update update)
         {
             UserChat userChat = (UserChat) update;
             var chatId = update.GetChatId();
             var msgId = update.GetMessageId();
 
-            var tuple = await TryGetUserContext(userChat);
+            var tuple = await TryGetUserContextAsync(userChat);
             if (tuple.Exists)
             {
                 // setup already completed. User is clicking on an old inline key
@@ -188,7 +188,7 @@ namespace BusVbot.Services
             return tuple.Exists;
         }
 
-        private async Task PersistNewUser(ChatId chatId, long userId, int agencyId)
+        private async Task PersistNewUserAsync(ChatId chatId, long userId, int agencyId)
         {
             var userChatContext = new UserChatContext(userId, chatId)
             {
@@ -199,7 +199,7 @@ namespace BusVbot.Services
             await _dbContext.SaveChangesAsync();
         }
 
-        private async Task<IReplyMarkup> GetCountriesReplyMarkup()
+        private async Task<IReplyMarkup> GetCountriesReplyMarkupAsync()
         {
             string[] countries = await _dbContext.Agencies
                 .Select(a => a.Country)
@@ -220,7 +220,7 @@ namespace BusVbot.Services
             return inlineMarkup;
         }
 
-        private async Task<IReplyMarkup> GetRegionsReplyMarkupForCountry(string country)
+        private async Task<IReplyMarkup> GetRegionsReplyMarkupForCountryAsync(string country)
         {
             string[] regions = await _dbContext.Agencies
                 .Where(a => a.Country == country)
@@ -251,7 +251,7 @@ namespace BusVbot.Services
             return inlineMarkup;
         }
 
-        private async Task<IReplyMarkup> GetAgenciesReplyMarkupForRegion(string country, string region)
+        private async Task<IReplyMarkup> GetAgenciesReplyMarkupForRegionAsync(string country, string region)
         {
             var agencies = await _dbContext.Agencies
                 .Where(a => a.Region == region)

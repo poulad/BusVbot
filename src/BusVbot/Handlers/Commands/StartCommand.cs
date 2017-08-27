@@ -30,13 +30,13 @@ namespace BusVbot.Handlers.Commands
         public override async Task<UpdateHandlingResult> HandleCommand(Update update, StartCommandArgs args)
         {
             var userChat = (UserChat) update;
-            if (await _userContextManager.ShouldSendInstructionsTo(userChat))
+            if (await _userContextManager.ShouldSendInstructionsToAsync(userChat))
             {
                 await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id,
                     string.Format(Constants.WelcomeMessageText, update.Message.From.FirstName),
                     ParseMode.Markdown);
 
-                await _userContextManager.ReplyWithSetupInstructions(Bot, update);
+                await _userContextManager.ReplyWithSetupInstructionsAsync(Bot, update);
             }
 
             return UpdateHandlingResult.Handled;
