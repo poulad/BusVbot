@@ -24,6 +24,9 @@ namespace BusVbot.Services
 
         Task PersistFrequentLocationAsync(UserChat userChat, Location location, string name);
 
-        Task<(bool Exists, FrequentLocation Location)> TryFindSavedLocationCloseToAsync(UserChat userchat, Location location);
+        Task<(bool Exists, FrequentLocation Location)> TryFindSavedLocationCloseToAsync(UserChat userchat,
+            Location location);
+
+        Task<Models.Agency[]> FindAgenciesForLocationAsync(Location location);
     }
 }

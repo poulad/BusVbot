@@ -189,6 +189,17 @@ namespace BusVbot.Services
             return (closestLocation != null, closestLocation?.FrequentLocation);
         }
 
+        public async Task<Models.Agency[]> FindAgenciesForLocationAsync(Location location)
+        {
+            var agencies = await _dbContext.Agencies
+                .Where(a =>
+                    a.MinLatitude <= location.Latitude && location.Latitude <= a.MaxLatitude &&
+                    a.MinLongitude <= location.Longitude && location.Longitude <= a.MaxLongitude)
+                .OrderBy(a => a.Title)
+                .ToArrayAsync();
+            return agencies;
+        }
+
         private static MemoryCacheEntryOptions GetLocationCacheOptions()
         {
             return new MemoryCacheEntryOptions

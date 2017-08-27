@@ -28,8 +28,7 @@ namespace BusVbot.Data
         {
             await _dbContext.Database.EnsureCreatedAsync();
 
-            var nxtbAgencies = (await _nextBusClient.GetAgencies())
-                .ToArray();
+            var nxtbAgencies = (await _nextBusClient.GetAgencies()).ToArray();
 
             await _dbContext.Agencies.LoadAsync();
             await _dbContext.AgencyRoutes.LoadAsync();
@@ -46,7 +45,7 @@ namespace BusVbot.Data
                 }
 
                 //for testing
-                if (!new[] { "ttc", "jtafla", "configdev" }.Contains(nxtbAgency.Tag))
+                if (!new[] {"ttc", "jtafla", "configdev"}.Contains(nxtbAgency.Tag))
                     continue;
 
                 try
@@ -74,11 +73,21 @@ namespace BusVbot.Data
             await _dbContext.SaveChangesAsync();
         }
 
-        private async Task SeedAgencyDataAsync(NextbusAgency nxbAgency)
+        private async Task SeedAgencyDataAsync(NextbusAgency nxtbAgency)
         {
-            var nxtbRoutes = await _nextBusClient.GetRoutesForAgency(nxbAgency.Tag);
+            var nxtbRoutes = (await _nextBusClient.GetRoutesForAgency(nxtbAgency.Tag)).ToArray();
 
-            Agency agency = (Agency)nxbAgency;
+            Agency agency = (Agency) nxtbAgency;
+
+            {
+                // Populate first agency coords
+                var routeConfig = await _nextBusClient.GetRouteConfig(nxtbAgency.Tag, nxtbRoutes[0].Tag);
+                agency.MinLatitude = (double) routeConfig.LatMin;
+                agency.MaxLatitude = (double) routeConfig.LatMax;
+                agency.MinLongitude = (double) routeConfig.LonMin;
+                agency.MaxLongitude = (double) routeConfig.LonMax;
+            }
+
             List<AgencyRoute> routes = new List<AgencyRoute>(90);
 
             foreach (var nxtbRoute in nxtbRoutes)
@@ -92,8 +101,8 @@ namespace BusVbot.Data
                 //    continue;
                 //}
 
-                var routeConfig = await _nextBusClient.GetRouteConfig(nxbAgency.Tag, nxtbRoute.Tag);
-                AgencyRoute route = (AgencyRoute)routeConfig;
+                var routeConfig = await _nextBusClient.GetRouteConfig(nxtbAgency.Tag, nxtbRoute.Tag);
+                AgencyRoute route = (AgencyRoute) routeConfig;
 
                 UpdateAgencyMinMaxCoordinates(ref agency,
                     route.MaxLatitude,
@@ -107,7 +116,7 @@ namespace BusVbot.Data
 
                 foreach (NextbusDirection nextbusDir in routeConfig.Directions)
                 {
-                    RouteDirection dir = (RouteDirection)nextbusDir;
+                    RouteDirection dir = (RouteDirection) nextbusDir;
                     dir.RouteDirectionBusStops.Capacity = nextbusDir.StopTags.Length;
 
                     foreach (string stopTag in nextbusDir.StopTags)
@@ -122,7 +131,6 @@ namespace BusVbot.Data
                             Console.WriteLine(e);
                             throw;
                         }
-
                     }
                     directions.Add(dir);
                 }
@@ -169,15 +177,15 @@ namespace BusVbot.Data
                     var q = _dbContext.BusStops.Local.Where(s =>
                         s.Tag == nxtbsStop.Tag &&
                         //s.StopId == nxtbsStop.StopId
-                        Math.Abs(s.Latitude - (double)nxtbsStop.Lat) < 0.00001 &&
-                        Math.Abs(s.Longitude - (double)nxtbsStop.Lon) < 0.00001
+                        Math.Abs(s.Latitude - (double) nxtbsStop.Lat) < 0.00001 &&
+                        Math.Abs(s.Longitude - (double) nxtbsStop.Lon) < 0.00001
                     ).ToArray();
 
                     BusStop stop = q.SingleOrDefault();
 
                     if (stop == null)
                     {
-                        stop = (BusStop)nxtbsStop;
+                        stop = (BusStop) nxtbsStop;
                         _dbContext.Add(stop);
                     }
 

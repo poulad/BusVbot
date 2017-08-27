@@ -1,5 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using BusVbot.Bot;
+using BusVbot.Extensions;
 using BusVbot.Models.Cache;
 using BusVbot.Services;
 using Telegram.Bot.Framework.Abstractions;
@@ -12,9 +14,15 @@ namespace BusVbot.Handlers
     {
         private readonly UserContextManager _userContextManager;
 
-        public UserProfileSetupHandler(UserContextManager userContextManager)
+        private readonly ILocationsManager _locationsManager;
+
+        public UserProfileSetupHandler(
+            UserContextManager userContextManager,
+            ILocationsManager locationsManager
+        )
         {
             _userContextManager = userContextManager;
+            _locationsManager = locationsManager;
         }
 
         public bool CanHandleUpdate(IBot bot, Update update) => true;
@@ -29,18 +37,29 @@ namespace BusVbot.Handlers
                 return UpdateHandlingResult.Continue;
             }
 
-            if (update.Type == UpdateType.CallbackQueryUpdate)
+            UpdateHandlingResult
+                result = UpdateHandlingResult.Handled; // ToDo result is alway Handled at this point. Refacotr methods
+            switch (update.Type)
             {
-                string callbackQuery = update.CallbackQuery.Data;
-                return HandleCallbackQuery(bot, update, callbackQuery).Result;
+                case UpdateType.CallbackQueryUpdate:
+                    string callbackQuery = update.CallbackQuery.Data;
+                    result = HandleCallbackQuery(bot, update, callbackQuery).Result;
+                    break;
+                case UpdateType.MessageUpdate // ToDo accept location in OSM format as well
+                when update.Message.Type == MessageType.LocationMessage:
+                    await HandleLocationUpdate(bot, update, update.Message.Location);
+                    break;
+                default:
+                    bool shouldSend = await _userContextManager.ShouldSendInstructionsToAsync(userChat);
+                    if (shouldSend)
+                    {
+                        await _userContextManager.ReplyWithSetupInstructionsAsync(bot, update);
+                    }
+                    result = UpdateHandlingResult.Handled;
+                    break;
             }
 
-            bool shouldSend = await _userContextManager.ShouldSendInstructionsToAsync(userChat);
-            if (shouldSend)
-            {
-                await _userContextManager.ReplyWithSetupInstructionsAsync(bot, update);
-            }
-            return UpdateHandlingResult.Handled;
+            return result;
         }
 
         public async Task<UpdateHandlingResult> HandleCallbackQuery(IBot bot, Update update, string query)
@@ -82,6 +101,31 @@ namespace BusVbot.Handlers
             }
 
             return UpdateHandlingResult.Handled;
+        }
+
+        public async Task HandleLocationUpdate(IBot bot, Update update, Location location)
+        {
+            var agencies = await _locationsManager.FindAgenciesForLocationAsync(location);
+
+            string agenciesTitles = string.Join("\n", agencies.Select(a => $"{a.Title} in {a.Region}, {a.Country}"));
+
+            switch (agencies.Length)
+            {
+                case 0:
+                    await bot.Client.SendTextMessageAsync(update.GetChatId(), $"No agency found!");
+                    break;
+                case 1:
+                    await bot.Client.SendTextMessageAsync(update.GetChatId(), $"Agency:\n`{agenciesTitles}`",
+                        ParseMode.Markdown);
+                    break;
+                default:
+                    await bot.Client.SendTextMessageAsync(update.GetChatId(),
+                        $"Agencies:\n```\n{agenciesTitles}\n```",
+                        ParseMode.Markdown);
+                    break;
+            }
+            
+            // ToDo set agency automatically and end profile set up
         }
     }
 }
