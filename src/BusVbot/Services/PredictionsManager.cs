@@ -110,7 +110,8 @@ namespace BusVbot.Services
             }
             else
             {
-                var routeTitle = result.Predictions.FirstOrDefault()?.DirectionTitleBecauseNoPredictions ?? string.Empty;
+                var routeTitle = result.Predictions.FirstOrDefault()?.DirectionTitleBecauseNoPredictions ??
+                                 string.Empty;
                 replyText = string.Format(Constants.PredictionNotFoundMessage, routeTitle);
             }
 
@@ -122,7 +123,7 @@ namespace BusVbot.Services
             await bot.Client.SendTextMessageAsync(chatId, replyText,
                 ParseMode.Markdown,
                 replyToMessageId: locationMsg.MessageId,
-                replyMarkup: new ReplyKeyboardRemove { RemoveKeyboard = true });
+                replyMarkup: new ReplyKeyboardRemove {RemoveKeyboard = true});
 
             #endregion
 
@@ -137,8 +138,8 @@ namespace BusVbot.Services
             BusStop nearestStop = await FindNearestBusStopAsync(userLocation, agencyTag, routeTag, direction);
             Location stopLocation = new Location
             {
-                Latitude = (float)nearestStop.Latitude,
-                Longitude = (float)nearestStop.Longitude,
+                Latitude = (float) nearestStop.Latitude,
+                Longitude = (float) nearestStop.Longitude,
             };
             RoutePrediction[] predictions = (await _nextBusClient
                 .GetRoutePredictionsByStopTag(agencyTag, nearestStop.Tag, routeTag)).ToArray();
@@ -200,21 +201,6 @@ namespace BusVbot.Services
             _cachingService[userchat] = cachedContext;
         }
 
-        public async Task<UserChatContext> EnsureUserChatContext(long userId, long chatId)
-        {
-            var ucContext = await _dbContext.UserChatContexts
-                .SingleOrDefaultAsync(x => x.ChatId == chatId && x.UserId == userId);
-
-            if (ucContext == null)
-            {
-                ucContext = new UserChatContext(userId, chatId);
-                _dbContext.UserChatContexts.Add(ucContext);
-                await _dbContext.SaveChangesAsync();
-            }
-
-            return ucContext;
-        }
-
         private async Task<(string ReplyText, IReplyMarkup ReplyMarkup)>
             CreateInstructionMessageForMissingInfo(UserChat userchat)
         {
@@ -228,48 +214,52 @@ namespace BusVbot.Services
                 return result;
             }
 
-            string routeTag = cachedContext.BusCommandArgs.RouteTag;
-            string direction = cachedContext.BusCommandArgs.DirectionName;
+            string routeTagInput = cachedContext.BusCommandArgs.RouteTag;
+            string directionInput = cachedContext.BusCommandArgs.DirectionName;
             Location location = cachedContext.Location;
 
             var dataParser = _agencyServiceAccessor.GetAgencyOrDefaultDataParser(cachedContext.AgencyTag);
-            string[] routes = await dataParser.FindMatchingRoutesAsync(routeTag);
+            string[] routes = await dataParser.FindMatchingRoutesAsync(routeTagInput);
 
             if (!routes.Any())
             {
                 result.ReplyText = string.Format(Constants.ValidationMessages.BusRouteNotFoundFormat,
-                    routeTag, string.Empty);
+                    routeTagInput, string.Empty);
                 return result;
             }
 
             if (routes.Length == 1)
             {
-                cachedContext.BusCommandArgs.RouteTag = routeTag = routes[0];
+                cachedContext.BusCommandArgs.RouteTag = routeTagInput = routes[0];
             }
 
-            string[] directions = await dataParser.FindMatchingDirectionsForRouteAsync(routeTag, direction);
+            #region Direction Validations
+
+            string[] directions = await dataParser.FindMatchingDirectionsForRouteAsync(routeTagInput, directionInput);
 
             if (directions.Length == 1)
             {
-                cachedContext.BusCommandArgs.DirectionName = direction = directions[0];
+                cachedContext.BusCommandArgs.DirectionName = directions[0];
             }
-
-            if (!directions.Any() || direction == null)
+            else
             {
-                directions = await dataParser.FindMatchingDirectionsForRouteAsync(routeTag);
+//                if (!directions.Any() || directionInput == null)
+//                    directions = await dataParser.FindMatchingDirectionsForRouteAsync(routeTagInput);
                 result.ReplyText = Constants.ValidationMessages.BusDirectionMissing;
 
                 var formatter = _agencyServiceAccessor.GetAgencyOrDefaultMessageFormatter(cachedContext.AgencyTag);
 
-                result.ReplyMarkup = formatter.CreateInlineKeyboardForDirections(routeTag, directions);
+                result.ReplyMarkup = formatter.CreateInlineKeyboardForDirections(routeTagInput, directions);
 
                 return result;
             }
 
+            #endregion
+
             if (location == null)
             {
                 result.ReplyText = Constants.ValidationMessages.LocationMissing;
-                var savedLocations = await _locationsManager.GetFrequentLocationsFor(userchat);
+                var savedLocations = await _locationsManager.GetFrequentLocationsAsync(userchat);
                 result.ReplyMarkup = CreateKeyboardMarkupForLocations(savedLocations);
                 return result;
             }
@@ -281,7 +271,7 @@ namespace BusVbot.Services
             string agencyTag, string routeTag, string direction)
         {
             string sql =
-                    @"SELECT * FROM bus_stop WHERE id = (SELECT ID FROM 
+                @"SELECT * FROM bus_stop WHERE id = (SELECT ID FROM 
                     (SELECT s.id as ID, MIN(SQRT(POWER(s.lon - {0} , 2) + POWER(s.lat - {1}, 2)))
                     FROM agency a
                     JOIN agency_route r ON a.id = r.agency_id
@@ -296,13 +286,13 @@ namespace BusVbot.Services
                     LIMIT 1) AS A)";
 
             BusStop busStop = await _dbContext.BusStops
-                    .FromSql(sql,
-                        userLocation.Longitude,
-                        userLocation.Latitude,
-                        agencyTag,
-                        routeTag,
-                        direction)
-                        .SingleAsync();
+                .FromSql(sql,
+                    userLocation.Longitude,
+                    userLocation.Latitude,
+                    agencyTag,
+                    routeTag,
+                    direction)
+                .SingleAsync();
 
             return busStop;
         }
@@ -312,7 +302,8 @@ namespace BusVbot.Services
             await bot.Client.SendChatActionAsync(new ChatId(chatId), ChatAction.FindLocation);
         }
 
-        private static ReplyKeyboardMarkup CreateKeyboardMarkupForLocations(IReadOnlyCollection<FrequentLocation> locations)
+        private static ReplyKeyboardMarkup CreateKeyboardMarkupForLocations(
+            IReadOnlyCollection<FrequentLocation> locations)
         {
             const int keysPerRow = 2;
 
@@ -333,7 +324,7 @@ namespace BusVbot.Services
             }
             keyboard[keyboard.Length - 1] = new[]
             {
-                new KeyboardButton("Share my location") { RequestLocation = true },
+                new KeyboardButton("Share my location") {RequestLocation = true},
             };
 
             return new ReplyKeyboardMarkup

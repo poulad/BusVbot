@@ -23,12 +23,12 @@ namespace BusVbot.Services
             _dbContext = dbContext;
         }
 
-        public async Task<FrequentLocation[]> GetFrequentLocationsFor(UserChat userChat)
+        public async Task<FrequentLocation[]> GetFrequentLocationsAsync(UserChat userChat)
         {
             FrequentLocation[] locations;
 
             var ucContext = await _dbContext.UserChatContexts
-                .Where(c => (UserChat)c == userChat)
+                .Where(c => (UserChat) c == userChat)
                 .Include(c => c.FrequentLocations)
                 .SingleOrDefaultAsync();
 
@@ -95,11 +95,12 @@ namespace BusVbot.Services
             return (location != null, location);
         }
 
-        public async Task<(bool Exists, bool Removed)> TryRemoveFrequentLocation(UserChat userChat, (string Name, ushort creationOrderNumber) valueTuple)
+        public async Task<(bool Exists, bool Removed)> TryRemoveFrequentLocationAsync(UserChat userChat,
+            (string Name, ushort creationOrderNumber) valueTuple)
         {
             var ucContext = await _dbContext.UserChatContexts
                 .Include(c => c.FrequentLocations)
-                .SingleOrDefaultAsync(c => (UserChat)c == userChat);
+                .SingleOrDefaultAsync(c => (UserChat) c == userChat);
 
             if (ucContext is null)
             {
@@ -130,9 +131,9 @@ namespace BusVbot.Services
             return (location != null, deleted);
         }
 
-        public async Task<(bool Exists, Location Location)> TryFindSavedLocation(UserChat userChat, string name)
+        public async Task<(bool Exists, Location Location)> TryFindSavedLocationAsync(UserChat userChat, string name)
         {
-            var ucContext = await _dbContext.UserChatContexts.Where(x => (UserChat)x == userChat)
+            var ucContext = await _dbContext.UserChatContexts.Where(x => (UserChat) x == userChat)
                 .Include(x => x.FrequentLocations)
                 .SingleOrDefaultAsync();
 
@@ -141,7 +142,7 @@ namespace BusVbot.Services
                 return (false, null);
             }
 
-            var location = (Location)ucContext.FrequentLocations
+            var location = (Location) ucContext.FrequentLocations
                 .FirstOrDefault(l => l.Name == name);
 
             var exists = location != null;
@@ -149,18 +150,18 @@ namespace BusVbot.Services
             return (exists, location);
         }
 
-        public async Task<int> FrequentLocationsCount(UserChat userChat)
+        public async Task<int> FrequentLocationsCountAsync(UserChat userChat)
         {
-            var ucContext = await _dbContext.UserChatContexts.Where(x => (UserChat)x == userChat)
+            var ucContext = await _dbContext.UserChatContexts.Where(x => (UserChat) x == userChat)
                 .Include(x => x.FrequentLocations)
                 .SingleOrDefaultAsync();
 
             return ucContext?.FrequentLocations.Count ?? 0;
         }
 
-        public async Task PersistFrequentLocation(UserChat userChat, Location location, string name)
+        public async Task PersistFrequentLocationAsync(UserChat userChat, Location location, string name)
         {
-            var ucContext = await _dbContext.UserChatContexts.Where(x => (UserChat)x == userChat)
+            var ucContext = await _dbContext.UserChatContexts.Where(x => (UserChat) x == userChat)
                 .Include(x => x.FrequentLocations)
                 .SingleAsync();
 
@@ -169,12 +170,40 @@ namespace BusVbot.Services
             await _dbContext.SaveChangesAsync();
         }
 
+        public async Task<(bool Exists, FrequentLocation Location)> TryFindSavedLocationCloseToAsync(UserChat userchat,
+            Location location)
+        {
+            var closestLocation = await _dbContext.UserChatContexts
+                .Where(uc => (UserChat) uc == userchat)
+                .Include(uc => uc.FrequentLocations)
+                .SelectMany(uc => uc.FrequentLocations)
+                .Select(l => new
+                {
+                    FrequentLocation = l,
+                    Distance = GetPointsDistance((Location) l, location)
+                })
+                .Where(l => l.Distance < 0.001)
+                .OrderBy(l => l.Distance)
+                .FirstOrDefaultAsync();
+
+            return (closestLocation != null, closestLocation?.FrequentLocation);
+        }
+
         private static MemoryCacheEntryOptions GetLocationCacheOptions()
         {
             return new MemoryCacheEntryOptions
             {
                 SlidingExpiration = TimeSpan.FromHours(1),
             };
+        }
+
+        private static double GetPointsDistance(Location location1, Location location2)
+        {
+            var distance = Math.Sqrt(
+                Math.Pow(location1.Latitude - location2.Latitude, 2) +
+                Math.Pow(location1.Longitude - location2.Longitude, 2)
+            );
+            return distance;
         }
     }
 }

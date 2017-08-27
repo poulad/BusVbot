@@ -19,7 +19,7 @@ namespace BusVbot.Services.Agency
             BusVbotDbContext dbContext,
             string agencyTag = null,
             string sampleRoutesMarkdown = null
-            )
+        )
         {
             DbContext = dbContext;
             AgencyTag = agencyTag;
@@ -45,7 +45,8 @@ namespace BusVbot.Services.Agency
             return (isValid, tag);
         }
 
-        public virtual (bool Success, string Direction) TryParseToDirection(string routeTag, string directionText)
+        public virtual (bool Success, string DirectionName) TryParseToDirectionName(string routeTag,
+            string directionText)
         {
             // todo check db records to find regex for directions
             if (string.IsNullOrWhiteSpace(directionText))
@@ -59,13 +60,13 @@ namespace BusVbot.Services.Agency
         public virtual async Task<string[]> FindMatchingRoutesAsync(string routeText)
         {
             var query = from r in DbContext.AgencyRoutes
-                        where r.Agency.Tag.Equals(AgencyTag, StringComparison.OrdinalIgnoreCase)
-                              && r.Tag.Equals(routeText, StringComparison.OrdinalIgnoreCase)
-                        select r.Tag;
+                where r.Agency.Tag.Equals(AgencyTag, StringComparison.OrdinalIgnoreCase)
+                      && r.Tag.Equals(routeText, StringComparison.OrdinalIgnoreCase)
+                select r.Tag;
 
             string route = await query.SingleOrDefaultAsync();
 
-            var routeTags = route == null ? new string[0] : new[] { route };
+            var routeTags = route == null ? new string[0] : new[] {route};
 
             return routeTags;
         }
@@ -82,16 +83,16 @@ namespace BusVbot.Services.Agency
                 .Select(d => d.Name)
                 .Distinct();
 
-            var parseResult = TryParseToDirection(null, directionText);
+            var parseResult = TryParseToDirectionName(null, directionText);
             if (parseResult.Success)
             {
                 string dir = await directionQuery
                     .SingleOrDefaultAsync(d =>
-                        d.Equals(parseResult.Direction, StringComparison.OrdinalIgnoreCase));
+                        d.Equals(parseResult.DirectionName, StringComparison.OrdinalIgnoreCase));
 
                 if (dir != null)
                 {
-                    directions = new[] { dir };
+                    directions = new[] {dir};
                 }
             }
 

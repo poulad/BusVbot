@@ -33,7 +33,7 @@ namespace BusVbot.Services.Agency
             return (isValid, routeTag);
         }
 
-        public override (bool Success, string Direction) TryParseToDirection(string routeTag, string directionText)
+        public override (bool Success, string DirectionName) TryParseToDirectionName(string routeTag, string directionText)
         {
             if (string.IsNullOrWhiteSpace(directionText))
             {

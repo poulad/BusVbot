@@ -73,7 +73,7 @@ namespace BusVbot.Handlers.Commands
 
         public override async Task<UpdateHandlingResult> HandleCommand(Update update, BusCommandArgs args)
         {
-            UserChat userchat = (UserChat)update;
+            UserChat userchat = (UserChat) update;
 
             if (update.Type == UpdateType.CallbackQueryUpdate)
             {
@@ -99,13 +99,14 @@ namespace BusVbot.Handlers.Commands
             return UpdateHandlingResult.Handled;
         }
 
+        // ToDo Use BusDirectionCallbackQueryHandler
         private async Task<UpdateHandlingResult> HandleCallbackQuery(Update update)
         {
             await Bot.Client.AnswerCallbackQueryAsync(update.GetCallbackQueryId(), cacheTime: 5);
             string direction = update.CallbackQuery.Data.Replace(
                 CommonConstants.CallbackQueries.BusCommand.BusDirectionPrefix, string.Empty);
 
-            UserChat userchat = (UserChat)update;
+            UserChat userchat = (UserChat) update;
             var cachedContext = await _predictionsManager.GetCachedRouteDirectionAsync(userchat);
             cachedContext.Direction = direction;
             await _predictionsManager.CacheRouteDirectionAsync(userchat, cachedContext.RouteTag, direction);

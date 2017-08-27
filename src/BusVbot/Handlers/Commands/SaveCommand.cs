@@ -19,24 +19,22 @@ namespace BusVbot.Handlers.Commands
         public string Name { get; set; }
 
         public Location Location { get; set; }
-        
+
         public bool IsValid => !string.IsNullOrWhiteSpace(Name) &&
-                                Location != null;
+                               Location != null;
+
         //                   (Location != null ^ BusCommandArgs.IsValid); 
-        // todo either location or bus args is valid for each /save command bcuz u reply to either a location or a /bus command call
+        // ToDo either location or bus args is valid for each /save command bcuz u reply to either a location or a /bus command call
     }
 
     public class SaveCommand : CommandBase<SaveCommandArgs>
     {
         private readonly ILocationsManager _locationsManager;
 
-        private readonly IPredictionsManager _predictionsManager;
-
-        public SaveCommand(ILocationsManager locationsManager, IPredictionsManager predictionsManager)
+        public SaveCommand(ILocationsManager locationsManager)
             : base(Constants.CommandName)
         {
             _locationsManager = locationsManager;
-            _predictionsManager = predictionsManager;
         }
 
         protected override SaveCommandArgs ParseInput(Update update)
@@ -73,27 +71,37 @@ namespace BusVbot.Handlers.Commands
                 return UpdateHandlingResult.Handled;
             }
 
-            var uc = (UserChat)update;
+            var uc = (UserChat) update;
 
-            await _predictionsManager.EnsureUserChatContext(uc.UserId, uc.ChatId);
-
-            var locationsCount = await _locationsManager.FrequentLocationsCount(uc);
+            var locationsCount = await _locationsManager.FrequentLocationsCountAsync(uc);
 
             if (locationsCount < CommonConstants.Location.MaxSavedLocations)
             {
-                await _locationsManager.PersistFrequentLocation(uc, args.Location, args.Name);
+                var closeLocationTuple = await _locationsManager.TryFindSavedLocationCloseToAsync(uc, args.Location);
+                if (closeLocationTuple.Exists)
+                {
+                    await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id,
+                        string.Format(Constants.LocationExistsMessageFormat, closeLocationTuple.Location.Name),
+                        ParseMode.Markdown,
+                        replyToMessageId: update.Message.MessageId);
+                }
+                else
+                {
+                    await _locationsManager.PersistFrequentLocationAsync(uc, args.Location, args.Name);
 
-                await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id,
-                    Constants.LocationSavedMessage,
-                    replyToMessageId: update.Message.MessageId,
-                    replyMarkup: new ReplyKeyboardRemove { RemoveKeyboard = true });
+                    await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id,
+                        string.Format(Constants.LocationSavedMessageFormat, args.Name),
+                        ParseMode.Markdown,
+                        replyToMessageId: update.Message.MessageId,
+                        replyMarkup: new ReplyKeyboardRemove());
+                }
             }
             else
             {
                 await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id,
                     Constants.MaxSaveLocationReachedMessage,
                     replyToMessageId: update.Message.MessageId,
-                    replyMarkup: new ReplyKeyboardRemove { RemoveKeyboard = true });
+                    replyMarkup: new ReplyKeyboardRemove());
             }
             return UpdateHandlingResult.Handled;
         }
@@ -102,16 +110,22 @@ namespace BusVbot.Handlers.Commands
         {
             public const string CommandName = "save";
 
-            public const string SaveCommandHelpMessage = "_Wrong usage of save command_\n" +
+            public const string SaveCommandHelpMessage =
+                "_Wrong usage of save command_\n" +
+                "You can save up to 4 locations you frequently take bus from.\n\n" +
                 "Use it such as:\n" +
-                "``` /save Home ```\n" +
-                "while replying to a location message";
+                "`/save Home`\n" +
+                "while replying to a location message.";
 
-            public const string LocationSavedMessage = "Got it!";
+            public const string LocationSavedMessageFormat =
+                "Got it! Frequent location saved as:\n_{0}_";
 
-            public static readonly string MaxSaveLocationReachedMessage = "I can't store more than " +
-                                                                         CommonConstants.Location.MaxSavedLocations + " locations.\n" +
-                                                                         "Try removin a saved location with /del";
+            public const string LocationExistsMessageFormat =
+                "That location ☝ is very close to your other frequent location:\n_{0}_";
+
+            public static readonly string MaxSaveLocationReachedMessage =
+                $"I can't remember more than {CommonConstants.Location.MaxSavedLocations} locations 🙄.\n\n" +
+                "Try removing a saved location with /del ❌ command.";
         }
     }
 }

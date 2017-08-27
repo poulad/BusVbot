@@ -10,7 +10,7 @@ namespace BusVbot.Services.Agency
 
         (bool Success, string RouteTag) TryParseToRouteTag(string routeText);
 
-        (bool Success, string Direction) TryParseToDirection(string routeTag, string directionText);
+        (bool Success, string DirectionName) TryParseToDirectionName(string routeTag, string directionText);
 
         Task<string[]> FindMatchingRoutesAsync(string routeText);
 

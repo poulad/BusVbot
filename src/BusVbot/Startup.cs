@@ -45,20 +45,24 @@ namespace BusVbot
 
                 services.AddDbContext<BusVbotDbContext>(builder =>
                     builder.UseNpgsql(connStr, options => options
-                    .MigrationsAssembly(migrationsAssembly))
-                    .EnableSensitiveDataLogging());
+                            .MigrationsAssembly(migrationsAssembly))
+                        .EnableSensitiveDataLogging());
             }
 
             services.AddTelegramBot<Bot.BusVbot>(_configuration)
+                /* Ignore channel messages: */
                 .AddUpdateHandler<ChannelMessageHandler>()
+                /* Global commands: */
+                .AddUpdateHandler<StartCommand>()
+                .AddUpdateHandler<HelpCommand>()
+                /* Make sure user has a profile: */
                 .AddUpdateHandler<UserProfileSetupHandler>()
+                /* Other handlers: */
                 .AddUpdateHandler<BusCommand>()
                 .AddUpdateHandler<LocationHanlder>()
                 .AddUpdateHandler<SaveCommand>()
                 .AddUpdateHandler<SavedLocationHandler>()
                 .AddUpdateHandler<DeleteCommand>()
-                .AddUpdateHandler<HelpCommand>()
-                .AddUpdateHandler<StartCommand>()
                 .Configure();
 
             services.AddTask<BotUpdateGetterTask<Bot.BusVbot>>();
@@ -72,14 +76,14 @@ namespace BusVbot
             services.AddTransient<TtcMessageFormatter>();
             services.AddTransient<IAgencyServiceAccessor, AgencyServiceAccessor>(factory =>
             {
-                var parsers = new IAgencyDataParser[] { factory.GetRequiredService<TtcDataParser>() };
-                var formatters = new IAgencyMessageFormatter[] { factory.GetRequiredService<TtcMessageFormatter>() };
+                var parsers = new IAgencyDataParser[] {factory.GetRequiredService<TtcDataParser>()};
+                var formatters = new IAgencyMessageFormatter[] {factory.GetRequiredService<TtcMessageFormatter>()};
                 return new AgencyServiceAccessor(
                     factory.GetRequiredService<IDefaultAgencyDataParser>(),
                     factory.GetRequiredService<IDefaultAgencyMessageFormatter>(),
                     parsers,
                     formatters
-                    );
+                );
             });
 
             services.AddTransient<ICachingService, CachingService>();
@@ -113,7 +117,7 @@ namespace BusVbot
                 app.UseExceptionHandler(builder =>
                     builder.Run(async context =>
                     {
-                        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                        context.Response.StatusCode = (int) HttpStatusCode.InternalServerError;
                         context.Response.ContentLength = 0;
                         await context.Response.WriteAsync(string.Empty)
                             .ConfigureAwait(false);

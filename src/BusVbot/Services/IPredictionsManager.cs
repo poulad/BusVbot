@@ -22,8 +22,6 @@ namespace BusVbot.Services
         
         Task<(string RouteTag, string Direction)> GetCachedRouteDirectionAsync(UserChat userchat);
 
-        Task CacheRouteDirectionAsync(UserChat userchat, string routeTag, string direction);
-        
-        Task<UserChatContext> EnsureUserChatContext(long userId, long chatId);
+        Task CacheRouteDirectionAsync(UserChat userchat, string routeTag, string direction);        
     }
 }

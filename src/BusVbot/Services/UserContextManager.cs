@@ -14,7 +14,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BusVbot.Services
 {
-    // todo Use IUserContextManager
+    // ToDo use IUserContextManager
     public class UserContextManager
     {
         private readonly BusVbotDbContext _dbContext;
@@ -29,15 +29,21 @@ namespace BusVbot.Services
 
         public async Task<(bool Exists, UserChatContext UserContext)> TryGetUserContext(UserChat userChat)
         {
-            var userContext = await _dbContext.UserChatContexts
-                .SingleOrDefaultAsync(u => u.UserId == userChat.UserId && u.ChatId == userChat.ChatId);
+            // ToDo make sure the cached context stays in sync with remove/update of UserChatContext
+            var cacheContext = GetOrCreateCacheEntryFor(userChat);
+            if (cacheContext.UserChatContext == null)
+            {
+                cacheContext.UserChatContext = await _dbContext.UserChatContexts
+                    .SingleOrDefaultAsync(u => u.UserId == userChat.UserId && u.ChatId == userChat.ChatId);
+                _cache.Set(userChat, cacheContext);
+            }
 
-            return (userContext != null, userContext);
+            return (cacheContext.UserChatContext != null, cacheContext.UserChatContext);
         }
 
         public async Task<bool> ReplyWithSetupInstructionsIfNotAlreadySet(IBot bot, Update update)
         {
-            var userChat = (UserChat)update;
+            var userChat = (UserChat) update;
 
             if (await ShouldSendInstructionsTo(userChat))
             {
@@ -65,7 +71,7 @@ namespace BusVbot.Services
 
             IReplyMarkup keyboardMarkup = new ReplyKeyboardMarkup(new[]
             {
-                new KeyboardButton("Share my location") { RequestLocation = true },
+                new KeyboardButton("Share my location") {RequestLocation = true},
             }, true, true);
 
             await bot.Client.SendTextMessageAsync(update.GetChatId(),
@@ -78,7 +84,7 @@ namespace BusVbot.Services
                 ParseMode.Markdown,
                 replyMarkup: keyboardMarkup);
 
-            var userChat = (UserChat)update;
+            var userChat = (UserChat) update;
 
             var cacheContext = GetOrCreateCacheEntryFor(userChat);
             cacheContext.ProfileSetupInstructionsSent = true;
@@ -128,7 +134,7 @@ namespace BusVbot.Services
 
         public async Task ReplyWithSettingUserAgency(IBot bot, Update update, int agencyId)
         {
-            UserChat userChat = (UserChat)update;
+            UserChat userChat = (UserChat) update;
             var chatId = update.GetChatId();
             int msgId = update.GetMessageId();
 
@@ -138,7 +144,8 @@ namespace BusVbot.Services
 
             Models.Agency agency = await _dbContext.Agencies.SingleAsync(a => a.Id == agencyId);
 
-            await bot.Client.SendTextMessageAsync(chatId, string.Format("Great! Your agency is set to:\n*{0}*", agency.Title),
+            await bot.Client.SendTextMessageAsync(chatId,
+                string.Format("Great! Your agency is set to:\n*{0}*", agency.Title),
                 ParseMode.Markdown,
                 replyMarkup: new ReplyKeyboardRemove());
         }
@@ -165,7 +172,7 @@ namespace BusVbot.Services
 
         public async Task<bool> TryReplyIfOldSetupInstructionMessage(IBot bot, Update update)
         {
-            UserChat userChat = (UserChat)update;
+            UserChat userChat = (UserChat) update;
             var chatId = update.GetChatId();
             var msgId = update.GetMessageId();
 
@@ -174,7 +181,8 @@ namespace BusVbot.Services
             {
                 // setup already completed. User is clicking on an old inline key
                 await bot.Client.DeleteMessageAsync(chatId, msgId);
-                await bot.Client.AnswerCallbackQueryAsync(update.GetCallbackQueryId(), "You already have selected an agency");
+                await bot.Client.AnswerCallbackQueryAsync(update.GetCallbackQueryId(),
+                    "You already have selected an agency");
             }
 
             return tuple.Exists;
@@ -204,10 +212,11 @@ namespace BusVbot.Services
             {
                 string country = countries[i];
                 string flag = country.FindCountryFlagEmoji();
-                inlineKeys[i] = new InlineKeyboardCallbackButton($"{flag} {country}", CommonConstants.CallbackQueries.UserProfileSetup.CountryPrefix + country);
+                inlineKeys[i] = new InlineKeyboardCallbackButton($"{flag} {country}",
+                    CommonConstants.CallbackQueries.UserProfileSetup.CountryPrefix + country);
             }
 
-            IReplyMarkup inlineMarkup = new InlineKeyboardMarkup(new[] { inlineKeys });
+            IReplyMarkup inlineMarkup = new InlineKeyboardMarkup(new[] {inlineKeys});
             return inlineMarkup;
         }
 
@@ -224,7 +233,8 @@ namespace BusVbot.Services
             var inlineKeys = new InlineKeyboardButton[regions.Length + navigationKeysCount][];
             inlineKeys[0] = new InlineKeyboardButton[]
             {
-                new InlineKeyboardCallbackButton("🌐 Back to countries", CommonConstants.CallbackQueries.UserProfileSetup.BackToCountries),
+                new InlineKeyboardCallbackButton("🌐 Back to countries",
+                    CommonConstants.CallbackQueries.UserProfileSetup.BackToCountries),
             };
 
             for (int i = 0; i < regions.Length; i++)
@@ -232,7 +242,8 @@ namespace BusVbot.Services
                 string region = regions[i];
                 inlineKeys[i + navigationKeysCount] = new InlineKeyboardButton[]
                 {
-                    new InlineKeyboardCallbackButton(region, CommonConstants.CallbackQueries.UserProfileSetup.RegionPrefix + region),
+                    new InlineKeyboardCallbackButton(region,
+                        CommonConstants.CallbackQueries.UserProfileSetup.RegionPrefix + region),
                 };
             }
 
@@ -244,7 +255,7 @@ namespace BusVbot.Services
         {
             var agencies = await _dbContext.Agencies
                 .Where(a => a.Region == region)
-                .Select(a => new { a.Title, a.Id })
+                .Select(a => new {a.Title, a.Id})
                 .OrderBy(a => a.Title)
                 .ToArrayAsync();
 
@@ -252,7 +263,8 @@ namespace BusVbot.Services
             var inlineKeys = new InlineKeyboardButton[agencies.Length + navigationKeysCount][];
             inlineKeys[0] = new InlineKeyboardButton[]
             {
-                new InlineKeyboardCallbackButton("🌐 Back to regions", CommonConstants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix + country),
+                new InlineKeyboardCallbackButton("🌐 Back to regions",
+                    CommonConstants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix + country),
             };
 
             for (int i = 0; i < agencies.Length; i++)
@@ -260,7 +272,8 @@ namespace BusVbot.Services
                 var agency = agencies[i];
                 inlineKeys[i + navigationKeysCount] = new InlineKeyboardButton[]
                 {
-                    new InlineKeyboardCallbackButton(agency.Title, CommonConstants.CallbackQueries.UserProfileSetup.AgencyPrefix + agency.Id),
+                    new InlineKeyboardCallbackButton(agency.Title,
+                        CommonConstants.CallbackQueries.UserProfileSetup.AgencyPrefix + agency.Id),
                 };
             }
 

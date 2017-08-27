@@ -41,7 +41,7 @@ namespace BusVbot.Handlers
             var locationName =
                 update.Message.Text.Replace(CommonConstants.Location.FrequentLocationPrefix, string.Empty);
 
-            var savedLocation = await _locationsManager.TryFindSavedLocation(uc, locationName);
+            var savedLocation = await _locationsManager.TryFindSavedLocationAsync(uc, locationName);
             if (savedLocation.Exists)
             {
                 _locationsManager.AddLocationToCache(uc, savedLocation.Location);
@@ -52,7 +52,7 @@ namespace BusVbot.Handlers
             {
                 // todo send through locationsManager and offer locations in keyboard
 
-                var savedLocCount = await _locationsManager.FrequentLocationsCount(uc);
+                var savedLocCount = await _locationsManager.FrequentLocationsCountAsync(uc);
 
                 var replyText = Constants.InvalidSavedLocationMessage;
                 if (savedLocCount < 1)

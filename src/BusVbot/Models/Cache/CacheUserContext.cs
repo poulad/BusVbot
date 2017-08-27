@@ -5,6 +5,8 @@ namespace BusVbot.Models.Cache
 {
     public class CacheUserContext
     {
+        public UserChatContext UserChatContext { get; set; }
+
         public Location Location { get; set; }
 
         public BusCommandArgs BusCommandArgs { get; set; }
@@ -16,7 +18,7 @@ namespace BusVbot.Models.Cache
         public string AgencyTag { get; set; }
     }
 
-    // todo move to its own file
+    // ToDo move to its own file
     public struct UserChat
     {
         public readonly long UserId;
@@ -43,7 +45,7 @@ namespace BusVbot.Models.Cache
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj)) return false;
-            return obj is UserChat && Equals((UserChat)obj);
+            return obj is UserChat && Equals((UserChat) obj);
         }
 
         public override int GetHashCode()

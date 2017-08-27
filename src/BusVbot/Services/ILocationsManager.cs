@@ -7,7 +7,7 @@ namespace BusVbot.Services
 {
     public interface ILocationsManager
     {
-        Task<FrequentLocation[]> GetFrequentLocationsFor(UserChat userChat);
+        Task<FrequentLocation[]> GetFrequentLocationsAsync(UserChat userChat);
 
         void AddLocationToCache(UserChat userChat, Location location);
 
@@ -15,13 +15,15 @@ namespace BusVbot.Services
 
         (bool Successful, Location Location) TryParseLocation(string text);
 
-        Task<(bool Exists, bool Removed)> TryRemoveFrequentLocation(UserChat userChat,
+        Task<(bool Exists, bool Removed)> TryRemoveFrequentLocationAsync(UserChat userChat,
             (string Name, ushort creationOrderNumber) valueTuple);
 
-        Task<(bool Exists, Location Location)> TryFindSavedLocation(UserChat userChat, string name);
+        Task<(bool Exists, Location Location)> TryFindSavedLocationAsync(UserChat userChat, string name);
 
-        Task<int> FrequentLocationsCount(UserChat userChat);
+        Task<int> FrequentLocationsCountAsync(UserChat userChat);
 
-        Task PersistFrequentLocation(UserChat userChat, Location location, string name);
+        Task PersistFrequentLocationAsync(UserChat userChat, Location location, string name);
+
+        Task<(bool Exists, FrequentLocation Location)> TryFindSavedLocationCloseToAsync(UserChat userchat, Location location);
     }
 }

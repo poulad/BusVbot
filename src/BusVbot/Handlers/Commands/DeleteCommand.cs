@@ -67,7 +67,7 @@ namespace BusVbot.Handlers.Commands
             #endregion
 
             ushort n = args.Number ?? default(ushort);
-            var tuple = await _locationsManager.TryRemoveFrequentLocation(uc, (args.Name, n));
+            var tuple = await _locationsManager.TryRemoveFrequentLocationAsync(uc, (args.Name, n));
 
             string replyText;
             ReplyMarkup replyMarkup = null;

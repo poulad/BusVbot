@@ -1,8 +1,10 @@
 ﻿using System.Threading.Tasks;
+using BusVbot.Models.Cache;
 using BusVbot.Services;
 using Telegram.Bot.Types;
 using Telegram.Bot.Framework;
 using Telegram.Bot.Framework.Abstractions;
+using Telegram.Bot.Types.Enums;
 
 namespace BusVbot.Handlers.Commands
 {
@@ -27,13 +29,25 @@ namespace BusVbot.Handlers.Commands
 
         public override async Task<UpdateHandlingResult> HandleCommand(Update update, StartCommandArgs args)
         {
-            await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id, "Welcome!");
+            var userChat = (UserChat) update;
+            if (await _userContextManager.ShouldSendInstructionsTo(userChat))
+            {
+                await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id,
+                    string.Format(Constants.WelcomeMessageText, update.Message.From.FirstName),
+                    ParseMode.Markdown);
 
-            // todo: send a description about bot
-
-            bool instructionsSent = await _userContextManager.ReplyWithSetupInstructionsIfNotAlreadySet(Bot, update);
+                await _userContextManager.ReplyWithSetupInstructions(Bot, update);
+            }
 
             return UpdateHandlingResult.Handled;
+        }
+
+        private static class Constants
+        {
+            public const string WelcomeMessageText =
+                "Hello {0}!\n" +
+                "BusV bot is at your service ☺\n\n" +
+                "Try /help command to get some info";
         }
     }
 }

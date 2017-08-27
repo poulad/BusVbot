@@ -1,5 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using BusVbot.Bot;
 using BusVbot.Models.Cache;
 using BusVbot.Services;
@@ -29,26 +28,17 @@ namespace BusVbot.Handlers
         /// </remarks>
         public bool CanHandleUpdate(IBot bot, Update update)
         {
-            bool canHandle = true;
-
-            if (update.Type == UpdateType.CallbackQueryUpdate)
+            bool canHandle;
+            switch (update.Type)
             {
-                canHandle = update.CallbackQuery.Data
-                    .StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.UserProfileSetupPrefix);
+                case UpdateType.CallbackQueryUpdate:
+                    canHandle = update.CallbackQuery.Data
+                        .StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.UserProfileSetupPrefix);
+                    break;
+                default:
+                    canHandle = true;
+                    break;
             }
-            else if (update.Type == UpdateType.MessageUpdate)
-            {
-                string msgTxt = update.Message.Text;
-                if (!string.IsNullOrWhiteSpace(msgTxt))
-                {
-                    bool isGlobalCommand = Regex.IsMatch(msgTxt, @"^/(?:start|help)", RegexOptions.IgnoreCase);
-                    if (isGlobalCommand)
-                    {
-                        canHandle = false;
-                    }
-                }
-            }
-
             return canHandle;
         }
 
@@ -60,10 +50,9 @@ namespace BusVbot.Handlers
                 return HandleCallbackQuery(bot, update, callbackQuery).Result;
             }
 
-            var userChat = (UserChat)update;
+            var userChat = (UserChat) update;
 
             var userTuple = await _userContextManager.TryGetUserContext(userChat);
-
             if (userTuple.Exists)
             {
                 return UpdateHandlingResult.Continue;
@@ -86,17 +75,20 @@ namespace BusVbot.Handlers
 
             if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.CountryPrefix))
             {
-                string country = query.TrimStart(CommonConstants.CallbackQueries.UserProfileSetup.CountryPrefix.ToCharArray());
+                string country =
+                    query.TrimStart(CommonConstants.CallbackQueries.UserProfileSetup.CountryPrefix.ToCharArray());
                 await _userContextManager.ReplyQueryWithRegionsForCountry(bot, update, country);
             }
             else if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.RegionPrefix))
             {
-                string region = query.Replace(CommonConstants.CallbackQueries.UserProfileSetup.RegionPrefix, string.Empty);
+                string region = query.Replace(CommonConstants.CallbackQueries.UserProfileSetup.RegionPrefix,
+                    string.Empty);
                 await _userContextManager.ReplyQueryWithAgenciesForRegion(bot, update, region);
             }
             else if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.AgencyPrefix))
             {
-                string agencyIdStr = query.Replace(CommonConstants.CallbackQueries.UserProfileSetup.AgencyPrefix, string.Empty);
+                string agencyIdStr = query.Replace(CommonConstants.CallbackQueries.UserProfileSetup.AgencyPrefix,
+                    string.Empty);
                 int agencyId = int.Parse(agencyIdStr);
                 await _userContextManager.ReplyWithSettingUserAgency(bot, update, agencyId);
             }
@@ -106,7 +98,9 @@ namespace BusVbot.Handlers
             }
             else if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix))
             {
-                string country = query.Replace(CommonConstants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix, string.Empty);
+                string country =
+                    query.Replace(CommonConstants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix,
+                        string.Empty);
                 await _userContextManager.ReplyQueryWithRegionsForCountry(bot, update, country);
             }
 
