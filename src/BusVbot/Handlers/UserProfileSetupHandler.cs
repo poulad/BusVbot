@@ -124,7 +124,7 @@ namespace BusVbot.Handlers
                         ParseMode.Markdown);
                     break;
             }
-            
+
             // ToDo set agency automatically and end profile set up
         }
     }

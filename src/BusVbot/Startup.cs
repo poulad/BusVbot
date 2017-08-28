@@ -110,7 +110,6 @@ namespace BusVbot
                 app.UseDeveloperExceptionPage();
                 app.UseBrowserLink();
 
-                app.EnsureDatabaseSeededAsync(env.IsDevelopment()).Wait();
                 app.StartTask<BotUpdateGetterTask<Bot.BusVbot>>(TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(1));
             }
             else
@@ -126,6 +125,8 @@ namespace BusVbot
 
                 app.UseTelegramBotWebhook<Bot.BusVbot>();
             }
+
+            app.EnsureDatabaseSeededAsync(includeTestData: env.IsDevelopment()).Wait();
         }
     }
 }
