@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using BusVbot.Models;
+using Microsoft.Extensions.Logging;
 using NextBus.NET;
 using NextbusAgency = NextBus.NET.Models.Agency;
 using NextbusStop = NextBus.NET.Models.Stop;
@@ -14,74 +14,89 @@ namespace BusVbot.Data
 {
     public class DataSeeder
     {
-        private readonly INextBusClient _nextBusClient;
-
         private readonly BusVbotDbContext _dbContext;
 
-        public DataSeeder(INextBusClient nextBusClient, BusVbotDbContext dbContext)
+        private readonly INextBusClient _nextBusClient;
+
+        private readonly ILogger<DataSeeder> _logger;
+
+        private const string TestAgencyTag = "ConfigDev";
+
+        public DataSeeder(BusVbotDbContext dbContext,
+            INextBusClient nextBusClient,
+            ILogger<DataSeeder> logger)
         {
             _nextBusClient = nextBusClient;
+            _logger = logger;
             _dbContext = dbContext;
         }
 
         public async Task SeedDatabaseAsync(bool includeTestData)
         {
-            await _dbContext.Database.EnsureCreatedAsync();
+            bool created = await _dbContext.Database.EnsureCreatedAsync().ConfigureAwait(false);
+            if (created)
+            {
+                _logger.LogInformation("Database created.");
+            }
 
-            var nxtbAgencies = (await _nextBusClient.GetAgencies()).ToArray();
+            var nxtbAgencies = (await _nextBusClient.GetAgencies().ConfigureAwait(false)).ToArray();
+            _logger.LogDebug("{0} agencies found.", nxtbAgencies.Length);
 
-            await _dbContext.Agencies.LoadAsync();
-            await _dbContext.AgencyRoutes.LoadAsync();
-            await _dbContext.RouteDirections.LoadAsync();
-            await _dbContext.BusStops.LoadAsync();
+            await _dbContext.Agencies.LoadAsync().ConfigureAwait(false);
+            await _dbContext.AgencyRoutes.LoadAsync().ConfigureAwait(false);
+            await _dbContext.RouteDirections.LoadAsync().ConfigureAwait(false);
+            await _dbContext.BusStops.LoadAsync().ConfigureAwait(false);
 
             for (int i = 0; i < nxtbAgencies.Length; i++)
             {
                 var nxtbAgency = nxtbAgencies[i];
 
-                if (nxtbAgency.Tag.Equals("ConfigDev", StringComparison.OrdinalIgnoreCase) && !includeTestData)
+                if (nxtbAgency.Tag.Equals(TestAgencyTag, StringComparison.OrdinalIgnoreCase) && !includeTestData)
                 {
+                    _logger.LogDebug("Skipping test agency: {0}.", nxtbAgency.Tag);
                     continue;
                 }
 
                 //for testing
-                if (!new[] {"ttc", "jtafla", "configdev"}.Contains(nxtbAgency.Tag))
-                    continue;
+//                if (!new[] {"ttc", "jtafla", "configdev"}.Contains(nxtbAgency.Tag))
+//                    continue;
 
                 try
                 {
                     if (_dbContext.Agencies.Local.All(a => a.Tag != nxtbAgency.Tag))
                     {
-                        await SeedAgencyDataAsync(nxtbAgency);
+                        _logger.LogDebug("Seeding data for agency {0}", nxtbAgency.Tag);
+                        await SeedAgencyDataAsync(nxtbAgency).ConfigureAwait(false);
                     }
                 }
                 catch (Exception e)
                     when (e is NextBusException || e is System.Net.Http.HttpRequestException)
                 {
                     // Retry the same agency after a moment
-                    Debug.WriteLine(e.Message);
-                    await Task.Delay(1_500);
+                    _logger.LogWarning(e.Message);
+                    await Task.Delay(2_500).ConfigureAwait(false);
                     i--;
                 }
                 catch (Exception e)
                 {
-                    Debug.WriteLine(e.Message);
+                    _logger.LogCritical("Unexpected exceptoin happened in data seeding.\n{0}", e);
                     throw;
                 }
             }
 
-            await _dbContext.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync().ConfigureAwait(false);
         }
 
         private async Task SeedAgencyDataAsync(NextbusAgency nxtbAgency)
         {
-            var nxtbRoutes = (await _nextBusClient.GetRoutesForAgency(nxtbAgency.Tag)).ToArray();
+            var nxtbRoutes = (await _nextBusClient.GetRoutesForAgency(nxtbAgency.Tag).ConfigureAwait(false)).ToArray();
 
             Agency agency = (Agency) nxtbAgency;
 
             {
                 // Populate first agency coords
-                var routeConfig = await _nextBusClient.GetRouteConfig(nxtbAgency.Tag, nxtbRoutes[0].Tag);
+                var routeConfig = await _nextBusClient.GetRouteConfig(nxtbAgency.Tag, nxtbRoutes[0].Tag)
+                    .ConfigureAwait(false);
                 agency.MinLatitude = (double) routeConfig.LatMin;
                 agency.MaxLatitude = (double) routeConfig.LatMax;
                 agency.MinLongitude = (double) routeConfig.LonMin;
@@ -101,7 +116,8 @@ namespace BusVbot.Data
                 //    continue;
                 //}
 
-                var routeConfig = await _nextBusClient.GetRouteConfig(nxtbAgency.Tag, nxtbRoute.Tag);
+                var routeConfig = await _nextBusClient.GetRouteConfig(nxtbAgency.Tag, nxtbRoute.Tag)
+                    .ConfigureAwait(false);
                 AgencyRoute route = (AgencyRoute) routeConfig;
 
                 UpdateAgencyMinMaxCoordinates(ref agency,
@@ -121,16 +137,16 @@ namespace BusVbot.Data
 
                     foreach (string stopTag in nextbusDir.StopTags)
                     {
-                        try
-                        {
-                            BusStop stop = busStops.Single(s => s.Tag == stopTag);
-                            dir.RouteDirectionBusStops.Add(new RouteDirectionBusStop(dir, stop));
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine(e);
-                            throw;
-                        }
+//                        try
+//                        {
+                        BusStop stop = busStops.Single(s => s.Tag == stopTag);
+                        dir.RouteDirectionBusStops.Add(new RouteDirectionBusStop(dir, stop));
+//                        }
+//                        catch (Exception e)
+//                        {
+//                            Console.WriteLine(e);
+//                            throw;
+//                        }
                     }
                     directions.Add(dir);
                 }
@@ -141,15 +157,14 @@ namespace BusVbot.Data
 
             agency.Routes = routes;
 
-            const string devConfigTag = "ConfigDev";
-            if (agency.Tag.Equals(devConfigTag, StringComparison.OrdinalIgnoreCase))
+            if (agency.Tag.Equals(TestAgencyTag, StringComparison.OrdinalIgnoreCase))
             {
-                agency.Country = devConfigTag;
+                agency.Country = TestAgencyTag;
             }
 
             _dbContext.Agencies.Add(agency);
 
-            await _dbContext.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync().ConfigureAwait(false);
         }
 
         private BusStop[] GetAllBusStopsPersistNew(NextbusStop[] nxtbsStops)
@@ -165,43 +180,43 @@ namespace BusVbot.Data
 
                 //{ }
 
-                try
+//                try
+//                {
+                //BusStop stop = _dbContext.BusStops.Local.SingleOrDefault(s =>
+                //    s.Tag == nxtbsStop.Tag &&
+                //    //s.StopId == nxtbsStop.StopId
+                //    Math.Abs(s.Latitude - (double)nxtbsStop.Lat) < 0.0001 &&
+                //    Math.Abs(s.Longitude - (double)nxtbsStop.Lon) < 0.0001
+                //);
+
+                var q = _dbContext.BusStops.Local.Where(s =>
+                    s.Tag == nxtbsStop.Tag &&
+                    //s.StopId == nxtbsStop.StopId
+                    Math.Abs(s.Latitude - (double) nxtbsStop.Lat) < 0.00001 &&
+                    Math.Abs(s.Longitude - (double) nxtbsStop.Lon) < 0.00001
+                ).ToArray();
+
+                BusStop stop = q.SingleOrDefault();
+
+                if (stop == null)
                 {
-                    //BusStop stop = _dbContext.BusStops.Local.SingleOrDefault(s =>
-                    //    s.Tag == nxtbsStop.Tag &&
-                    //    //s.StopId == nxtbsStop.StopId
-                    //    Math.Abs(s.Latitude - (double)nxtbsStop.Lat) < 0.0001 &&
-                    //    Math.Abs(s.Longitude - (double)nxtbsStop.Lon) < 0.0001
-                    //);
-
-                    var q = _dbContext.BusStops.Local.Where(s =>
-                        s.Tag == nxtbsStop.Tag &&
-                        //s.StopId == nxtbsStop.StopId
-                        Math.Abs(s.Latitude - (double) nxtbsStop.Lat) < 0.00001 &&
-                        Math.Abs(s.Longitude - (double) nxtbsStop.Lon) < 0.00001
-                    ).ToArray();
-
-                    BusStop stop = q.SingleOrDefault();
-
-                    if (stop == null)
-                    {
-                        stop = (BusStop) nxtbsStop;
-                        _dbContext.Add(stop);
-                    }
-
-                    stops.Add(stop);
+                    stop = (BusStop) nxtbsStop;
+                    _dbContext.Add(stop);
                 }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    throw;
-                }
+
+                stops.Add(stop);
+//                }
+//                catch (Exception e)
+//                {
+//                    Console.WriteLine(e);
+//                    throw;
+//                }
             }
 
             return stops.ToArray();
         }
 
-        private void UpdateAgencyMinMaxCoordinates(ref Agency agency,
+        private static void UpdateAgencyMinMaxCoordinates(ref Agency agency,
             double maxLat, double minLat,
             double maxLon, double minLon)
         {

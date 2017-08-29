@@ -105,12 +105,13 @@ namespace BusVbot
             loggerFactory.AddConsole(_configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
+            app.EnsureDatabaseSeededAsync(false).Wait();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
                 app.UseBrowserLink();
-
-                app.StartTask<BotUpdateGetterTask<Bot.BusVbot>>(TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(1));
+                app.StartTask<BotUpdateGetterTask<Bot.BusVbot>>(TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(2));
             }
             else
             {
@@ -125,8 +126,6 @@ namespace BusVbot
 
                 app.UseTelegramBotWebhook<Bot.BusVbot>();
             }
-
-            app.EnsureDatabaseSeededAsync(includeTestData: env.IsDevelopment()).Wait();
         }
     }
 }

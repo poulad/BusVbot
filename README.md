@@ -1,51 +1,80 @@
-# myTTCBot
+[![BusVbot on Telegram](https://img.shields.io/badge/BusVbot-Telegram-blue.svg)](https://t.me/BusVbot)
+[![Build Status](https://travis-ci.org/pouladpld/BusVbot.svg?branch=master)](https://travis-ci.org/pouladpld/BusVbot)
 
-[![Build Status](https://travis-ci.org/pouladpld/myTTCBot.svg?branch=master)](https://travis-ci.org/pouladpld/myTTCBot)
+# 🚍 BusV Bot 🤖
 
-A Telegram chat bot that makes sure you won't miss your bus in Toronto
+[![BusVbot logo](./docs/logo.png)](https://t.me/BusVbot)
 
-## Screenshots
+**BusV** is a Telegram chat bot 🤖 that helps you catch your bus 🚍 by providing you route information and bus predictions. Start chatting with it on Telegram to find out more: [`@BusVbot`](https://t.me/BusVbot).
 
---> Add examples here <--
+This bot works best for passengers who take frequent routes and already know what bus they should take to reach their destinations.
 
-## Getting Started
+[![BusVbot demo](./docs/demo.gif)](https://t.me/BusVbot)
+
+Supporting 60 transit agencies in North America, the real-time bus predictions are powered by [NextBus](https://www.nextbus.com).
+
+Here are the regions that agencies operate in:
+
+| Canada | U.S |
+| :----- | :-- |
+| Ontario, Quebec | California-Northern, California-Southern, District of Columbia, Florida, Georgia, Indiana, Iowa, Kentucky, Maryland, Massachusetts, Mississippi, Nevada, New Jersey, New York, North Carolina, Oregon, Pennsylvania, Texas, Virginia, Washington |
+
+## Build and Run
+
+BusVbot is built using [`Telegram.Bot.Framework`](https://github.com/pouladpld/Telegram.Bot.Framework) as an ASP.NET Core app.
 
 ### Requirements
 
-- Visual Studio 2017 or [.NET Core 1.1](https://www.microsoft.com/net/download/core#/current).
-- PostgreSQL database
-- Telegram bot API Token
-
-> Talk to **[BotFather](http://t.me/botfather)** to get a token from Telegram for your bot. This token is your bot's secret. Keep it safe and never commit it to git.
+- Visual Studio 2017 or [.NET Core 1.1](https://github.com/dotnet/core/blob/master/release-notes/download-archive.md)
+- Postgres database
+- Telegram Bot API token
 
 ### Configurations
 
-Make a copy of [appsettings.json](src/MyTTCBot/appsettings.json) in project folder and name it `appsettings.Development.json`:
+Make a copy of [appsettings.json](./src/BusVbot/appsettings.json) in project folder and name it `appsettings.Development.json`:
 
 ```bash
-cd src\MyTTCBot
-copy appsettings.json appsettings.Development.json
+cp -v src/BusVbot/appsettings{,.Development}.json
 ```
 
-At minimum, put the _bot name_ and _API token_ values in that file.
+Edit the `appsettings.Development.json` file and put your _bot name_,  _API token_, and _Postgres connection string_ values there.
 
-> There are other options to provide the app with configurations. Have a look at first few lines of [Startup class](src/MyTTCBot/Startup.cs).
+> There are other options to provide the app with configurations. Have a look at first few lines of [Startup class](./src/BusVbot/Startup.cs).
 
-> Note that `appsettings.Development.json` will be gitignored so it is safe to store the app secrets there.
+> Note that `appsettings.Development.json` is gitignored so it is safe to store the app secrets there.
 
-### Running
+### Database
 
-Run Postgres database in a docker container:
+Run the Postgres database. Examples here are using docker containers.
 
 ```bash
 # create and start the container
-docker run --name myttcbot-postgres -p 5432:5432 -e POSTGRES_USER=myttcbot -e POSTGRES_PASSWORD=password -d postgres
-
-# start the container
-docker start myttcbot-postgres
-
-# connect and query the database
-docker run -it --rm --link myttcbot-postgres:postgres -e PGPASSWORD=password postgres psql -h postgres -U myttcbot
+docker run -d -p 5432:5432 --name busvbot-postgres -e POSTGRES_PASSWORD=password -e POSTGRES_USER=busvbot -e POSTGRES_DB=busvbot postgres
 ```
 
-By running the app in VS without webhooks, bot starts getting updates and processing them. If webhooks are enabled, navigate to [http://localhost:5000/botname/apitoken/me](http://localhost:5000/botname/apitoken/me) and see the bot in action.
+> See [`docker-local.sh`](./src/scripts/docker-local.sh) for sample docker commands to use.
+
+### Seed Data
+
+While running in _Development_ environment, app makes sure database is seeded with data from NextBus before it starts the bot.
+
+It might take a while to download all the data so in order to save time, use the [sql dump file](./src/BusVbot/Data/nextbus-dump.sql) and its `INSERT` statements instead.
+
+Create schema:
+
+```bash
+cd src/BusVbot
+dotnet restore
+dotnet ef database update
+```
+
+Insert data:
+
+```bash
+# inside docker container, as postgres user
+psql -U busvbot < nextbus-dump.sql
+```
+
+### Run
+
+Run the app and start chatting with the bot on Telegram.
