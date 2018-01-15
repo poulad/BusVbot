@@ -70,7 +70,7 @@ namespace BusVbot.Tests.AgencyDataParser
             var result = sut.TryParseToDirectionName(null, directionText);
 
             Assert.True(result.Success);
-            Assert.StrictEqual(expectedDirection, result.DirectionName);
+            Assert.Equal(expectedDirection, result.DirectionName);
         }
 
         [Theory(DisplayName = "Fail TTC directions not in N/E/W/S format")]
@@ -121,7 +121,7 @@ namespace BusVbot.Tests.AgencyDataParser
             }
 
             Assert.Single(results);
-            Assert.StrictEqual(routeTag, results[0]);
+            Assert.Equal(routeTag, results[0]);
         }
 
         [Theory(DisplayName = "Find single direction for TTC route")]

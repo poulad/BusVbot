@@ -1,7 +1,6 @@
 ﻿using System;
-using System.IO;
+using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 
 namespace BusVbot
 {
@@ -11,19 +10,10 @@ namespace BusVbot
         {
             Console.Title = "BusVbot";
 
-            var config = new ConfigurationBuilder()
-                .AddCommandLine(args)
-                .Build();
-
-            var host = new WebHostBuilder()
-                .UseKestrel()
-                .UseContentRoot(Directory.GetCurrentDirectory())
-                .UseIISIntegration()
-                .UseConfiguration(config)
+            WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>()
-                .Build();
-
-            host.Run();
+                .Build()
+                .Run();
         }
     }
 }
