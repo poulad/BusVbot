@@ -29,10 +29,7 @@ namespace BusVbot
 
         public Startup(IHostingEnvironment env)
         {
-            _configuration = new ConfigurationBuilder()
-                .SetBasePath(env.ContentRootPath)
-                .AddEnvironmentVariables("BusVbot_")
-                .AddJsonFile("appsettings.json")
+            _configuration = BuildConfiguration(env.ContentRootPath)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .Build();
         }
@@ -127,5 +124,11 @@ namespace BusVbot
                 app.UseTelegramBotWebhook<Bot.BusVbot>();
             }
         }
+
+        public static IConfigurationBuilder BuildConfiguration(string contentRoot) =>
+            new ConfigurationBuilder()
+                .SetBasePath(contentRoot)
+                .AddEnvironmentVariables("BusVbot_")
+                .AddJsonFile("appsettings.json");
     }
 }

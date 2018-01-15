@@ -9,13 +9,8 @@ echo; echo "@> Build and publish project ${project}"; echo;
 cd "${root_dir}/src/${project}" &&
     rm -rf bin/publish/ &&
     dotnet restore &&
-    dotnet publish -c Release -o bin/publish/ &&
+    dotnet publish -c Release -r debian-arm -o bin/publish/ &&
     cp -v "${scripts_dir}/Dockerfile" Dockerfile
-
-
-echo; echo "@> Copy nginx Dockerfile into its context"; echo;
-cd "${scripts_dir}" &&
-    cp -v nginx.Dockerfile nginx/Dockerfile
 
 
 echo; echo "@> Build docker compose"; echo;
@@ -23,8 +18,8 @@ cd "${scripts_dir}" &&
     docker-compose build
 
 
-echo; echo "@> Remove copied Dockerfiles"; echo;
-rm -v "${root_dir}/src/${project}/Dockerfile" "${scripts_dir}/nginx/Dockerfile"
+echo; echo "@> Remove copied Dockerfile"; echo;
+rm -v "${root_dir}/src/${project}/Dockerfile"
 
 
 echo; echo "@> Restart and update containers"; echo;

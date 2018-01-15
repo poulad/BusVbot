@@ -1,21 +1,6 @@
 version: '2'
 
 services:
-
-  nginx:
-    container_name: nginx
-    build:
-      context: ./nginx
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
-      - "8443:8443"
-    links:
-      - busvbot
-    networks:
-      - BusVbot-network
-
   busvbot:
     container_name: busvbot
     build:
@@ -24,6 +9,7 @@ services:
         project: BusVbot
     expose:
       - "80"
+    restart: on-failure
     networks:
       - BusVbot-network
 
