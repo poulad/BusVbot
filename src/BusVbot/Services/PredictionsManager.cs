@@ -13,6 +13,7 @@ using Telegram.Bot.Types;
 using NextBus.NET.Models;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.InlineKeyboardButtons;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BusVbot.Services
@@ -119,18 +120,43 @@ namespace BusVbot.Services
             var locationMsg = await bot.Client.SendLocationAsync(chatId,
                 result.BusStopLocation.Latitude,
                 result.BusStopLocation.Longitude,
-                replyToMessageId: replyToMessageId);
+                replyToMessageId: replyToMessageId,
+                replyMarkup: new ReplyKeyboardRemove {RemoveKeyboard = true});
+
+            var markup = CreateRefreshInlineKeyboard(agencyTag, cachedContext.BusCommandArgs.RouteTag,
+                cachedContext.BusCommandArgs.DirectionName);
 
             await bot.Client.SendTextMessageAsync(chatId, replyText,
                 ParseMode.Markdown,
                 replyToMessageId: locationMsg.MessageId,
-                replyMarkup: new ReplyKeyboardRemove {RemoveKeyboard = true});
+                replyMarkup: markup
+            );
 
             #endregion
 
             cachedContext.BusCommandArgs = null;
             cachedContext.Location = null;
             _cachingService[userchat] = cachedContext;
+        }
+
+        public async Task UpdateMessagePredictionsAsync(IBot bot, ChatId chatId, int messageId, Location location,
+            string agency, string route, string direction)
+        {
+            var result = await GetPredictionsReplyAsync(location, agency, route, direction);
+
+            if (result.Predictions.Any() && result.Predictions.All(p => p.HasPredictions))
+            {
+                string replyText = _agencyServiceAccessor.GetAgencyOrDefaultMessageFormatter(agency)
+                    .FormatBusPredictionsReplyText(result.Predictions);
+
+                await bot.Client.EditMessageTextAsync(chatId, messageId, replyText, ParseMode.Markdown,
+                    replyMarkup: CreateRefreshInlineKeyboard(agency, route, direction)
+                );
+            }
+            else
+            {
+                // ToDo log failure
+            }
         }
 
         public async Task<(Location BusStopLocation, RoutePrediction[] Predictions)> GetPredictionsReplyAsync
@@ -323,6 +349,7 @@ namespace BusVbot.Services
                     .ToArray();
                 keyboard[i] = buttons;
             }
+
             keyboard[keyboard.Length - 1] = new[]
             {
                 new KeyboardButton("Share my location") {RequestLocation = true},
@@ -334,6 +361,15 @@ namespace BusVbot.Services
                 OneTimeKeyboard = true,
                 ResizeKeyboard = true,
             };
+        }
+
+        private InlineKeyboardMarkup CreateRefreshInlineKeyboard(string agency, string route, string direction)
+        {
+            string cqData = CommonConstants.CallbackQueries.Prediction.PredictionPrefix +
+                            string.Join(CommonConstants.CallbackQueries.Prediction.PredictionValuesDelimiter,
+                                agency, route, direction);
+
+            return new InlineKeyboardMarkup(new[] {InlineKeyboardButton.WithCallbackData("🔄", cqData)});
         }
 
         public static class Constants

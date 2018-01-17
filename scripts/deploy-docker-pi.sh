@@ -26,4 +26,4 @@ echo; echo "@> Restart and update containers"; echo;
 cd "${scripts_dir}" &&
     docker-compose down &&
     docker-compose up -d &&
-    docker-compose logs
+    docker-compose logs --follow
