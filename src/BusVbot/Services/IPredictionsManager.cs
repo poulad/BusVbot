@@ -14,13 +14,16 @@ namespace BusVbot.Services
 
         Task TryReplyWithPredictionsAsync(IBot bot, UserChat userchat, int replyToMessageId);
 
+        Task UpdateMessagePredictionsAsync(IBot bot, ChatId chatId, int messageId, Location location,
+            string agency, string route, string direction);
+
         Task<(Location BusStopLocation, RoutePrediction[] Predictions)> GetPredictionsReplyAsync
             (Location userLocation, string agencyTag, string routeTag, string direction);
 
         (bool Success, string Route, string Direction) TryParseToRouteDirection(string input);
-        
+
         Task<(string RouteTag, string Direction)> GetCachedRouteDirectionAsync(UserChat userchat);
 
-        Task CacheRouteDirectionAsync(UserChat userchat, string routeTag, string direction);        
+        Task CacheRouteDirectionAsync(UserChat userchat, string routeTag, string direction);
     }
 }

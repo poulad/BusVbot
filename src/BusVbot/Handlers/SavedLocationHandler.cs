@@ -31,13 +31,13 @@ namespace BusVbot.Handlers
 
             var text = update.Message.Text;
             return update.Message.ReplyToMessage == null &&
-                text.StartsWith(CommonConstants.Location.FrequentLocationPrefix) &&
-                text.Length > CommonConstants.Location.FrequentLocationPrefix.Length;
+                   text.StartsWith(CommonConstants.Location.FrequentLocationPrefix) &&
+                   text.Length > CommonConstants.Location.FrequentLocationPrefix.Length;
         }
 
         public override async Task<UpdateHandlingResult> HandleUpdateAsync(IBot bot, Update update)
         {
-            var uc = (UserChat)update;
+            var uc = (UserChat) update;
             var locationName =
                 update.Message.Text.Replace(CommonConstants.Location.FrequentLocationPrefix, string.Empty);
 
@@ -64,13 +64,15 @@ namespace BusVbot.Handlers
                     replyText,
                     ParseMode.Markdown,
                     replyToMessageId: update.Message.MessageId,
-                    replyMarkup: new ReplyKeyboardRemove { RemoveKeyboard = true });
+                    replyMarkup: new ReplyKeyboardRemove {RemoveKeyboard = true});
             }
+
             return UpdateHandlingResult.Handled;
         }
 
-        public static class Constants
-        { // ToDo: check and remove
+        private static class Constants
+        {
+            // ToDo: check and remove
             public const string InvalidSavedLocationMessage = "I don't remember that location 🙀";
 
             public const string NoSavedLocationMessage = "You don't have any saved location 🐵" +
