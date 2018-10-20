@@ -1,36 +1,21 @@
 ﻿using System.Threading.Tasks;
-using Telegram.Bot.Framework;
 using Telegram.Bot.Framework.Abstractions;
-using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
 namespace BusVbot.Handlers.Commands
 {
-    public class HelpCommandArgs : ICommandArgs
+    public class HelpCommand : CommandBase
     {
-        public string RawInput { get; set; }
-
-        public string ArgsInput { get; set; }
-    }
-
-    public class HelpCommand : CommandBase<HelpCommandArgs>
-    {
-        private const string CommandName = "help";
-
-        public HelpCommand()
-            : base(CommandName)
+        public override async Task HandleAsync(IUpdateContext context, UpdateDelegate next, string[] args)
         {
-        }
+            var replyText = string.Format(Constants.HelpMessageFormat, context.Update.Message.From.FirstName);
 
-        public override async Task<UpdateHandlingResult> HandleCommand(Update update, HelpCommandArgs args)
-        {
-            var replyText = string.Format(Constants.HelpMessageFormat, update.Message.From.FirstName);
-
-            await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id, replyText,
+            await context.Bot.Client.SendTextMessageAsync(
+                context.Update.Message.Chat.Id,
+                replyText,
                 ParseMode.Markdown,
-                replyToMessageId: update.Message.MessageId);
-
-            return UpdateHandlingResult.Handled;
+                replyToMessageId: context.Update.Message.MessageId
+            ).ConfigureAwait(false);
         }
 
         private static class Constants

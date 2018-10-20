@@ -12,13 +12,13 @@ namespace BusVbot.Extensions
 
             switch (update.Type)
             {
-                case UpdateType.MessageUpdate:
+                case UpdateType.Message:
                     chatId = update.Message.Chat.Id;
                     break;
                 case UpdateType.ChannelPost:
                     chatId = update.ChannelPost.Chat.Id;
                     break;
-                case UpdateType.CallbackQueryUpdate:
+                case UpdateType.CallbackQuery:
                     chatId = update.CallbackQuery.Message.Chat.Id;
                     break;
                 case UpdateType.EditedMessage:
@@ -38,13 +38,13 @@ namespace BusVbot.Extensions
 
             switch (update.Type)
             {
-                case UpdateType.MessageUpdate:
+                case UpdateType.Message:
                     msgId = update.Message.MessageId;
                     break;
                 case UpdateType.ChannelPost:
                     msgId = update.ChannelPost.MessageId;
                     break;
-                case UpdateType.CallbackQueryUpdate:
+                case UpdateType.CallbackQuery:
                     msgId = update.CallbackQuery.Message.MessageId;
                     break;
                 default:

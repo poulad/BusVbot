@@ -32,7 +32,7 @@ namespace BusVbot.Tests
             };
             
             var cache = new MemoryCache(new MemoryCacheOptions());
-            var sut = new LocationHanlder(cache, null);
+            var sut = new LocationHandler(cache, null);
 
             // act
             await sut.HandleUpdateAsync(null, null);

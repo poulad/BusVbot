@@ -1,10 +1,9 @@
-﻿using System;
-using System.Linq;
-using BusVbot.Bot;
+﻿using BusVbot.Bot;
 using BusVbot.Configurations;
 using Microsoft.Extensions.Options;
 using NextBus.NET.Models;
-using Telegram.Bot.Types.InlineKeyboardButtons;
+using System;
+using System.Linq;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BusVbot.Services.Agency
@@ -35,16 +34,13 @@ namespace BusVbot.Services.Agency
                 keyboard[i] = directions
                     .Skip(i * keysPerRow)
                     .Take(keysPerRow)
-                    .Select(direction => new InlineKeyboardCallbackButton(
+                    .Select(direction => InlineKeyboardButton.WithCallbackData(
                         direction, CommonConstants.CallbackQueries.BusCommand.BusDirectionPrefix + direction
-                    ) as InlineKeyboardButton)
+                    ))
                     .ToArray();
             }
 
-            return new InlineKeyboardMarkup
-            {
-                InlineKeyboard = keyboard,
-            };
+            return new InlineKeyboardMarkup(keyboard);
         }
 
         public string FormatBusPredictionsReplyText(RoutePrediction[] routePredictions)

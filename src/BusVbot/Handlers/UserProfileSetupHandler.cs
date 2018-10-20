@@ -1,9 +1,9 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using BusVbot.Bot;
+﻿using BusVbot.Bot;
 using BusVbot.Extensions;
 using BusVbot.Models.Cache;
 using BusVbot.Services;
+using System.Linq;
+using System.Threading.Tasks;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -25,48 +25,45 @@ namespace BusVbot.Handlers
             _locationsManager = locationsManager;
         }
 
-        public bool CanHandleUpdate(IBot bot, Update update) => true;
-
-        public async Task<UpdateHandlingResult> HandleUpdateAsync(IBot bot, Update update)
+        public async Task HandleAsync(IUpdateContext context, UpdateDelegate next)
         {
-            var userChat = (UserChat) update;
+            var userChat = (UserChat)context.Update;
 
-            var userTuple = await _userContextManager.TryGetUserContextAsync(userChat);
+            var userTuple = await _userContextManager.TryGetUserContextAsync(userChat)
+                .ConfigureAwait(false);
             if (userTuple.Exists)
             {
-                return UpdateHandlingResult.Continue;
+                return;
             }
 
-            UpdateHandlingResult
-                result = UpdateHandlingResult.Handled; // ToDo result is alway Handled at this point. Refacotr methods
-            switch (update.Type)
+            if (context.Update.CallbackQuery != null)
             {
-                case UpdateType.CallbackQueryUpdate:
-                    string callbackQuery = update.CallbackQuery.Data;
-                    result = HandleCallbackQuery(bot, update, callbackQuery).Result;
-                    break;
-                case UpdateType.MessageUpdate // ToDo accept location in OSM format as well
-                when update.Message.Type == MessageType.LocationMessage:
-                    await HandleLocationUpdate(bot, update, update.Message.Location);
-                    break;
-                default:
-                    bool shouldSend = await _userContextManager.ShouldSendInstructionsToAsync(userChat);
-                    if (shouldSend)
-                    {
-                        await _userContextManager.ReplyWithSetupInstructionsAsync(bot, update);
-                    }
-                    result = UpdateHandlingResult.Handled;
-                    break;
+                string callbackQuery = context.Update.CallbackQuery.Data;
+                await HandleCallbackQuery(context.Bot, context.Update, callbackQuery)
+                    .ConfigureAwait(false);
             }
-
-            return result;
+            else if (context.Update.Message?.Location != null)
+            {
+                // ToDo accept location in OSM format as well
+                await HandleLocationUpdate(context.Bot, context.Update, context.Update.Message.Location)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                bool shouldSend = await _userContextManager.ShouldSendInstructionsToAsync(userChat);
+                if (shouldSend)
+                {
+                    await _userContextManager.ReplyWithSetupInstructionsAsync(context.Bot, context.Update)
+                        .ConfigureAwait(false);
+                }
+            }
         }
 
-        public async Task<UpdateHandlingResult> HandleCallbackQuery(IBot bot, Update update, string query)
+        public async Task HandleCallbackQuery(IBot bot, Update update, string query)
         {
             if (await _userContextManager.TryReplyIfOldSetupInstructionMessageAsync(bot, update))
             {
-                return UpdateHandlingResult.Handled;
+                return;
             }
 
             if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.CountryPrefix))
@@ -99,8 +96,6 @@ namespace BusVbot.Handlers
                         string.Empty);
                 await _userContextManager.ReplyQueryWithRegionsForCountryAsync(bot, update, country);
             }
-
-            return UpdateHandlingResult.Handled;
         }
 
         public async Task HandleLocationUpdate(IBot bot, Update update, Location location)

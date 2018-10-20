@@ -18,6 +18,12 @@ namespace BusVbot.Models.Cache
         public string AgencyTag { get; set; }
     }
 
+    public class BusCommandArgs
+    {
+        public string RouteTag { get; set; }
+        public string DirectionName { get; set; }
+    }
+
     // ToDo move to its own file
     public struct UserChat
     {

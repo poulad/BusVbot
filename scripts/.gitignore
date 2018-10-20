@@ -1,3 +1,0 @@
-nginx/nginx.conf
-nginx/nginx-certs/**
-!nginx/nginx-certs/.gitkeep

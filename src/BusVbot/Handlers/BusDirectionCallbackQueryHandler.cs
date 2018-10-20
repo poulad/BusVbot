@@ -1,15 +1,13 @@
-﻿using System.Threading.Tasks;
-using BusVbot.Bot;
+﻿using BusVbot.Bot;
 using BusVbot.Extensions;
 using BusVbot.Models.Cache;
 using BusVbot.Services;
-using Telegram.Bot.Framework;
+using System.Threading.Tasks;
 using Telegram.Bot.Framework.Abstractions;
-using Telegram.Bot.Types;
 
 namespace BusVbot.Handlers
 {
-    public class BusDirectionCallbackQueryHandler : UpdateHandlerBase
+    public class BusDirectionCallbackQueryHandler : IUpdateHandler
     {
         private readonly IPredictionsManager _predictionsManager;
 
@@ -18,31 +16,28 @@ namespace BusVbot.Handlers
             _predictionsManager = predictionsManager;
         }
 
-        public override bool CanHandleUpdate(IBot bot, Update update)
+        public async Task HandleAsync(IUpdateContext context, UpdateDelegate next)
         {
-            bool canHandle =
-                update.CallbackQuery?.Data?.StartsWith(CommonConstants.CallbackQueries.BusCommand.BusCommandPrefix) ??
-                false;
-            return canHandle;
-        }
-
-        public override async Task<UpdateHandlingResult> HandleUpdateAsync(IBot bot, Update update)
-        {
-            await bot.Client.AnswerCallbackQueryAsync(update.GetCallbackQueryId(), cacheTime: 5);
-            var directionName = update.CallbackQuery.Data.Replace(
+            await context.Bot.Client.AnswerCallbackQueryAsync(context.Update.GetCallbackQueryId(), cacheTime: 5)
+                .ConfigureAwait(false);
+            var directionName = context.Update.CallbackQuery.Data.Replace(
                 CommonConstants.CallbackQueries.BusCommand.BusDirectionPrefix, string.Empty);
 
-            var userchat = (UserChat) update;
-            var cachedContext = await _predictionsManager.GetCachedRouteDirectionAsync(userchat);
+            var userchat = (UserChat)context.Update;
+            var cachedContext = await _predictionsManager.GetCachedRouteDirectionAsync(userchat)
+                .ConfigureAwait(false);
             cachedContext.Direction = directionName;
-            await _predictionsManager.CacheRouteDirectionAsync(userchat, cachedContext.RouteTag, directionName);
+            await _predictionsManager.CacheRouteDirectionAsync(userchat, cachedContext.RouteTag, directionName)
+                .ConfigureAwait(false);
 
-            await bot.Client.DeleteMessageAsync(userchat.ChatId, update.CallbackQuery.Message.MessageId);
+            await context.Bot.Client.DeleteMessageAsync(userchat.ChatId, context.Update.CallbackQuery.Message.MessageId)
+                .ConfigureAwait(false);
 
-            await _predictionsManager.TryReplyWithPredictionsAsync(bot, userchat,
-                update.CallbackQuery.Message.ReplyToMessage.MessageId);
-
-            return UpdateHandlingResult.Handled;
+            await _predictionsManager.TryReplyWithPredictionsAsync(
+                context.Bot,
+                userchat,
+                context.Update.CallbackQuery.Message.ReplyToMessage.MessageId
+            ).ConfigureAwait(false);
         }
     }
 }

@@ -1,9 +1,9 @@
-﻿using System;
+﻿using BusVbot.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
-using BusVbot.Models;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using System;
 
 namespace BusVbot.Data.Migrations
 {

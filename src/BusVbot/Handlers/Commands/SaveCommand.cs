@@ -1,115 +1,105 @@
-﻿using System.Threading.Tasks;
-using BusVbot.Bot;
+﻿using BusVbot.Bot;
 using BusVbot.Models.Cache;
 using BusVbot.Services;
-using Telegram.Bot.Types;
-using Telegram.Bot.Framework;
+using System.Linq;
+using System.Threading.Tasks;
 using Telegram.Bot.Framework.Abstractions;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BusVbot.Handlers.Commands
 {
-    public class SaveCommandArgs : ICommandArgs
-    {
-        public string RawInput { get; set; }
-
-        public string ArgsInput { get; set; }
-
-        public string Name { get; set; }
-
-        public Location Location { get; set; }
-
-        public bool IsValid => !string.IsNullOrWhiteSpace(Name) &&
-                               Location != null;
-
-        //                   (Location != null ^ BusCommandArgs.IsValid); 
-        // ToDo either location or bus args is valid for each /save command bcuz u reply to either a location or a /bus command call
-    }
-
-    public class SaveCommand : CommandBase<SaveCommandArgs>
+    public class SaveCommand : CommandBase
     {
         private readonly ILocationsManager _locationsManager;
 
-        public SaveCommand(ILocationsManager locationsManager)
-            : base(Constants.CommandName)
+        public SaveCommand(
+            ILocationsManager locationsManager
+        )
         {
             _locationsManager = locationsManager;
         }
 
-        protected override SaveCommandArgs ParseInput(Update update)
+        public override async Task HandleAsync(IUpdateContext context, UpdateDelegate next, string[] args)
         {
-            var args = base.ParseInput(update);
+            string locationName = string.Join(' ', args.Skip(1));
+            Location location;
 
-            args.Name = args.ArgsInput;
-
-            if (update.Message.ReplyToMessage?.Location != null)
+            if (context.Update.Message.ReplyToMessage?.Location != null)
             {
-                args.Location = update.Message.ReplyToMessage.Location;
+                location = context.Update.Message.ReplyToMessage.Location;
             }
-            else if (!string.IsNullOrWhiteSpace(update.Message.ReplyToMessage?.Text))
+            else if (!string.IsNullOrWhiteSpace(context.Update.Message.ReplyToMessage?.Text))
             {
-                var text = update.Message.ReplyToMessage.Text;
-                var loc = _locationsManager.TryParseLocation(text);
-                if (loc.Successful)
-                {
-                    args.Location = loc.Location;
-                }
+                string text = context.Update.Message.ReplyToMessage.Text;
+                location = _locationsManager.TryParseLocation(text).Location;
+            }
+            else
+            {
+                location = null;
             }
 
-            return args;
-        }
+            bool areArgsValid = !string.IsNullOrWhiteSpace(locationName) && location != null;
+            //                   (Location != null ^ BusCommandArgs.IsValid); 
+            // ToDo either location or bus args is valid for each /save command bcuz u reply to either a location or a /bus command call
 
-        public override async Task<UpdateHandlingResult> HandleCommand(Update update, SaveCommandArgs args)
-        {
-            if (!args.IsValid)
+            if (!areArgsValid)
             {
-                await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id, Constants.SaveCommandHelpMessage,
+                await context.Bot.Client.SendTextMessageAsync(
+                    context.Update.Message.Chat.Id, Constants.SaveCommandHelpMessage,
                     ParseMode.Markdown,
-                    replyToMessageId: update.Message.MessageId);
+                    replyToMessageId: context.Update.Message.MessageId
+                ).ConfigureAwait(false);
 
-                return UpdateHandlingResult.Handled;
+                return;
             }
 
-            var uc = (UserChat) update;
+            var uc = (UserChat)context.Update;
 
-            var locationsCount = await _locationsManager.FrequentLocationsCountAsync(uc);
+            var locationsCount = await _locationsManager.FrequentLocationsCountAsync(uc)
+                .ConfigureAwait(false);
 
             if (locationsCount < CommonConstants.Location.MaxSavedLocations)
             {
-                var closeLocationTuple = await _locationsManager.TryFindSavedLocationCloseToAsync(uc, args.Location);
+                var closeLocationTuple = await _locationsManager.TryFindSavedLocationCloseToAsync(uc, location)
+                    .ConfigureAwait(false);
                 if (closeLocationTuple.Exists)
                 {
-                    await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id,
+                    await context.Bot.Client.SendTextMessageAsync(
+                        context.Update.Message.Chat.Id,
                         string.Format(Constants.LocationExistsMessageFormat, closeLocationTuple.Location.Name),
                         ParseMode.Markdown,
-                        replyToMessageId: update.Message.MessageId);
+                        replyToMessageId: context.Update.Message.MessageId
+                    ).ConfigureAwait(false);
                 }
                 else
                 {
-                    await _locationsManager.PersistFrequentLocationAsync(uc, args.Location, args.Name);
+                    await _locationsManager.PersistFrequentLocationAsync(uc, location, locationName)
+                        .ConfigureAwait(false);
 
-                    await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id,
-                        string.Format(Constants.LocationSavedMessageFormat, args.Name),
+                    await context.Bot.Client.SendTextMessageAsync(
+                        context.Update.Message.Chat.Id,
+                        string.Format(Constants.LocationSavedMessageFormat, locationName),
                         ParseMode.Markdown,
-                        replyToMessageId: update.Message.MessageId,
-                        replyMarkup: new ReplyKeyboardRemove());
+                        replyToMessageId: context.Update.Message.MessageId,
+                        replyMarkup: new ReplyKeyboardRemove()
+                    ).ConfigureAwait(false);
                 }
             }
             else
             {
-                await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id,
+                await context.Bot.Client.SendTextMessageAsync(
+                    context.Update.Message.Chat.Id,
                     Constants.MaxSaveLocationReachedMessage,
-                    replyToMessageId: update.Message.MessageId,
-                    replyMarkup: new ReplyKeyboardRemove());
+                    replyToMessageId: context.Update.Message.MessageId,
+                    replyMarkup: new ReplyKeyboardRemove()
+                ).ConfigureAwait(false);
             }
-            return UpdateHandlingResult.Handled;
         }
 
         private static class Constants
         {
-            public const string CommandName = "save";
-
             public const string SaveCommandHelpMessage =
                 "_Wrong usage of save command_\n" +
                 "You can save up to 4 locations you frequently take bus from.\n\n" +

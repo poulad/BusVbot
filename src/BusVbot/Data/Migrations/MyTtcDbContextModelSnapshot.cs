@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using BusVbot.Models;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace BusVbot.Data.Migrations
 {

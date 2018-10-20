@@ -1,9 +1,8 @@
-﻿using System;
-using System.Linq;
-using BusVbot.Bot;
+﻿using BusVbot.Bot;
 using BusVbot.Configurations;
 using Microsoft.Extensions.Options;
-using Telegram.Bot.Types.InlineKeyboardButtons;
+using System;
+using System.Linq;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BusVbot.Services.Agency.TTC
@@ -12,9 +11,7 @@ namespace BusVbot.Services.Agency.TTC
     {
         public TtcMessageFormatter(IOptions<AgencyTimeZonesAccessor> timezoneOptions)
             : base(Constants.Tag, timezoneOptions)
-        {
-
-        }
+        { }
 
         public override InlineKeyboardMarkup CreateInlineKeyboardForDirections(string routeTag, string[] directions)
         {
@@ -46,17 +43,14 @@ namespace BusVbot.Services.Agency.TTC
                 var buttons = directions
                     .Skip(i * keysPerRow)
                     .Take(keysPerRow)
-                    .Select(d => new InlineKeyboardCallbackButton(
+                    .Select(d => InlineKeyboardButton.WithCallbackData(
                         d, CommonConstants.CallbackQueries.BusCommand.BusDirectionPrefix + d
-                    ) as InlineKeyboardButton)
+                    ))
                     .ToArray();
                 keyboard[i] = buttons;
             }
 
-            return new InlineKeyboardMarkup
-            {
-                InlineKeyboard = keyboard,
-            };
+            return new InlineKeyboardMarkup(keyboard);
         }
 
         private static class Constants

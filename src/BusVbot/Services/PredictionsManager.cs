@@ -1,19 +1,17 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using BusVbot.Bot;
-using BusVbot.Handlers.Commands;
+﻿using BusVbot.Bot;
 using BusVbot.Models;
 using BusVbot.Models.Cache;
 using BusVbot.Services.Agency;
 using Microsoft.EntityFrameworkCore;
 using NextBus.NET;
-using Telegram.Bot.Types;
 using NextBus.NET.Models;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Telegram.Bot.Framework.Abstractions;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.InlineKeyboardButtons;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BusVbot.Services
@@ -35,7 +33,8 @@ namespace BusVbot.Services
             ICachingService cachingService,
             ILocationsManager locationsManager,
             BusVbotDbContext dbContext,
-            IAgencyServiceAccessor agencyServiceAccessor)
+            IAgencyServiceAccessor agencyServiceAccessor
+        )
         {
             _nextBusClient = nextBusClient;
             _cachingService = cachingService;
@@ -121,7 +120,8 @@ namespace BusVbot.Services
                 result.BusStopLocation.Latitude,
                 result.BusStopLocation.Longitude,
                 replyToMessageId: replyToMessageId,
-                replyMarkup: new ReplyKeyboardRemove {RemoveKeyboard = true});
+                replyMarkup: new ReplyKeyboardRemove()
+            );
 
             var markup = CreateRefreshInlineKeyboard(agencyTag, cachedContext.BusCommandArgs.RouteTag,
                 cachedContext.BusCommandArgs.DirectionName);
@@ -165,8 +165,8 @@ namespace BusVbot.Services
             BusStop nearestStop = await FindNearestBusStopAsync(userLocation, agencyTag, routeTag, direction);
             Location stopLocation = new Location
             {
-                Latitude = (float) nearestStop.Latitude,
-                Longitude = (float) nearestStop.Longitude,
+                Latitude = (float)nearestStop.Latitude,
+                Longitude = (float)nearestStop.Longitude,
             };
             RoutePrediction[] predictions = (await _nextBusClient
                 .GetRoutePredictionsByStopTag(agencyTag, nearestStop.Tag, routeTag)).ToArray();
@@ -270,8 +270,8 @@ namespace BusVbot.Services
             }
             else
             {
-//                if (!directions.Any() || directionInput == null)
-//                    directions = await dataParser.FindMatchingDirectionsForRouteAsync(routeTagInput);
+                //                if (!directions.Any() || directionInput == null)
+                //                    directions = await dataParser.FindMatchingDirectionsForRouteAsync(routeTagInput);
                 result.ReplyText = Constants.ValidationMessages.BusDirectionMissing;
 
                 var formatter = _agencyServiceAccessor.GetAgencyOrDefaultMessageFormatter(cachedContext.AgencyTag);
@@ -369,7 +369,7 @@ namespace BusVbot.Services
                             string.Join(CommonConstants.CallbackQueries.Prediction.PredictionValuesDelimiter,
                                 agency, route, direction);
 
-            return new InlineKeyboardMarkup(new[] {InlineKeyboardButton.WithCallbackData("🔄", cqData)});
+            return new InlineKeyboardMarkup(new[] { InlineKeyboardButton.WithCallbackData("🔄", cqData) });
         }
 
         public static class Constants

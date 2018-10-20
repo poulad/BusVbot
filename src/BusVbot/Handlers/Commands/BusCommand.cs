@@ -1,78 +1,54 @@
-﻿using System.Threading.Tasks;
-using BusVbot.Models.Cache;
+﻿using BusVbot.Models.Cache;
 using BusVbot.Services;
-using Telegram.Bot.Framework;
+using System.Linq;
+using System.Threading.Tasks;
 using Telegram.Bot.Framework.Abstractions;
-using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
 namespace BusVbot.Handlers.Commands
 {
-    public class BusCommandArgs : ICommandArgs
-    {
-        public string RawInput { get; set; }
-
-        public string ArgsInput { get; set; }
-
-        public string RouteTag { get; set; }
-
-        public string DirectionName { get; set; }
-    }
-
-    public class BusCommand : CommandBase<BusCommandArgs>
+    public class BusCommand : CommandBase
     {
         private readonly IPredictionsManager _predictionsManager;
 
-        public BusCommand(IPredictionsManager predictionsManager)
-            : base(Constants.CommandName)
+        public BusCommand(
+            IPredictionsManager predictionsManager
+        )
         {
             _predictionsManager = predictionsManager;
         }
 
-        protected override BusCommandArgs ParseInput(Update update)
+        public override async Task HandleAsync(IUpdateContext context, UpdateDelegate next, string[] args)
         {
-            BusCommandArgs args;
+            string argsValue = string.Join(' ', args.Skip(1));
+            var cmdArgs = _predictionsManager.TryParseToRouteDirection(argsValue);
 
-            if (update.Type == UpdateType.MessageUpdate)
+            var userchat = (UserChat)context.Update;
+
+            if (_predictionsManager.ValidateRouteFormat(cmdArgs.Route))
             {
-                args = base.ParseInput(update);
-                var result = _predictionsManager.TryParseToRouteDirection(args.ArgsInput);
+                await _predictionsManager
+                    .CacheRouteDirectionAsync(userchat, cmdArgs.Route, cmdArgs.Direction)
+                    .ConfigureAwait(false);
 
-                if (result.Success)
-                {
-                    args.RouteTag = result.Route;
-                    args.DirectionName = result.Direction;
-                }
+                await _predictionsManager.TryReplyWithPredictionsAsync(
+                    context.Bot,
+                    userchat,
+                    context.Update.Message.MessageId
+                ).ConfigureAwait(false);
             }
             else
             {
-                args = null;
-            }
+                string sampleRoutes = await _predictionsManager.GetSampleRouteTextAsync(userchat)
+                    .ConfigureAwait(false);
 
-            return args;
-        }
-
-        public override async Task<UpdateHandlingResult> HandleCommand(Update update, BusCommandArgs args)
-        {
-            var userchat = (UserChat) update;
-
-            if (!_predictionsManager.ValidateRouteFormat(args.RouteTag))
-            {
-                string sampleRoutes = await _predictionsManager.GetSampleRouteTextAsync(userchat);
-
-                await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id,
+                await context.Bot.Client.SendTextMessageAsync(
+                    context.Update.Message.Chat.Id,
                     Constants.InvalidArgumentsMessage + sampleRoutes,
                     ParseMode.Markdown,
-                    replyToMessageId: update.Message.MessageId);
-
-                return UpdateHandlingResult.Handled;
+                    replyToMessageId: context.Update.Message.MessageId
+                ).ConfigureAwait(false);
             }
-
-            await _predictionsManager.CacheRouteDirectionAsync(userchat, args.RouteTag, args.DirectionName);
-
-            await _predictionsManager.TryReplyWithPredictionsAsync(Bot, userchat, update.Message.MessageId);
-
-            return UpdateHandlingResult.Handled;
         }
 
         public static class Constants

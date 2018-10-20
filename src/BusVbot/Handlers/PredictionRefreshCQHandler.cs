@@ -1,38 +1,35 @@
-﻿using System.Threading.Tasks;
-using BusVbot.Bot;
+﻿using BusVbot.Bot;
 using BusVbot.Extensions;
 using BusVbot.Services;
-using Telegram.Bot.Framework;
+using System.Threading.Tasks;
 using Telegram.Bot.Framework.Abstractions;
-using Telegram.Bot.Types;
 
 namespace BusVbot.Handlers
 {
-    public class PredictionRefreshCqHandler : UpdateHandlerBase
+    public class PredictionRefreshCqHandler : IUpdateHandler
     {
         private readonly IPredictionsManager _predictionsManager;
 
-        public PredictionRefreshCqHandler(IPredictionsManager predictionsManager)
+        public PredictionRefreshCqHandler(
+            IPredictionsManager predictionsManager
+        )
         {
             _predictionsManager = predictionsManager;
         }
 
-        public override bool CanHandleUpdate(IBot bot, Update update) =>
-            update.CallbackQuery?.Data?.StartsWith(CommonConstants.CallbackQueries.Prediction.PredictionPrefix) == true;
-
-        public override async Task<UpdateHandlingResult> HandleUpdateAsync(IBot bot, Update update)
+        public async Task HandleAsync(IUpdateContext context, UpdateDelegate next)
         {
-            var location = update.CallbackQuery.Message.ReplyToMessage.Location;
-            var tokens = update.CallbackQuery.Data
+            var location = context.Update.CallbackQuery.Message.ReplyToMessage.Location;
+            var tokens = context.Update.CallbackQuery.Data
                 .Replace(CommonConstants.CallbackQueries.Prediction.PredictionPrefix, string.Empty)
                 .Split(CommonConstants.CallbackQueries.Prediction.PredictionValuesDelimiter);
 
-            await bot.Client.AnswerCallbackQueryAsync(update.GetCallbackQueryId(), cacheTime: 2 * 60);
+            await context.Bot.Client.AnswerCallbackQueryAsync(context.Update.GetCallbackQueryId(), cacheTime: 2 * 60)
+                .ConfigureAwait(false);
 
-            await _predictionsManager.UpdateMessagePredictionsAsync(bot, update.GetChatId(),
-                update.CallbackQuery.Message.MessageId, location, tokens[0], tokens[1], tokens[2]);
-
-            return UpdateHandlingResult.Handled;
+            await _predictionsManager.UpdateMessagePredictionsAsync(context.Bot, context.Update.GetChatId(),
+                context.Update.CallbackQuery.Message.MessageId, location, tokens[0], tokens[1], tokens[2])
+                .ConfigureAwait(false);
         }
     }
 }

@@ -1,15 +1,14 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using BusVbot.Bot;
+﻿using BusVbot.Bot;
 using BusVbot.Extensions;
 using BusVbot.Models;
 using BusVbot.Models.Cache;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using System.Linq;
+using System.Threading.Tasks;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.InlineKeyboardButtons;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BusVbot.Services
@@ -43,7 +42,7 @@ namespace BusVbot.Services
 
         public async Task<bool> ReplyWithSetupInstructionsIfNotAlreadySetAsync(IBot bot, Update update)
         {
-            var userChat = (UserChat) update;
+            var userChat = (UserChat)update;
 
             if (await ShouldSendInstructionsToAsync(userChat))
             {
@@ -84,7 +83,7 @@ namespace BusVbot.Services
                 ParseMode.Markdown,
                 replyMarkup: keyboardMarkup);
 
-            var userChat = (UserChat) update;
+            var userChat = (UserChat)update;
 
             var cacheContext = GetOrCreateCacheEntryFor(userChat);
             cacheContext.ProfileSetupInstructionsSent = true;
@@ -98,7 +97,7 @@ namespace BusVbot.Services
             IReplyMarkup replyMarkup = await GetCountriesReplyMarkupAsync();
 
             await bot.Client.EditMessageTextAsync(chatId, msgId, Constants.CountryMessage,
-                replyMarkup: replyMarkup);
+                replyMarkup: (InlineKeyboardMarkup)replyMarkup);
         }
 
         public async Task ReplyQueryWithRegionsForCountryAsync(IBot bot, Update update, string country)
@@ -118,23 +117,28 @@ namespace BusVbot.Services
         public async Task ReplyQueryWithAgenciesForRegionAsync(IBot bot, Update update, string region)
         {
             var chatId = update.GetChatId();
-            var msgId = update.GetMessageId();
+            int msgId = update.GetMessageId();
 
             string country = await _dbContext.Agencies
                 .Where(a => a.Region == region)
                 .Select(a => a.Country)
                 .FirstAsync();
 
-            IReplyMarkup replyMarkup = await GetAgenciesReplyMarkupForRegionAsync(country, region);
+            IReplyMarkup replyMarkup = await GetAgenciesReplyMarkupForRegionAsync(country, region)
+                .ConfigureAwait(false);
 
-            await bot.Client.EditMessageTextAsync(chatId, msgId, $"Select an agency in *{region}*",
+            await bot.Client.EditMessageTextAsync(
+                chatId,
+                msgId,
+                $"Select an agency in *{region}*",
                 ParseMode.Markdown,
-                replyMarkup: replyMarkup);
+                replyMarkup: (InlineKeyboardMarkup)replyMarkup
+            ).ConfigureAwait(false);
         }
 
         public async Task ReplyWithSettingUserAgencyAsync(IBot bot, Update update, int agencyId)
         {
-            UserChat userChat = (UserChat) update;
+            UserChat userChat = (UserChat)update;
             var chatId = update.GetChatId();
             int msgId = update.GetMessageId();
 
@@ -172,7 +176,7 @@ namespace BusVbot.Services
 
         public async Task<bool> TryReplyIfOldSetupInstructionMessageAsync(IBot bot, Update update)
         {
-            UserChat userChat = (UserChat) update;
+            UserChat userChat = (UserChat)update;
             var chatId = update.GetChatId();
             var msgId = update.GetMessageId();
 
@@ -212,11 +216,11 @@ namespace BusVbot.Services
             {
                 string country = countries[i];
                 string flag = country.FindCountryFlagEmoji();
-                inlineKeys[i] = new InlineKeyboardCallbackButton($"{flag} {country}",
+                inlineKeys[i] = InlineKeyboardButton.WithCallbackData($"{flag} {country}",
                     CommonConstants.CallbackQueries.UserProfileSetup.CountryPrefix + country);
             }
 
-            IReplyMarkup inlineMarkup = new InlineKeyboardMarkup(new[] {inlineKeys});
+            IReplyMarkup inlineMarkup = new InlineKeyboardMarkup(new[] { inlineKeys });
             return inlineMarkup;
         }
 
@@ -233,7 +237,7 @@ namespace BusVbot.Services
             var inlineKeys = new InlineKeyboardButton[regions.Length + navigationKeysCount][];
             inlineKeys[0] = new InlineKeyboardButton[]
             {
-                new InlineKeyboardCallbackButton("🌐 Back to countries",
+                InlineKeyboardButton.WithCallbackData("🌐 Back to countries",
                     CommonConstants.CallbackQueries.UserProfileSetup.BackToCountries),
             };
 
@@ -242,7 +246,7 @@ namespace BusVbot.Services
                 string region = regions[i];
                 inlineKeys[i + navigationKeysCount] = new InlineKeyboardButton[]
                 {
-                    new InlineKeyboardCallbackButton(region,
+                    InlineKeyboardButton.WithCallbackData(region,
                         CommonConstants.CallbackQueries.UserProfileSetup.RegionPrefix + region),
                 };
             }
@@ -255,7 +259,7 @@ namespace BusVbot.Services
         {
             var agencies = await _dbContext.Agencies
                 .Where(a => a.Region == region)
-                .Select(a => new {a.Title, a.Id})
+                .Select(a => new { a.Title, a.Id })
                 .OrderBy(a => a.Title)
                 .ToArrayAsync();
 
@@ -263,7 +267,7 @@ namespace BusVbot.Services
             var inlineKeys = new InlineKeyboardButton[agencies.Length + navigationKeysCount][];
             inlineKeys[0] = new InlineKeyboardButton[]
             {
-                new InlineKeyboardCallbackButton("🌐 Back to regions",
+                InlineKeyboardButton.WithCallbackData("🌐 Back to regions",
                     CommonConstants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix + country),
             };
 
@@ -272,7 +276,8 @@ namespace BusVbot.Services
                 var agency = agencies[i];
                 inlineKeys[i + navigationKeysCount] = new InlineKeyboardButton[]
                 {
-                    new InlineKeyboardCallbackButton(agency.Title,
+                    InlineKeyboardButton.WithCallbackData(
+                        agency.Title,
                         CommonConstants.CallbackQueries.UserProfileSetup.AgencyPrefix + agency.Id),
                 };
             }

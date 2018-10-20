@@ -1,45 +1,37 @@
-﻿using System.Threading.Tasks;
-using BusVbot.Models.Cache;
+﻿using BusVbot.Models.Cache;
 using BusVbot.Services;
-using Telegram.Bot.Types;
-using Telegram.Bot.Framework;
+using System.Threading.Tasks;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types.Enums;
 
 namespace BusVbot.Handlers.Commands
 {
-    public class StartCommandArgs : ICommandArgs
+    public class StartCommand : CommandBase
     {
-        public string RawInput { get; set; }
-
-        public string ArgsInput { get; set; }
-    }
-
-    public class StartCommand : CommandBase<StartCommandArgs>
-    {
-        private const string CommandName = "start";
-
         private readonly UserContextManager _userContextManager;
 
-        public StartCommand(UserContextManager userContextManager)
-            : base(CommandName)
+        public StartCommand(
+            UserContextManager userContextManager
+        )
         {
             _userContextManager = userContextManager;
         }
 
-        public override async Task<UpdateHandlingResult> HandleCommand(Update update, StartCommandArgs args)
+        public override async Task HandleAsync(IUpdateContext context, UpdateDelegate next, string[] args)
         {
-            var userChat = (UserChat) update;
+            var userChat = (UserChat)context.Update;
             if (await _userContextManager.ShouldSendInstructionsToAsync(userChat))
             {
-                await Bot.Client.SendTextMessageAsync(update.Message.Chat.Id,
-                    string.Format(Constants.WelcomeMessageText, update.Message.From.FirstName),
-                    ParseMode.Markdown);
+                await context.Bot.Client.SendTextMessageAsync(
+                    context.Update.Message.Chat.Id,
+                    string.Format(Constants.WelcomeMessageText, context.Update.Message.From.FirstName),
+                    ParseMode.Markdown
+                ).ConfigureAwait(false);
 
-                await _userContextManager.ReplyWithSetupInstructionsAsync(Bot, update);
+                await _userContextManager
+                    .ReplyWithSetupInstructionsAsync(context.Bot, context.Update)
+                    .ConfigureAwait(false);
             }
-
-            return UpdateHandlingResult.Handled;
         }
 
         private static class Constants
