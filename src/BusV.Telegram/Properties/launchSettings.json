@@ -8,19 +8,18 @@
     "windowsAuthentication": false
   },
   "profiles": {
+    "BusVbot": {
+      "applicationUrl": "http://localhost:5000/",
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
     "IIS Express": {
       "commandName": "IISExpress",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
-    },
-    "MyTTCBot": {
-      "commandName": "Project",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "launchBrowser": false,
-      "launchUrl": "http://localhost:5000"
     }
   }
 }
