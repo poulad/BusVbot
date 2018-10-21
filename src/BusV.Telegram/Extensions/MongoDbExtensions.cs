@@ -33,18 +33,18 @@ namespace BusV.Telegram.Extensions
                 provider.GetRequiredService<IMongoClient>().GetDatabase(dbName)
             );
 
-            services.AddTransient<IMongoCollection<ChatBot>>(provider =>
+            services.AddTransient<IMongoCollection<Agency>>(provider =>
                 provider.GetRequiredService<IMongoDatabase>()
-                    .GetCollection<ChatBot>(BusV.Data.Constants.Collections.Bots.Name)
+                    .GetCollection<Agency>(BusV.Data.Constants.Collections.Agencies.Name)
             );
 
-            services.AddTransient<IMongoCollection<Registration>>(provider =>
-                provider.GetRequiredService<IMongoDatabase>()
-                    .GetCollection<Registration>(BusV.Data.Constants.Collections.Registrations.Name)
-            );
+//            services.AddTransient<IMongoCollection<Registration>>(provider =>
+//                provider.GetRequiredService<IMongoDatabase>()
+//                    .GetCollection<Registration>(BusV.Data.Constants.Collections.Registrations.Name)
+//            );
 
-            services.AddTransient<IChatBotRepository, ChatBotRepository>();
-            services.AddTransient<IUserRegistrationRepository, UserRegistrationRepository>();
+            services.AddTransient<IAgencyRepository, AgencyRepository>();
+//            services.AddTransient<IUserRegistrationRepository, UserRegistrationRepository>();
 
             Initializer.RegisterClassMaps();
         }

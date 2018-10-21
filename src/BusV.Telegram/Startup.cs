@@ -26,6 +26,8 @@ namespace BusV.Telegram
         {
             services.AddMongoDb(Configuration.GetSection("Data"));
 
+            services.AddOperationServices();
+
             services.AddTransient<BusVbot>()
                 .Configure<BotOptions<BusVbot>>(Configuration.GetSection("Bot"))
                 .Configure<CustomBotOptions<BusVbot>>(Configuration.GetSection("Bot"))
@@ -66,7 +68,6 @@ namespace BusV.Telegram
 //            services.AddTransient<ILocationsManager, LocationsManager>();
 //            services.AddTransient<IPredictionsManager, PredictionsManager>();
 //
-//            services.AddTransient<INextBusClient, NextBusClient>();
 //            services.AddTransient<UserContextManager>();
 //
 //            services.AddMemoryCache();
@@ -79,7 +80,7 @@ namespace BusV.Telegram
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-
+                app.EnsureDatabaseSeededAsync();
                 app.UseTelegramBotLongPolling<BusVbot>(ConfigureBot(), startAfter: TimeSpan.FromSeconds(2));
             }
             else

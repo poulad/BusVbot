@@ -1,8 +1,10 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using BusV.Data.Entities;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.IdGenerators;
+using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 
 namespace BusV.Data
@@ -15,18 +17,18 @@ namespace BusV.Data
         )
         {
             {
-                // "bots" collection
+                // "agencies" collection
                 await database
-                    .CreateCollectionAsync(Constants.Collections.Bots.Name, cancellationToken: cancellationToken)
+                    .CreateCollectionAsync(Constants.Collections.Agencies.Name, cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
-                var botsCollection = database.GetCollection<ChatBot>(Constants.Collections.Bots.Name);
+                var botsCollection = database.GetCollection<Agency>(Constants.Collections.Agencies.Name);
 
-                // create unique index "bot_id" on the field "name"
-                var key = Builders<ChatBot>.IndexKeys.Ascending(u => u.Name);
-                await botsCollection.Indexes.CreateOneAsync(new CreateIndexModel<ChatBot>(
+                // create unique index "agency_name" on the field "tag"
+                var key = Builders<Agency>.IndexKeys.Ascending(a => a.Tag);
+                await botsCollection.Indexes.CreateOneAsync(new CreateIndexModel<Agency>(
                         key,
                         new CreateIndexOptions
-                            { Name = Constants.Collections.Bots.Indexes.BotId, Unique = true }),
+                            { Name = Constants.Collections.Agencies.Indexes.AgencyName, Unique = true }),
                     cancellationToken: cancellationToken
                 ).ConfigureAwait(false);
             }
@@ -57,16 +59,24 @@ namespace BusV.Data
 
         public static void RegisterClassMaps()
         {
-            if (!BsonClassMap.IsClassMapRegistered(typeof(ChatBot)))
+            if (!BsonClassMap.IsClassMapRegistered(typeof(Agency)))
             {
-                BsonClassMap.RegisterClassMap<ChatBot>(map =>
+                BsonClassMap.RegisterClassMap<Agency>(map =>
                 {
-                    map.MapIdProperty(b => b.Id).SetIdGenerator(new StringObjectIdGenerator());
-                    map.MapProperty(b => b.Name).SetElementName("name").SetOrder(1);
-                    map.MapProperty(u => u.Platform).SetElementName("platform");
-                    map.MapProperty(u => u.Url).SetElementName("url");
-                    map.MapProperty(u => u.Token).SetElementName("token");
-                    map.MapProperty(u => u.JoinedAt).SetElementName("created_at");
+                    map.MapIdProperty(u => u.Id)
+                        .SetIdGenerator(StringObjectIdGenerator.Instance)
+                        .SetSerializer(new StringSerializer(BsonType.ObjectId));
+                    map.MapProperty(b => b.Tag).SetElementName("tag").SetOrder(1);
+                    map.MapProperty(u => u.CreatedAt).SetElementName("created_at");
+                    map.MapProperty(u => u.Title).SetElementName("title").SetIgnoreIfDefault(true);
+                    map.MapProperty(u => u.Region).SetElementName("region").SetIgnoreIfDefault(true);
+                    map.MapProperty(u => u.Country).SetElementName("country").SetIgnoreIfDefault(true);
+                    map.MapProperty(u => u.ShortTitle).SetElementName("short_title").SetIgnoreIfDefault(true);
+                    map.MapProperty(u => u.MaxLatitude).SetElementName("max_lat").SetIgnoreIfDefault(true);
+                    map.MapProperty(u => u.MinLatitude).SetElementName("min_lat").SetIgnoreIfDefault(true);
+                    map.MapProperty(u => u.MaxLongitude).SetElementName("max_lon").SetIgnoreIfDefault(true);
+                    map.MapProperty(u => u.MinLongitude).SetElementName("min_lon").SetIgnoreIfDefault(true);
+                    map.MapProperty(u => u.ModifiedAt).SetElementName("modified_at").SetIgnoreIfDefault(true);
                 });
             }
 

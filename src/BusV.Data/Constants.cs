@@ -4,13 +4,13 @@
     {
         public static class Collections
         {
-            public static class Bots
+            public static class Agencies
             {
-                public const string Name = "bots";
+                public const string Name = "agencies";
 
                 public static class Indexes
                 {
-                    public const string BotId = "bot_id";
+                    public const string AgencyName = "agency_id";
                 }
             }
 

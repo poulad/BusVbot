@@ -6,16 +6,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.App"/>
-        <PackageReference Include="JsonEnvVar" Version="1.0.0"/>
-        <PackageReference Include="NextBus.NET" Version="0.0.3"/>
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="2.1.2"/>
-        <PackageReference Include="System.ValueTuple" Version="4.5.0"/>
-        <PackageReference Include="Telegram.Bot.Framework" Version="2.0.0-alpha3"/>
+        <PackageReference Include="Microsoft.AspNetCore.App" />
+        <PackageReference Include="JsonEnvVar" Version="1.0.0" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="2.1.2" />
+        <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+        <PackageReference Include="Telegram.Bot.Framework" Version="2.0.0-alpha3" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\BusV.Ops\BusV.Ops.csproj"/>
+        <ProjectReference Include="..\BusV.Ops\BusV.Ops.csproj" />
     </ItemGroup>
 
 </Project>
