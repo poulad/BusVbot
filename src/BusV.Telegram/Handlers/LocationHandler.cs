@@ -1,10 +1,10 @@
-﻿using BusVbot.Models.Cache;
-using BusVbot.Services;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using BusV.Telegram.Models.Cache;
+using BusV.Telegram.Services;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types.Enums;
 
-namespace BusVbot.Handlers
+namespace BusV.Telegram.Handlers
 {
     public class LocationHandler : IUpdateHandler
     {

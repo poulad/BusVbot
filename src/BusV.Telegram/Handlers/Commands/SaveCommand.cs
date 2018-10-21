@@ -1,14 +1,13 @@
-﻿using BusVbot.Bot;
-using BusVbot.Models.Cache;
-using BusVbot.Services;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
+using BusV.Telegram.Models.Cache;
+using BusV.Telegram.Services;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace BusVbot.Handlers.Commands
+namespace BusV.Telegram.Handlers.Commands
 {
     public class SaveCommand : CommandBase
     {
@@ -60,7 +59,7 @@ namespace BusVbot.Handlers.Commands
             var locationsCount = await _locationsManager.FrequentLocationsCountAsync(uc)
                 .ConfigureAwait(false);
 
-            if (locationsCount < CommonConstants.Location.MaxSavedLocations)
+            if (locationsCount < Telegram.Constants.Location.MaxSavedLocations)
             {
                 var closeLocationTuple = await _locationsManager.TryFindSavedLocationCloseToAsync(uc, location)
                     .ConfigureAwait(false);
@@ -114,7 +113,7 @@ namespace BusVbot.Handlers.Commands
                 "That location ☝ is very close to your other frequent location:\n_{0}_";
 
             public static readonly string MaxSaveLocationReachedMessage =
-                $"I can't remember more than {CommonConstants.Location.MaxSavedLocations} locations 🙄.\n\n" +
+                $"I can't remember more than {Telegram.Constants.Location.MaxSavedLocations} locations 🙄.\n\n" +
                 "Try removing a saved location with /del ❌ command.";
         }
     }

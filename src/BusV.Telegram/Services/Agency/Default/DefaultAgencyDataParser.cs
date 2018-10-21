@@ -1,7 +1,7 @@
-﻿using BusVbot.Models;
+﻿using BusV.Telegram.Models;
 
 // ReSharper disable once CheckNamespace
-namespace BusVbot.Services.Agency
+namespace BusV.Telegram.Services.Agency
 {
     public class DefaultAgencyDataParser : AgencyDataParserBase, IDefaultAgencyDataParser
     {

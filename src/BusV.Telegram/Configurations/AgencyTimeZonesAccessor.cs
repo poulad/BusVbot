@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace BusVbot.Configurations
+namespace BusV.Telegram.Configurations
 {
     public class AgencyTimeZonesAccessor
     {

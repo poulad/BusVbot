@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace BusVbot.Services.Agency
+namespace BusV.Telegram.Services.Agency
 {
     public class AgencyServiceAccessor : IAgencyServiceAccessor
     {

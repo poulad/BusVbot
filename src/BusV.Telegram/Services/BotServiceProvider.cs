@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using Telegram.Bot.Framework.Abstractions;
 
-namespace BusVbot.Services
+namespace BusV.Telegram.Services
 {
     internal class BotServiceProvider : IBotServiceProvider
     {

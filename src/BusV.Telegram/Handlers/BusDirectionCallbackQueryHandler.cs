@@ -1,11 +1,10 @@
-﻿using BusVbot.Bot;
-using BusVbot.Extensions;
-using BusVbot.Models.Cache;
-using BusVbot.Services;
+﻿using BusV.Telegram.Extensions;
 using System.Threading.Tasks;
+using BusV.Telegram.Models.Cache;
+using BusV.Telegram.Services;
 using Telegram.Bot.Framework.Abstractions;
 
-namespace BusVbot.Handlers
+namespace BusV.Telegram.Handlers
 {
     public class BusDirectionCallbackQueryHandler : IUpdateHandler
     {
@@ -21,7 +20,7 @@ namespace BusVbot.Handlers
             await context.Bot.Client.AnswerCallbackQueryAsync(context.Update.GetCallbackQueryId(), cacheTime: 5)
                 .ConfigureAwait(false);
             var directionName = context.Update.CallbackQuery.Data.Replace(
-                CommonConstants.CallbackQueries.BusCommand.BusDirectionPrefix, string.Empty);
+                Constants.CallbackQueries.BusCommand.BusDirectionPrefix, string.Empty);
 
             var userchat = (UserChat)context.Update;
             var cachedContext = await _predictionsManager.GetCachedRouteDirectionAsync(userchat)

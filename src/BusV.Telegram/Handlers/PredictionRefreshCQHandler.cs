@@ -1,10 +1,9 @@
-﻿using BusVbot.Bot;
-using BusVbot.Extensions;
-using BusVbot.Services;
+﻿using BusV.Telegram.Extensions;
 using System.Threading.Tasks;
+using BusV.Telegram.Services;
 using Telegram.Bot.Framework.Abstractions;
 
-namespace BusVbot.Handlers
+namespace BusV.Telegram.Handlers
 {
     public class PredictionRefreshCqHandler : IUpdateHandler
     {
@@ -21,8 +20,8 @@ namespace BusVbot.Handlers
         {
             var location = context.Update.CallbackQuery.Message.ReplyToMessage.Location;
             var tokens = context.Update.CallbackQuery.Data
-                .Replace(CommonConstants.CallbackQueries.Prediction.PredictionPrefix, string.Empty)
-                .Split(CommonConstants.CallbackQueries.Prediction.PredictionValuesDelimiter);
+                .Replace(Constants.CallbackQueries.Prediction.PredictionPrefix, string.Empty)
+                .Split(Constants.CallbackQueries.Prediction.PredictionValuesDelimiter);
 
             await context.Bot.Client.AnswerCallbackQueryAsync(context.Update.GetCallbackQueryId(), cacheTime: 2 * 60)
                 .ConfigureAwait(false);

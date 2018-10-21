@@ -2,11 +2,11 @@
 using System.Linq;
 using Microsoft.Extensions.Caching.Memory;
 using System.Threading.Tasks;
-using BusVbot.Models;
-using BusVbot.Models.Cache;
+using BusV.Telegram.Models;
+using BusV.Telegram.Models.Cache;
 using Microsoft.EntityFrameworkCore;
 
-namespace BusVbot.Services
+namespace BusV.Telegram.Services
 {
     public class CachingService : ICachingService
     {

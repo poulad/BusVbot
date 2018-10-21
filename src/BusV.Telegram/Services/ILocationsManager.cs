@@ -1,9 +1,9 @@
 ﻿using System.Threading.Tasks;
-using BusVbot.Models;
-using BusVbot.Models.Cache;
+using BusV.Telegram.Models;
+using BusV.Telegram.Models.Cache;
 using Telegram.Bot.Types;
 
-namespace BusVbot.Services
+namespace BusV.Telegram.Services
 {
     public interface ILocationsManager
     {

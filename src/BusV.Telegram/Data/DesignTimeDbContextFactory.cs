@@ -1,10 +1,10 @@
-﻿using BusVbot.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using System;
+using BusV.Telegram.Models;
 
-namespace BusVbot.Data
+namespace BusV.Telegram.Data
 {
     public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<BusVbotDbContext>
     {

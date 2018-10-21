@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Telegram.Bot.Types;
 
-namespace BusVbot.Models
+namespace BusV.Telegram.Models
 {
     [Table("frequent_location")]
     public class FrequentLocation

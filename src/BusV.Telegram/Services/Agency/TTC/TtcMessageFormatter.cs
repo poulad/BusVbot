@@ -1,11 +1,10 @@
-﻿using BusVbot.Bot;
-using BusVbot.Configurations;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using System;
 using System.Linq;
+using BusV.Telegram.Configurations;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace BusVbot.Services.Agency.TTC
+namespace BusV.Telegram.Services.Agency.TTC
 {
     public class TtcMessageFormatter : AgencyMessageFormatterBase
     {
@@ -44,7 +43,7 @@ namespace BusVbot.Services.Agency.TTC
                     .Skip(i * keysPerRow)
                     .Take(keysPerRow)
                     .Select(d => InlineKeyboardButton.WithCallbackData(
-                        d, CommonConstants.CallbackQueries.BusCommand.BusDirectionPrefix + d
+                        d, Telegram.Constants.CallbackQueries.BusCommand.BusDirectionPrefix + d
                     ))
                     .ToArray();
                 keyboard[i] = buttons;

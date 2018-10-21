@@ -1,12 +1,11 @@
-﻿using BusVbot.Bot;
-using BusVbot.Models.Cache;
-using BusVbot.Services;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using BusV.Telegram.Models.Cache;
+using BusV.Telegram.Services;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace BusVbot.Handlers
+namespace BusV.Telegram.Handlers
 {
     public class SavedLocationHandler : IUpdateHandler
     {
@@ -27,7 +26,7 @@ namespace BusVbot.Handlers
         {
             var uc = (UserChat)context.Update;
             var locationName =
-                context.Update.Message.Text.Replace(CommonConstants.Location.FrequentLocationPrefix, string.Empty);
+                context.Update.Message.Text.Replace(Telegram.Constants.Location.FrequentLocationPrefix, string.Empty);
 
             var savedLocation = await _locationsManager.TryFindSavedLocationAsync(uc, locationName)
                 .ConfigureAwait(false);

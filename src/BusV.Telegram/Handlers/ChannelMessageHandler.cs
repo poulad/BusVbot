@@ -5,7 +5,7 @@ using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
-namespace BusVbot.Handlers
+namespace BusV.Telegram.Handlers
 {
     public class ChannelMessageHandler : IUpdateHandler
     {
@@ -33,8 +33,7 @@ namespace BusVbot.Handlers
                     throw new ArgumentException("Invalid update type", nameof(context.Update));
             }
 
-            string channelInfo = $"ID: `{channelChat.Id}`, Username: `{channelChat.Username}`, Title: `{channelChat.Title}`";
-            _logger.LogInformation($"Ignoring message from channel: {channelInfo}");
+            _logger.LogInformation("Ignoring message from channel chat {0}.", channelChat);
 
             return Task.CompletedTask;
         }

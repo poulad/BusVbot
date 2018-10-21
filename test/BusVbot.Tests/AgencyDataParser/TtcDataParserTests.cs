@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using BusVbot.Models;
-using BusVbot.Services.Agency;
-using BusVbot.Tests.Helpers;
+using BusV.Telegram.Models;
+using BusV.Telegram.Services.Agency;
+using BusV.Telegram.Tests.Helpers;
 using Xunit;
 
-namespace BusVbot.Tests.AgencyDataParser
+namespace BusV.Telegram.Tests.AgencyDataParser
 {
     public class TtcDataParserTests
     {

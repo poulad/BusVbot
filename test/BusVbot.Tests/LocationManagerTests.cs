@@ -1,11 +1,11 @@
 ﻿using System.Threading.Tasks;
-using BusVbot.Models;
-using BusVbot.Services;
-using BusVbot.Tests.Helpers;
+using BusV.Telegram.Models;
+using BusV.Telegram.Services;
+using BusV.Telegram.Tests.Helpers;
 using Telegram.Bot.Types;
 using Xunit;
 
-namespace BusVbot.Tests
+namespace BusV.Telegram.Tests
 {
     public class LocationManagerTests
     {

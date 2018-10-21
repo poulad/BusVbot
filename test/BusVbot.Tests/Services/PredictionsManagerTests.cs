@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using Moq;
-using BusVbot.Models;
-using BusVbot.Services;
+using BusV.Telegram.Models;
+using BusV.Telegram.Services;
 using Telegram.Bot.Types;
 using Xunit;
 
-namespace BusVbot.Tests.Services
+namespace BusV.Telegram.Tests.Services
 {
     public class PredictionsManagerTests
     {

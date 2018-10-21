@@ -1,6 +1,6 @@
-﻿namespace BusVbot.Bot
+﻿namespace BusV.Telegram
 {
-    public static class CommonConstants
+    public static class Constants
     {
         public static class Location
         {

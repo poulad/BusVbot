@@ -1,7 +1,7 @@
-﻿using BusVbot.Handlers.Commands;
+﻿using BusV.Telegram.Handlers.Commands;
 using Telegram.Bot.Types;
 
-namespace BusVbot.Models.Cache
+namespace BusV.Telegram.Models.Cache
 {
     public class CacheUserContext
     {

@@ -2,7 +2,7 @@
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types.Enums;
 
-namespace BusVbot.Handlers.Commands
+namespace BusV.Telegram.Handlers.Commands
 {
     public class HelpCommand : CommandBase
     {

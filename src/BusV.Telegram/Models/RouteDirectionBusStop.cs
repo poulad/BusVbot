@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BusVbot.Models
+namespace BusV.Telegram.Models
 {
     [Table("route_direction__bus_stop")]
     public class RouteDirectionBusStop

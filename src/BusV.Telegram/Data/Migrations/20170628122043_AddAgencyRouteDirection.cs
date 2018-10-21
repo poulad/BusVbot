@@ -2,7 +2,7 @@
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using System;
 
-namespace BusVbot.Data.Migrations
+namespace BusV.Telegram.Data.Migrations
 {
     public partial class AddAgencyRouteDirection : Migration
     {

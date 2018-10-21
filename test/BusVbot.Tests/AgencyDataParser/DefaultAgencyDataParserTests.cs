@@ -1,7 +1,7 @@
-﻿using BusVbot.Services.Agency;
+﻿using BusV.Telegram.Services.Agency;
 using Xunit;
 
-namespace BusVbot.Tests.AgencyDataParser
+namespace BusV.Telegram.Tests.AgencyDataParser
 {
     public class DefaultAgencyDataParserTests
     {

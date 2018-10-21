@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using Telegram.Bot.Types;
 
-namespace BusVbot.Models
+namespace BusV.Telegram.Models
 {
     [Table("userchat_context")]
     public class UserChatContext

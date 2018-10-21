@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using BusVbot.Data;
+using BusV.Telegram.Data;
 using Microsoft.AspNetCore.Builder;
 
 // ReSharper disable once CheckNamespace

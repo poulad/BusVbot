@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace BusVbot.Services.Agency
+namespace BusV.Telegram.Services.Agency
 {
     public interface IAgencyServiceAccessor
     {

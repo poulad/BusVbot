@@ -2,10 +2,10 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using BusVbot.Models;
+using BusV.Telegram.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace BusVbot.Services.Agency
+namespace BusV.Telegram.Services.Agency
 {
     public abstract class AgencyDataParserBase : IAgencyDataParser
     {

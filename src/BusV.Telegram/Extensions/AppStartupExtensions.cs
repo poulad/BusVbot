@@ -1,6 +1,6 @@
-﻿using BusVbot;
-using BusVbot.Options;
-using BusVbot.Services;
+﻿using BusV.Telegram;
+using BusV.Telegram.Options;
+using BusV.Telegram.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -10,11 +10,12 @@ using System.Threading.Tasks;
 using Telegram.Bot.Framework;
 using Telegram.Bot.Framework.Abstractions;
 
+// ReSharper disable once CheckNamespace
 namespace Microsoft.AspNetCore.Builder
 {
-    static class AppStartupExtensions
+    internal static class AppStartupExtensions
     {
-        public static IApplicationBuilder UseTelegramBotLongPolling<TBot>(
+        public static void UseTelegramBotLongPolling<TBot>(
             this IApplicationBuilder app,
             IBotBuilder botBuilder,
             TimeSpan startAfter = default,
@@ -22,6 +23,7 @@ namespace Microsoft.AspNetCore.Builder
         )
             where TBot : BotBase
         {
+            var logger = app.ApplicationServices.GetRequiredService<ILogger<Startup>>();
             if (startAfter == default)
             {
                 startAfter = TimeSpan.FromSeconds(2);
@@ -30,24 +32,22 @@ namespace Microsoft.AspNetCore.Builder
             var updateManager = new UpdatePollingManager<TBot>(botBuilder, new BotServiceProvider(app));
 
             Task.Run(async () =>
-            {
-                await Task.Delay(startAfter, cancellationToken);
-                await updateManager.RunAsync(cancellationToken: cancellationToken);
-            }, cancellationToken)
-            .ContinueWith(t =>
-            {// ToDo use logger
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(t.Exception);
-                Console.ResetColor();
-                throw t.Exception;
-            }, TaskContinuationOptions.OnlyOnFaulted);
-
-            return app;
+                    {
+                        await Task.Delay(startAfter, cancellationToken)
+                            .ConfigureAwait(false);
+                        await updateManager.RunAsync(cancellationToken: cancellationToken)
+                            .ConfigureAwait(false);
+                    }, cancellationToken
+                )
+                .ContinueWith(t =>
+                    {
+                        logger.LogError(t.Exception, "Bot update manager failed.");
+                        throw t.Exception;
+                    }, TaskContinuationOptions.OnlyOnFaulted
+                );
         }
 
-        public static IApplicationBuilder EnsureWebhookSet<TBot>(
-            this IApplicationBuilder app
-        )
+        public static void EnsureWebhookSet<TBot>(this IApplicationBuilder app)
             where TBot : IBot
         {
             using (var scope = app.ApplicationServices.CreateScope())
@@ -57,13 +57,11 @@ namespace Microsoft.AspNetCore.Builder
                 var options = scope.ServiceProvider.GetRequiredService<IOptions<CustomBotOptions<TBot>>>();
                 var url = new Uri(new Uri(options.Value.WebhookDomain), options.Value.WebhookPath);
 
-                logger.LogInformation("Setting webhook for bot \"{0}\" to URL \"{1}\"", typeof(TBot).Name, url);
+                logger.LogDebug("Setting webhook for bot \"{0}\" to URL \"{1}\"", typeof(TBot).Name, url);
 
                 bot.Client.SetWebhookAsync(url.AbsoluteUri)
                     .GetAwaiter().GetResult();
             }
-
-            return app;
         }
     }
 }

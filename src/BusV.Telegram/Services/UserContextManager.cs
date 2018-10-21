@@ -1,17 +1,16 @@
-﻿using BusVbot.Bot;
-using BusVbot.Extensions;
-using BusVbot.Models;
-using BusVbot.Models.Cache;
+﻿using BusV.Telegram.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System.Linq;
 using System.Threading.Tasks;
+using BusV.Telegram.Models;
+using BusV.Telegram.Models.Cache;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace BusVbot.Services
+namespace BusV.Telegram.Services
 {
     // ToDo use IUserContextManager
     public class UserContextManager
@@ -217,7 +216,7 @@ namespace BusVbot.Services
                 string country = countries[i];
                 string flag = country.FindCountryFlagEmoji();
                 inlineKeys[i] = InlineKeyboardButton.WithCallbackData($"{flag} {country}",
-                    CommonConstants.CallbackQueries.UserProfileSetup.CountryPrefix + country);
+                    Telegram.Constants.CallbackQueries.UserProfileSetup.CountryPrefix + country);
             }
 
             IReplyMarkup inlineMarkup = new InlineKeyboardMarkup(new[] { inlineKeys });
@@ -238,7 +237,7 @@ namespace BusVbot.Services
             inlineKeys[0] = new InlineKeyboardButton[]
             {
                 InlineKeyboardButton.WithCallbackData("🌐 Back to countries",
-                    CommonConstants.CallbackQueries.UserProfileSetup.BackToCountries),
+                    Telegram.Constants.CallbackQueries.UserProfileSetup.BackToCountries),
             };
 
             for (int i = 0; i < regions.Length; i++)
@@ -247,7 +246,7 @@ namespace BusVbot.Services
                 inlineKeys[i + navigationKeysCount] = new InlineKeyboardButton[]
                 {
                     InlineKeyboardButton.WithCallbackData(region,
-                        CommonConstants.CallbackQueries.UserProfileSetup.RegionPrefix + region),
+                        Telegram.Constants.CallbackQueries.UserProfileSetup.RegionPrefix + region),
                 };
             }
 
@@ -268,7 +267,7 @@ namespace BusVbot.Services
             inlineKeys[0] = new InlineKeyboardButton[]
             {
                 InlineKeyboardButton.WithCallbackData("🌐 Back to regions",
-                    CommonConstants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix + country),
+                    Telegram.Constants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix + country),
             };
 
             for (int i = 0; i < agencies.Length; i++)
@@ -278,7 +277,7 @@ namespace BusVbot.Services
                 {
                     InlineKeyboardButton.WithCallbackData(
                         agency.Title,
-                        CommonConstants.CallbackQueries.UserProfileSetup.AgencyPrefix + agency.Id),
+                        Telegram.Constants.CallbackQueries.UserProfileSetup.AgencyPrefix + agency.Id),
                 };
             }
 

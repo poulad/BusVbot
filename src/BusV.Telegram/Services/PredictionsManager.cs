@@ -1,20 +1,19 @@
-﻿using BusVbot.Bot;
-using BusVbot.Models;
-using BusVbot.Models.Cache;
-using BusVbot.Services.Agency;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using NextBus.NET;
 using NextBus.NET.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using BusV.Telegram.Models;
+using BusV.Telegram.Models.Cache;
+using BusV.Telegram.Services.Agency;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace BusVbot.Services
+namespace BusV.Telegram.Services
 {
     public class PredictionsManager : IPredictionsManager
     {
@@ -345,7 +344,7 @@ namespace BusVbot.Services
                 var buttons = locations
                     .Skip(i * keysPerRow)
                     .Take(keysPerRow)
-                    .Select(l => new KeyboardButton(CommonConstants.Location.FrequentLocationPrefix + l.Name))
+                    .Select(l => new KeyboardButton(Telegram.Constants.Location.FrequentLocationPrefix + l.Name))
                     .ToArray();
                 keyboard[i] = buttons;
             }
@@ -365,8 +364,8 @@ namespace BusVbot.Services
 
         private InlineKeyboardMarkup CreateRefreshInlineKeyboard(string agency, string route, string direction)
         {
-            string cqData = CommonConstants.CallbackQueries.Prediction.PredictionPrefix +
-                            string.Join(CommonConstants.CallbackQueries.Prediction.PredictionValuesDelimiter,
+            string cqData = Telegram.Constants.CallbackQueries.Prediction.PredictionPrefix +
+                            string.Join(Telegram.Constants.CallbackQueries.Prediction.PredictionValuesDelimiter,
                                 agency, route, direction);
 
             return new InlineKeyboardMarkup(new[] { InlineKeyboardButton.WithCallbackData("🔄", cqData) });

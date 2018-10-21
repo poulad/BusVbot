@@ -2,11 +2,11 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Moq;
-using BusVbot.Models;
-using BusVbot.Services;
+using BusV.Telegram.Models;
+using BusV.Telegram.Services;
 using Xunit;
 
-namespace BusVbot.Tests
+namespace BusV.Telegram.Tests
 {
     public class BusCommandTests
     {

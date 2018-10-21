@@ -1,11 +1,11 @@
-﻿using BusVbot.Models.Cache;
-using BusVbot.Services;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
+using BusV.Telegram.Models.Cache;
+using BusV.Telegram.Services;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types.Enums;
 
-namespace BusVbot.Handlers.Commands
+namespace BusV.Telegram.Handlers.Commands
 {
     public class BusCommand : CommandBase
     {

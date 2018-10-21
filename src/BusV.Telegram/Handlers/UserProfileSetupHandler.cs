@@ -1,14 +1,13 @@
-﻿using BusVbot.Bot;
-using BusVbot.Extensions;
-using BusVbot.Models.Cache;
-using BusVbot.Services;
+﻿using BusV.Telegram.Extensions;
 using System.Linq;
 using System.Threading.Tasks;
+using BusV.Telegram.Models.Cache;
+using BusV.Telegram.Services;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
-namespace BusVbot.Handlers
+namespace BusV.Telegram.Handlers
 {
     public class UserProfileSetupHandler : IUpdateHandler
     {
@@ -66,33 +65,33 @@ namespace BusVbot.Handlers
                 return;
             }
 
-            if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.CountryPrefix))
+            if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.CountryPrefix))
             {
                 string country =
-                    query.TrimStart(CommonConstants.CallbackQueries.UserProfileSetup.CountryPrefix.ToCharArray());
+                    query.TrimStart(Constants.CallbackQueries.UserProfileSetup.CountryPrefix.ToCharArray());
                 await _userContextManager.ReplyQueryWithRegionsForCountryAsync(bot, update, country);
             }
-            else if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.RegionPrefix))
+            else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.RegionPrefix))
             {
-                string region = query.Replace(CommonConstants.CallbackQueries.UserProfileSetup.RegionPrefix,
+                string region = query.Replace(Constants.CallbackQueries.UserProfileSetup.RegionPrefix,
                     string.Empty);
                 await _userContextManager.ReplyQueryWithAgenciesForRegionAsync(bot, update, region);
             }
-            else if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.AgencyPrefix))
+            else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.AgencyPrefix))
             {
-                string agencyIdStr = query.Replace(CommonConstants.CallbackQueries.UserProfileSetup.AgencyPrefix,
+                string agencyIdStr = query.Replace(Constants.CallbackQueries.UserProfileSetup.AgencyPrefix,
                     string.Empty);
                 int agencyId = int.Parse(agencyIdStr);
                 await _userContextManager.ReplyWithSettingUserAgencyAsync(bot, update, agencyId);
             }
-            else if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.BackToCountries))
+            else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.BackToCountries))
             {
                 await _userContextManager.ReplyQueryWithCountriesAsync(bot, update);
             }
-            else if (query.StartsWith(CommonConstants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix))
+            else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix))
             {
                 string country =
-                    query.Replace(CommonConstants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix,
+                    query.Replace(Constants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix,
                         string.Empty);
                 await _userContextManager.ReplyQueryWithRegionsForCountryAsync(bot, update, country);
             }

@@ -1,8 +1,8 @@
-﻿using BusVbot.Configurations;
+﻿using BusV.Telegram.Configurations;
 using Microsoft.Extensions.Options;
 
 // ReSharper disable once CheckNamespace
-namespace BusVbot.Services.Agency
+namespace BusV.Telegram.Services.Agency
 {
     public class DefaultAgencyMessageFormatter : AgencyMessageFormatterBase, IDefaultAgencyMessageFormatter
     {

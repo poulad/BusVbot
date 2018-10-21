@@ -14,4 +14,8 @@
     <PackageReference Include="Telegram.Bot.Framework" Version="2.0.0-alpha3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\BusV.Data\BusV.Data.csproj" />
+  </ItemGroup>
+
 </Project>

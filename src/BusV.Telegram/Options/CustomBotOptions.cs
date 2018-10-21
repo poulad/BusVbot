@@ -1,7 +1,7 @@
 ﻿using Telegram.Bot.Framework;
 using Telegram.Bot.Framework.Abstractions;
 
-namespace BusVbot.Options
+namespace BusV.Telegram.Options
 {
     public class CustomBotOptions<TBot> : BotOptions<TBot>
         where TBot : IBot

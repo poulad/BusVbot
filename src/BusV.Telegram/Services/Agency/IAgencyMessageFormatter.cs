@@ -1,7 +1,7 @@
 ﻿using NextBus.NET.Models;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace BusVbot.Services.Agency
+namespace BusV.Telegram.Services.Agency
 {
     public interface IAgencyMessageFormatter
     {

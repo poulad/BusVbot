@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
-using BusVbot.Models.Cache;
+using BusV.Telegram.Models.Cache;
 
-namespace BusVbot.Services
+namespace BusV.Telegram.Services
 {
     public interface ICachingService
     {

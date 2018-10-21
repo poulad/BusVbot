@@ -1,11 +1,11 @@
-﻿using BusVbot.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using System;
+using BusV.Telegram.Models;
 
-namespace BusVbot.Data.Migrations
+namespace BusV.Telegram.Data.Migrations
 {
     [DbContext(typeof(BusVbotDbContext))]
     [Migration("20170628122043_AddAgencyRouteDirection")]

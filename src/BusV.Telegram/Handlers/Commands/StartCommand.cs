@@ -1,26 +1,25 @@
-﻿using BusVbot.Models.Cache;
-using BusVbot.Services;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using BusV.Telegram.Models.Cache;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types.Enums;
 
-namespace BusVbot.Handlers.Commands
+namespace BusV.Telegram.Handlers.Commands
 {
     public class StartCommand : CommandBase
     {
-        private readonly UserContextManager _userContextManager;
-
-        public StartCommand(
-            UserContextManager userContextManager
-        )
-        {
-            _userContextManager = userContextManager;
-        }
+//        private readonly UserContextManager _userContextManager;
+//
+//        public StartCommand(
+//            UserContextManager userContextManager
+//        )
+//        {
+//            _userContextManager = userContextManager;
+//        }
 
         public override async Task HandleAsync(IUpdateContext context, UpdateDelegate next, string[] args)
         {
             var userChat = (UserChat)context.Update;
-            if (await _userContextManager.ShouldSendInstructionsToAsync(userChat))
+//            if (await _userContextManager.ShouldSendInstructionsToAsync(userChat))
             {
                 await context.Bot.Client.SendTextMessageAsync(
                     context.Update.Message.Chat.Id,
@@ -28,9 +27,9 @@ namespace BusVbot.Handlers.Commands
                     ParseMode.Markdown
                 ).ConfigureAwait(false);
 
-                await _userContextManager
-                    .ReplyWithSetupInstructionsAsync(context.Bot, context.Update)
-                    .ConfigureAwait(false);
+//                await _userContextManager
+//                    .ReplyWithSetupInstructionsAsync(context.Bot, context.Update)
+//                    .ConfigureAwait(false);
             }
         }
 

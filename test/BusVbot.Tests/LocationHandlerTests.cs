@@ -1,10 +1,10 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Moq;
-using BusVbot.Models;
+using BusV.Telegram.Models;
 using Xunit;
 
-namespace BusVbot.Tests
+namespace BusV.Telegram.Tests
 {
     /*
     public class LocationHandlerTests

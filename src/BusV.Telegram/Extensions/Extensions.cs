@@ -1,8 +1,7 @@
-﻿using BusVbot.Bot;
-using Telegram.Bot.Types;
+﻿using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
-namespace BusVbot.Extensions
+namespace BusV.Telegram.Extensions
 {
     internal static class Extensions
     {
@@ -73,10 +72,10 @@ namespace BusVbot.Extensions
             {
                 case "U.S.":
                 case "UNITED STATES":
-                    flag = CommonConstants.FlagEmojis.UnitedStates;
+                    flag = Constants.FlagEmojis.UnitedStates;
                     break;
                 case "CANADA":
-                    flag = CommonConstants.FlagEmojis.Canada;
+                    flag = Constants.FlagEmojis.Canada;
                     break;
                 default:
                     flag = null;

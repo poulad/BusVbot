@@ -1,11 +1,11 @@
 ﻿using System;
+using BusV.Telegram.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using BusVbot.Models;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
-namespace BusVbot.Data.Migrations
+namespace BusV.Telegram.Data.Migrations
 {
     [DbContext(typeof(BusVbotDbContext))]
     partial class MyTtcDbContextModelSnapshot : ModelSnapshot

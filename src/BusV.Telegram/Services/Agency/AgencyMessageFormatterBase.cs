@@ -1,12 +1,11 @@
-﻿using BusVbot.Bot;
-using BusVbot.Configurations;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using NextBus.NET.Models;
 using System;
 using System.Linq;
+using BusV.Telegram.Configurations;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace BusVbot.Services.Agency
+namespace BusV.Telegram.Services.Agency
 {
     public abstract class AgencyMessageFormatterBase : IAgencyMessageFormatter
     {
@@ -35,7 +34,7 @@ namespace BusVbot.Services.Agency
                     .Skip(i * keysPerRow)
                     .Take(keysPerRow)
                     .Select(direction => InlineKeyboardButton.WithCallbackData(
-                        direction, CommonConstants.CallbackQueries.BusCommand.BusDirectionPrefix + direction
+                        direction, Telegram.Constants.CallbackQueries.BusCommand.BusDirectionPrefix + direction
                     ))
                     .ToArray();
             }

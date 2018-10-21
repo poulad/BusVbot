@@ -2,14 +2,13 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using BusVbot.Bot;
-using BusVbot.Models;
-using BusVbot.Models.Cache;
+using BusV.Telegram.Models;
+using BusV.Telegram.Models.Cache;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Telegram.Bot.Types;
 
-namespace BusVbot.Services
+namespace BusV.Telegram.Services
 {
     public class LocationsManager : ILocationsManager
     {
@@ -62,7 +61,7 @@ namespace BusVbot.Services
             }
             else if (!string.IsNullOrWhiteSpace(update.Message?.Text))
             {
-                var match = Regex.Match(update.Message.Text, CommonConstants.Location.OsmAndLocationRegex,
+                var match = Regex.Match(update.Message.Text, Constants.Location.OsmAndLocationRegex,
                     RegexOptions.IgnoreCase);
                 if (match.Success)
                 {
@@ -82,7 +81,7 @@ namespace BusVbot.Services
 
             if (!string.IsNullOrWhiteSpace(text))
             {
-                var match = Regex.Match(text, CommonConstants.Location.OsmAndLocationRegex, RegexOptions.IgnoreCase);
+                var match = Regex.Match(text, Constants.Location.OsmAndLocationRegex, RegexOptions.IgnoreCase);
                 if (match.Success)
                 {
                     location = new Location

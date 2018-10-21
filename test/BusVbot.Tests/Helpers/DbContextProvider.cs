@@ -1,7 +1,7 @@
-﻿using BusVbot.Models;
+﻿using BusV.Telegram.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace BusVbot.Tests.Helpers
+namespace BusV.Telegram.Tests.Helpers
 {
     internal class DbContextProvider
     {

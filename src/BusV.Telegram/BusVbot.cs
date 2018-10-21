@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using Telegram.Bot.Framework;
 
-namespace BusVbot.Bot
+namespace BusV.Telegram
 {
     public class BusVbot : BotBase
     {

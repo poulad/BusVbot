@@ -1,10 +1,9 @@
-﻿using BusVbot.Bot;
-using System.Linq;
+﻿using System.Linq;
 using System.Text.RegularExpressions;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types.Enums;
 
-namespace BusVbot
+namespace BusV.Telegram
 {
     public static class When
     {
@@ -23,16 +22,16 @@ namespace BusVbot
         public static bool LocationOrCoordinates(IUpdateContext context) =>
             context.Update.Message?.Location != null ^ (
                 !string.IsNullOrWhiteSpace(context.Update.Message?.Text) &&
-                Regex.IsMatch(context.Update.Message.Text, CommonConstants.Location.OsmAndLocationRegex, RegexOptions.IgnoreCase)
+                Regex.IsMatch(context.Update.Message.Text, Constants.Location.OsmAndLocationRegex, RegexOptions.IgnoreCase)
             );
 
         public static bool IsBusDirectionCq(IUpdateContext context) =>
             context.Update.CallbackQuery?.Data
-                ?.StartsWith(CommonConstants.CallbackQueries.BusCommand.BusCommandPrefix) == true;
+                ?.StartsWith(Constants.CallbackQueries.BusCommand.BusCommandPrefix) == true;
 
         public static bool IsBusPredictionCq(IUpdateContext context) =>
             context.Update.CallbackQuery?.Data
-                ?.StartsWith(CommonConstants.CallbackQueries.Prediction.PredictionPrefix) == true;
+                ?.StartsWith(Constants.CallbackQueries.Prediction.PredictionPrefix) == true;
 
         public static bool CallbackQuery(IUpdateContext context) =>
             context.Update.CallbackQuery != null;
@@ -41,7 +40,7 @@ namespace BusVbot
             NewTextMessage(context) &&
             context.Update.Message.ReplyToMessage == null &&
             // ToDo use regex instead
-            context.Update.Message.Text.StartsWith(CommonConstants.Location.FrequentLocationPrefix) &&
-            context.Update.Message.Text.Length > CommonConstants.Location.FrequentLocationPrefix.Length;
+            context.Update.Message.Text.StartsWith(Constants.Location.FrequentLocationPrefix) &&
+            context.Update.Message.Text.Length > Constants.Location.FrequentLocationPrefix.Length;
     }
 }

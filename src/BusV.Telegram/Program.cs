@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using System;
 
-namespace BusVbot
+namespace BusV.Telegram
 {
     public class Program
     {
@@ -13,7 +13,7 @@ namespace BusVbot
             CreateWebHostBuilder(args).Build().Run();
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
+        private static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostBuilder, configBuilder) => configBuilder
                     .AddJsonFile("appsettings.json")

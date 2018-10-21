@@ -1,10 +1,10 @@
 ﻿using System.Threading.Tasks;
-using BusVbot.Models.Cache;
+using BusV.Telegram.Models.Cache;
 using NextBus.NET.Models;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types;
 
-namespace BusVbot.Services
+namespace BusV.Telegram.Services
 {
     public interface IPredictionsManager
     {

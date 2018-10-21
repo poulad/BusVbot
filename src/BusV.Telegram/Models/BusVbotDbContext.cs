@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace BusVbot.Models
+namespace BusV.Telegram.Models
 {
     public class BusVbotDbContext : DbContext
     {

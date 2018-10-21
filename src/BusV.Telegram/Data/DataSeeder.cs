@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BusV.Telegram.Models;
 using Microsoft.EntityFrameworkCore;
-using BusVbot.Models;
 using Microsoft.Extensions.Logging;
 using NextBus.NET;
 using NextbusAgency = NextBus.NET.Models.Agency;
 using NextbusStop = NextBus.NET.Models.Stop;
 using NextbusDirection = NextBus.NET.Models.Direction;
 
-namespace BusVbot.Data
+namespace BusV.Telegram.Data
 {
     public class DataSeeder
     {
