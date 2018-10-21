@@ -249,3 +249,5 @@ appsettings.*.json
 
 # Rider IDE
 .idea/
+
+!scripts/build/

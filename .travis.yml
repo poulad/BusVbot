@@ -31,27 +31,22 @@ jobs:
     #   env:
     #     - image_tag=zevere/botops-vivid:unstable-solution
     #   script: node scripts/test/ops.integration.test.js
-    # - stage: Deploy
-    #   name: "Deploy"
-    #   script: skip
-    #   env:
-    #     - image_tag=zevere/botops-vivid:unstable
-    #     - secure: ezT09UzTu6ZryUiLCUipZPkvRTZfNuUEOxPdBMbkGwfeFgeSLJtJCSp+udFBxg7NCnq9bAFP16YcBrOl3gzps5SVY2bwx8FOPQ44owpj+Wjbw85b6pJXAZ21KpxVorg0YrcpC1ycNVFg8iZAIFz7c2/JPkpWQEsrr6qVSfetjkaLub8+KdHZnalnRGj3DEbsamfT+VUlFwygjoWj9hbh8Utn9oG6svcWEN4YOJ4rAxIvpcAXWyN2dn97mv4c14Maqr3FCKtCWfLioAP0NLiF9R9KK4Eao5v/cNdAgqeainoO3i22E/6n2XgurBBDnE8uMMkF6TnUPRvMKGzj7DiC60fcEAb3+oV29tIFZc4JJ5caoUIXwFPMgh2xSLwkWIslrBv1wfRCgYcziyBav4WTGrs3jDBuihQpcY18VeYyRJ6tD31NiOFedoKnIoEsocrCnR08ce8wE/mJNfi3b7NpX4RNowwXfWvJ/H8K4PI1279LhTWXdhDzCGj23o/cThBzqXPq2L+YJBDhf7+kH82Xj7MTQtwlGbbGNK3aGeoSEQy9IKvRYwB3yozufJj1CaLFz9FwzgNBz/WXWu3H428QXLKCFfcp+0BQhLxAnnQu1pewuxfxtUAMVaJX3VtUKXUXZr1uROvY9WY3sHHvyGTXnW5IlHAmoii7+lkj30q/kpU=
-    #   install: cd scripts && npm ci && cd ..
-    #   deploy:
-    #     - provider: script
-    #       skip_cleanup: true
-    #       script: node scripts/deploy Staging
-    #       on:
-    #         branch: develop
-    #     - provider: script
-    #       skip_cleanup: true
-    #       script: node scripts/deploy Production
-    #       on:
-    #         branch: master
-    # - stage: PIV
-    #   name: "PIV Checks"
-    #   script: echo ToDo
+    - stage: Deploy
+      name: "Deploy"
+      script: skip
+      env:
+        - image_tag=poulad/busvbot:unstable
+        # - secure: ezT09UzTu6ZryUiLCUipZPkvRTZfNuUEOxPdBMbkGwfeFgeSLJtJCSp+udFBxg7NCnq9bAFP16YcBrOl3gzps5SVY2bwx8FOPQ44owpj+Wjbw85b6pJXAZ21KpxVorg0YrcpC1ycNVFg8iZAIFz7c2/JPkpWQEsrr6qVSfetjkaLub8+KdHZnalnRGj3DEbsamfT+VUlFwygjoWj9hbh8Utn9oG6svcWEN4YOJ4rAxIvpcAXWyN2dn97mv4c14Maqr3FCKtCWfLioAP0NLiF9R9KK4Eao5v/cNdAgqeainoO3i22E/6n2XgurBBDnE8uMMkF6TnUPRvMKGzj7DiC60fcEAb3+oV29tIFZc4JJ5caoUIXwFPMgh2xSLwkWIslrBv1wfRCgYcziyBav4WTGrs3jDBuihQpcY18VeYyRJ6tD31NiOFedoKnIoEsocrCnR08ce8wE/mJNfi3b7NpX4RNowwXfWvJ/H8K4PI1279LhTWXdhDzCGj23o/cThBzqXPq2L+YJBDhf7+kH82Xj7MTQtwlGbbGNK3aGeoSEQy9IKvRYwB3yozufJj1CaLFz9FwzgNBz/WXWu3H428QXLKCFfcp+0BQhLxAnnQu1pewuxfxtUAMVaJX3VtUKXUXZr1uROvY9WY3sHHvyGTXnW5IlHAmoii7+lkj30q/kpU=
+      install: cd scripts && npm ci && cd ..
+      deploy:
+        - provider: script
+          skip_cleanup: true
+          script: node scripts/deploy Production
+          on:
+            branch: master
+    - stage: PIV
+      name: "PIV Checks"
+      script: echo ToDo
 
 
 # env:
