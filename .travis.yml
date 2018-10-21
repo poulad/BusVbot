@@ -37,7 +37,7 @@ jobs:
           skip_cleanup: true
           script: node scripts/deploy Production
           on:
-            branch: ci
+            branch: master
 
 
 # Disable "Build pushed pull requests"
