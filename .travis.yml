@@ -34,13 +34,15 @@ jobs:
     - stage: Deploy
       name: "Deploy"
       script: skip
+      install:
+        - cd scripts && npm ci && cd ..
+        - docker pull poulad/busvbot:unstable
       env:
         # DEPLOY_SETTINGS_JSON='{"Production":[
         #   {"type":"docker","options":{"source":"poulad/busvbot:unstable","target":"poulad/busvbot:latest","user":"","pass":""}},
         #   {"type":"heroku","options":{"app":"busvbot","source":"poulad/busvbot:latest","dyno":"web","user":"","token":""}}
         # ]}'
         - secure: Z7zjHuFe7zkATfNUUonVuQvsrZIj3x1yyPCToEwSx1VFvnsrsyCtvkoSjxkIg92MdLlt0RUQHXNXygKl6DKIBudIuIAHpXNP01MEe674jr4xMqm7d86JRdB1NkielY85IjPXv4dvt540MoMgVb3MuiifHIHgfPnb2g4QzBPpKHYZLOGBGZEA/4TkA44z1Mre1adKKl5GUnq6N0jdYzbrNigR5lMKeTei+jE4dh1P81zJPSMhWYRZw8wUlT2b8R9MkuSbBGNa0XWQVq163pnHg5JyiydbZAcfWJR2u2sQTrfjqjt0J14W0k72JaRhhRXRCAW6eJFXzaFMv4cEpgpvdtXJOjMp46JUOj/Mw7bejlXGmbkW5syuzOi/Q/jKZ60lqej1WfkhkqJH+VGeKboNeaJgjjnQN/tdc/UFLT6KpplWK4huCauyaUEoO4MeXiqk0a2o2lEvLlP++10rZadJH/u5ESxT/G89Hhlk+H1EBcgJf81Yy3Cvzya7xRD6i+27mG4pMmxPRqbOM0nYwPu8hxYw8LxEXKxVX7xHwg65gHCitScvqmBIIp5DgDliimCGDE/5x8GBF2ANULsGoqCZt4S1vATuur82gQ4uUsxZtLYrdoRp8RGyu4rC06m5VLUE6P8GIPtHmOJI1RzcaXXb3s44BQqXLPbOFK+LQyIUWSo=
-      install: cd scripts && npm ci && cd ..
       deploy:
         - provider: script
           skip_cleanup: true
