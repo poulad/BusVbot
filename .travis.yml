@@ -35,7 +35,6 @@ jobs:
       name: "Deploy"
       script: skip
       env:
-        - image_tag=poulad/busvbot:unstable
         # DEPLOY_SETTINGS_JSON='{"Production":[
         #   {"type":"docker","options":{"source":"poulad/busvbot:unstable","target":"poulad/busvbot:latest","user":"","pass":""}},
         #   {"type":"heroku","options":{"app":"busvbot","source":"poulad/busvbot:latest","dyno":"web","user":"","token":""}}
