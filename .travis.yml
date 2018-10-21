@@ -1,15 +1,78 @@
-# Build instructions for travis-ci.org
-
-language: csharp
 dist: trusty
-mono: none
 sudo: required
-dotnet: 1.0.3
-script:
-  - dotnet nuget locals all --clear
-  - chmod +x ./scripts/build.sh
-  - ./scripts/build.sh
-  - chmod +x ./scripts/test.sh
-  - ./scripts/test.sh
+language: node_js
+node_js:
+  - node
+branches:
+  except:
+  - gh-pages
 notifications:
   email: false
+services:
+  - docker
+
+jobs:
+  include:
+    - stage: Build
+      name: "Buid Docker image"
+      install: cd scripts && npm ci && cd ..
+      script: node scripts/build
+      env:
+        # DEPLOY_SETTINGS_JSON='{"CI":[{"type":"docker","options":{"user":"poulad","pass":"password"}}]}'
+        - secure: axsfNJRvzMxFJ82qM1ySMXGXK3H5Z/WyZYATTZ1Hb7y6YdyJiK02V2eosAHl7dBOP493/8lpi6p9AzjzKC0kG3OldPcXz+oazVHj7Y0uLpfeg6tkHWqedDek2q+WbykmKwIuH8AkXZw4bXEVp78TADCCtEtQLaSmMFSifApkttiUjztR3mb8MSZ9CjLIi8bdlR1pV9DX9CzwzNZFFwPmnwTPboSey7qvu23/bIjdZh+AXCVX1tLe5yRle7aganjekkE1lm4VrdAH1EwJo+m9BGQombVIWn/HfM3cbHsoReAObDqeB4oIZ4HzOUW3ANa1788JeTak/71p0iSmAhUvtQOOMjEKDY1UmHrZRvwq09jHLUnTPRlJboUn0nnTyR67D8nllApWm5+LFYq912jOmDdBESC64yY965K21XQ0nMo2fQRddx8tMoupq2CvGchV5pqfKAcVU3mL4pR5Nr3VE/ixd93LLrbsvj39L2JNshKrl6yGzhRype0MES2Jw8V+FXEQPoXMGBpbLP3RMydmOHo7ifKduTn8qlAFOb/NyT6giWw6A+R6EbrYZ+BOpLf+CQv1xZrnMyH3GUWNRaloMBczgWaohqL+3JqHkthk1Re5phswhEsK8pQ65D1FXG+O4y8P1ScaTC7wuLkPCChxYF0p8WUc6+AS3OU8YcG3BOs=
+    # - stage: Test
+    #   name: "Vivid tests"
+    #   install: cd scripts && npm ci && cd ..
+    #   script: echo ToDo
+    # - name: "Vivid Operations - Systems Integration Tests"
+    #   install:
+    #     - cd scripts && npm ci && cd ..
+    #     - docker pull zevere/botops-vivid:unstable-solution
+    #   env:
+    #     - image_tag=zevere/botops-vivid:unstable-solution
+    #   script: node scripts/test/ops.integration.test.js
+    # - stage: Deploy
+    #   name: "Deploy"
+    #   script: skip
+    #   env:
+    #     - image_tag=zevere/botops-vivid:unstable
+    #     - secure: ezT09UzTu6ZryUiLCUipZPkvRTZfNuUEOxPdBMbkGwfeFgeSLJtJCSp+udFBxg7NCnq9bAFP16YcBrOl3gzps5SVY2bwx8FOPQ44owpj+Wjbw85b6pJXAZ21KpxVorg0YrcpC1ycNVFg8iZAIFz7c2/JPkpWQEsrr6qVSfetjkaLub8+KdHZnalnRGj3DEbsamfT+VUlFwygjoWj9hbh8Utn9oG6svcWEN4YOJ4rAxIvpcAXWyN2dn97mv4c14Maqr3FCKtCWfLioAP0NLiF9R9KK4Eao5v/cNdAgqeainoO3i22E/6n2XgurBBDnE8uMMkF6TnUPRvMKGzj7DiC60fcEAb3+oV29tIFZc4JJ5caoUIXwFPMgh2xSLwkWIslrBv1wfRCgYcziyBav4WTGrs3jDBuihQpcY18VeYyRJ6tD31NiOFedoKnIoEsocrCnR08ce8wE/mJNfi3b7NpX4RNowwXfWvJ/H8K4PI1279LhTWXdhDzCGj23o/cThBzqXPq2L+YJBDhf7+kH82Xj7MTQtwlGbbGNK3aGeoSEQy9IKvRYwB3yozufJj1CaLFz9FwzgNBz/WXWu3H428QXLKCFfcp+0BQhLxAnnQu1pewuxfxtUAMVaJX3VtUKXUXZr1uROvY9WY3sHHvyGTXnW5IlHAmoii7+lkj30q/kpU=
+    #   install: cd scripts && npm ci && cd ..
+    #   deploy:
+    #     - provider: script
+    #       skip_cleanup: true
+    #       script: node scripts/deploy Staging
+    #       on:
+    #         branch: develop
+    #     - provider: script
+    #       skip_cleanup: true
+    #       script: node scripts/deploy Production
+    #       on:
+    #         branch: master
+    # - stage: PIV
+    #   name: "PIV Checks"
+    #   script: echo ToDo
+
+
+# env:
+  # DEPLOY_SETTINGS_JSON='{"Staging":[ /* ... */ ]}'
+  # - secure: CcNQ3mQ4QPnOvAIt1rCoOrt9jVYpsRXDIyAAdsnQi4DAEK0Zycge7yJSAv/YbDQTCwSS8KzNsX+OxegH7WpGkfkEQI76WKkgMEFwURscFsk8pDb+wQj5J3tINtZi9wOOe8yL7IHRYtYln2rMNG9qsaKBLC/dVpLwSDuOG6itk2ScqArOl8MVEDWJH5b2I8GY0kiUAaUWRjY3HhsKOuOb+fiMttrTr6K+tfa+RbW9T5exT2c1K0oTRC0yTpSSgymJn0vcnTB19awdMcxh3Gpey73Hz/hd+41gK9E1/xiGGimlpwWdDV3fPkHYRDmYOR7YkfD4Qtn1MO/r8K1AdIouRTpsZ2FCt7PTH4mBxHPzRNri6gITGbjiNCaUj+csjjDND14wvg1g+jTWA/5I7u8moDmiOczIXKjPKtmqNDMzFCDQXbx4zKvdf0j6UNmLeBQ8+TkQfba7b9dCtPAIQbaw8hPOSzZ8wKC8A3yvaSSrtOIvQ3qK5p8n+FxAgeeoHicPj68jhG4oSPh9R+pyy1n+5RmUtESV7KIB1d2coQJ8oBcfI16VX6oif8XWObkFxn/TQca37Mh4Y27Gaz0+S2VUZWTqZOHgTmyAyMB7DFmqfJx3X0jEADfrjQRJ46zQ2LwW3QHmPa0sZkHKtHx/p7Gc7uoIIG+L16jHFRzA9tj8yY8=
+
+
+# Disable "Build pushed pull requests"
+
+# env:
+#   DEPLOY_SETTINGS_JSON: A mapping of environment to the deployment types and their options.
+#   {
+#     "Staging": [
+#       { "type": "docker",
+#         "options": { "source": "foo:edge", "target": "foo/bar:latest", "user": "foo", "pass": "PASS" }
+#       },
+#       { "type": "heroku",
+#         "options": {
+#           "app": "foo-staging", "source": "foo:latest", "dyno": "web", "user": "foo@example.org", "token": "TOKEN"
+#         }
+#       }
+#     ],
+#     "Production": [ ]
+#   }
