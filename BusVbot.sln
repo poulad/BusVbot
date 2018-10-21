@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.26730.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{053EEB30-7CD0-427E-9066-A78FA6F489F1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BusVbot", "src\BusVbot\BusVbot.csproj", "{6BFC9E71-2C14-46E0-97E0-207F8D026F1E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BusV.Telegram", "src\BusV.Telegram\BusV.Telegram.csproj", "{6BFC9E71-2C14-46E0-97E0-207F8D026F1E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{5892FF9C-B28D-4AD0-A2ED-B435AB406D30}"
 EndProject
