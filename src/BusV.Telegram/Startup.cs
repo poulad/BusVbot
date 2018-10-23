@@ -24,7 +24,8 @@ namespace BusV.Telegram
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMongoDb(Configuration.GetSection("Data"));
+            services.AddMongoDb(Configuration.GetSection("Mongo"));
+            services.AddRedisCache(Configuration.GetSection("Redis"));
 
             services.AddOperationServices();
 
@@ -34,7 +35,7 @@ namespace BusV.Telegram
                 .AddScoped<ChannelMessageHandler>()
                 .AddScoped<StartCommand>()
                 .AddScoped<HelpCommand>()
-//                .AddScoped<UserProfileSetupHandler>()
+                .AddScoped<UserProfileSetupHandler>()
 //                .AddScoped<BusCommand>()
 //                .AddScoped<BusDirectionCallbackQueryHandler>()
 //                .AddScoped<PredictionRefreshCqHandler>()
@@ -80,7 +81,7 @@ namespace BusV.Telegram
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.EnsureDatabaseSeededAsync();
+//                app.EnsureDatabaseSeededAsync();
                 app.UseTelegramBotLongPolling<BusVbot>(ConfigureBot(), startAfter: TimeSpan.FromSeconds(2));
             }
             else
@@ -101,9 +102,9 @@ namespace BusV.Telegram
                     .UseCommand<HelpCommand>("help")
                     .UseCommand<StartCommand>("start")
                 )
-        /*
                 // ensure the user has a profile loaded for the rest of the handlers
                 .Use<UserProfileSetupHandler>()
+        /*
                 // for new messages...
                 .MapWhen(When.NewMessage, msgBranch => msgBranch
                     // accept locations as a location or a text coordinates(OSM)

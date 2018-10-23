@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using BusV.Ops;
 using BusV.Telegram.Models;
 using BusV.Telegram.Models.Cache;
 using BusV.Telegram.Services.Agency;
@@ -297,7 +298,7 @@ namespace BusV.Telegram.Services
             string agencyTag, string routeTag, string direction)
         {
             string sql =
-                @"SELECT * FROM bus_stop WHERE id = (SELECT ID FROM 
+                @"SELECT * FROM bus_stop WHERE id = (SELECT ID FROM
                     (SELECT s.id as ID, MIN(SQRT(POWER(s.lon - {0} , 2) + POWER(s.lat - {1}, 2)))
                     FROM agency a
                     JOIN agency_route r ON a.id = r.agency_id

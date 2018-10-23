@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
+using BusV.Ops;
 using BusV.Telegram.Models;
-using BusV.Telegram.Models.Cache;
 using Telegram.Bot.Types;
 
 namespace BusV.Telegram.Services

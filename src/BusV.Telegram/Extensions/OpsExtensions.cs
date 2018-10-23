@@ -16,6 +16,8 @@ namespace BusV.Telegram.Extensions
             services.AddTransient<INextBusClient, NextBusClient>();
 
             services.AddScoped<IDataSeeder, DataSeeder>();
+
+            services.AddScoped<ILocationService, LocationService>();
         }
     }
 }

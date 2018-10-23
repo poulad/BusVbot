@@ -71,6 +71,7 @@ namespace BusV.Telegram.Extensions
             switch (countryName.ToUpper())
             {
                 case "U.S.":
+                case "USA":
                 case "UNITED STATES":
                     flag = Constants.FlagEmojis.UnitedStates;
                     break;

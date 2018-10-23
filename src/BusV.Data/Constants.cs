@@ -14,13 +14,13 @@
                 }
             }
 
-            public static class Registrations
+            public static class Users
             {
-                public const string Name = "registrations";
+                public const string Name = "users";
 
                 public static class Indexes
                 {
-                    public const string BotUsername = "bot_username";
+                    public const string UserChat = "user_chat";
                 }
             }
         }

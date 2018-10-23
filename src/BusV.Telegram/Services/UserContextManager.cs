@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System.Linq;
 using System.Threading.Tasks;
+using BusV.Ops;
 using BusV.Telegram.Models;
 using BusV.Telegram.Models.Cache;
 using Telegram.Bot.Framework.Abstractions;
@@ -41,7 +42,7 @@ namespace BusV.Telegram.Services
 
         public async Task<bool> ReplyWithSetupInstructionsIfNotAlreadySetAsync(IBot bot, Update update)
         {
-            var userChat = (UserChat)update;
+            var userChat = update.ToUserchat();
 
             if (await ShouldSendInstructionsToAsync(userChat))
             {
@@ -55,7 +56,7 @@ namespace BusV.Telegram.Services
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="bot"></param>
         /// <param name="update"></param>
@@ -69,7 +70,7 @@ namespace BusV.Telegram.Services
 
             IReplyMarkup keyboardMarkup = new ReplyKeyboardMarkup(new[]
             {
-                new KeyboardButton("Share my location") {RequestLocation = true},
+                new KeyboardButton("Share my location") { RequestLocation = true },
             }, true, true);
 
             await bot.Client.SendTextMessageAsync(update.GetChatId(),
@@ -82,7 +83,7 @@ namespace BusV.Telegram.Services
                 ParseMode.Markdown,
                 replyMarkup: keyboardMarkup);
 
-            var userChat = (UserChat)update;
+            var userChat = (UserChat) update.ToUserchat();
 
             var cacheContext = GetOrCreateCacheEntryFor(userChat);
             cacheContext.ProfileSetupInstructionsSent = true;
@@ -96,7 +97,7 @@ namespace BusV.Telegram.Services
             IReplyMarkup replyMarkup = await GetCountriesReplyMarkupAsync();
 
             await bot.Client.EditMessageTextAsync(chatId, msgId, Constants.CountryMessage,
-                replyMarkup: (InlineKeyboardMarkup)replyMarkup);
+                replyMarkup: (InlineKeyboardMarkup) replyMarkup);
         }
 
         public async Task ReplyQueryWithRegionsForCountryAsync(IBot bot, Update update, string country)
@@ -131,13 +132,13 @@ namespace BusV.Telegram.Services
                 msgId,
                 $"Select an agency in *{region}*",
                 ParseMode.Markdown,
-                replyMarkup: (InlineKeyboardMarkup)replyMarkup
+                replyMarkup: (InlineKeyboardMarkup) replyMarkup
             ).ConfigureAwait(false);
         }
 
         public async Task ReplyWithSettingUserAgencyAsync(IBot bot, Update update, int agencyId)
         {
-            UserChat userChat = (UserChat)update;
+            UserChat userChat = update.ToUserchat();
             var chatId = update.GetChatId();
             int msgId = update.GetMessageId();
 
@@ -166,7 +167,7 @@ namespace BusV.Telegram.Services
             }
             else
             {
-                _cache.TryGetValue(userChat, out CacheUserContext cacheContext);
+                _cache.TryGetValue(userChat, out CacheUserContext2 cacheContext);
                 shouldSend = !cacheContext?.ProfileSetupInstructionsSent ?? true;
             }
 
@@ -175,7 +176,7 @@ namespace BusV.Telegram.Services
 
         public async Task<bool> TryReplyIfOldSetupInstructionMessageAsync(IBot bot, Update update)
         {
-            UserChat userChat = (UserChat)update;
+            UserChat userChat = (UserChat) update.ToUserchat();
             var chatId = update.GetChatId();
             var msgId = update.GetMessageId();
 
@@ -285,13 +286,14 @@ namespace BusV.Telegram.Services
             return inlineMarkup;
         }
 
-        private CacheUserContext GetOrCreateCacheEntryFor(UserChat userChat)
+        private CacheUserContext2 GetOrCreateCacheEntryFor(UserChat userChat)
         {
-            if (!_cache.TryGetValue(userChat, out CacheUserContext cacheContext))
+            if (!_cache.TryGetValue(userChat, out CacheUserContext2 cacheContext))
             {
-                cacheContext = new CacheUserContext();
+                cacheContext = new CacheUserContext2();
                 _cache.Set(userChat, cacheContext);
             }
+
             return cacheContext;
         }
 

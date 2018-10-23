@@ -1,12 +1,14 @@
 ﻿using System.Threading.Tasks;
+using BusV.Ops;
+using BusV.Telegram.Models;
 using BusV.Telegram.Models.Cache;
 
 namespace BusV.Telegram.Services
 {
     public interface ICachingService
     {
-        CacheUserContext this[UserChat userChat] { get; set; }
+        CacheUserContext2 this[UserChat userChat] { get; set; }
 
-        Task<CacheUserContext> GetCachedContextAsync(UserChat userchat);
+        Task<CacheUserContext2> GetCachedContextAsync(UserChat userchat);
     }
 }

@@ -7,7 +7,7 @@ namespace BusV.Data
     /// <summary>
     /// Contains operations to work with an agency collection
     /// </summary>
-    public interface IAgencyRepository
+    public interface IAgencyRepo
     {
         /// <summary>
         /// Creates a new agency document
@@ -28,6 +28,17 @@ namespace BusV.Data
         /// <returns>Agency having the tag or null if doesn't exist</returns>
         Task<Agency> GetByTagAsync(
             string tag,
+            CancellationToken cancellationToken = default
+        );
+
+        Task<Agency[]> GetByLocationAsync(
+            float latitude,
+            float longitude,
+            CancellationToken cancellationToken = default
+        );
+
+        Task UpdateAsync(
+            Agency agency,
             CancellationToken cancellationToken = default
         );
 

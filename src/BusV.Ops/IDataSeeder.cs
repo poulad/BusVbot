@@ -12,7 +12,7 @@ namespace BusV.Ops
             CancellationToken cancellationToken = default
         );
 
-        Task UpdateRoutesForAgencyAsync(
+        Task<(double MinLat, double MaxLat, double MinLon, double MaxLon)> UpdateRoutesForAgencyAsync(
             string agencyTag,
             CancellationToken cancellationToken = default
         );

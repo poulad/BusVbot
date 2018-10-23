@@ -29,22 +29,20 @@ namespace BusV.Telegram.Extensions
 
             string dbName = new ConnectionString(connectionString).DatabaseName;
             services.AddSingleton<IMongoClient, MongoClient>(_ => new MongoClient(connectionString));
-            services.AddTransient<IMongoDatabase>(provider =>
+            services.AddTransient(provider =>
                 provider.GetRequiredService<IMongoClient>().GetDatabase(dbName)
             );
 
-            services.AddTransient<IMongoCollection<Agency>>(provider =>
-                provider.GetRequiredService<IMongoDatabase>()
-                    .GetCollection<Agency>(BusV.Data.Constants.Collections.Agencies.Name)
+            services.AddTransient<IAgencyRepo, AgencyRepo>();
+            services.AddTransient(provider => provider.GetRequiredService<IMongoDatabase>()
+                .GetCollection<Agency>(BusV.Data.Constants.Collections.Agencies.Name)
             );
 
-//            services.AddTransient<IMongoCollection<Registration>>(provider =>
-//                provider.GetRequiredService<IMongoDatabase>()
-//                    .GetCollection<Registration>(BusV.Data.Constants.Collections.Registrations.Name)
-//            );
+            services.AddTransient<IUserProfileRepo, UserProfileRepo>();
+            services.AddTransient(provider => provider.GetRequiredService<IMongoDatabase>()
+                .GetCollection<UserProfile>(BusV.Data.Constants.Collections.Users.Name)
+            );
 
-            services.AddTransient<IAgencyRepository, AgencyRepository>();
-//            services.AddTransient<IUserRegistrationRepository, UserRegistrationRepository>();
 
             Initializer.RegisterClassMaps();
         }

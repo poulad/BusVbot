@@ -8,13 +8,13 @@ using MongoDB.Driver;
 namespace BusV.Data
 {
     /// <inheritdoc />
-    public class AgencyRepository : IAgencyRepository
+    public class AgencyRepo : IAgencyRepo
     {
         private readonly IMongoCollection<Agency> _collection;
 
         private FilterDefinitionBuilder<Agency> Filter => Builders<Agency>.Filter;
 
-        public AgencyRepository(
+        public AgencyRepo(
             IMongoCollection<Agency> collection
         )
         {
@@ -57,6 +57,48 @@ namespace BusV.Data
                 .ConfigureAwait(false);
 
             return agency;
+        }
+
+        /// <inheritdoc />
+        public async Task<Agency[]> GetByLocationAsync(
+            float latitude,
+            float longitude,
+            CancellationToken cancellationToken = default
+        )
+        {
+            var filter = Filter.And(
+                Filter.Lte(a => a.MinLatitude, latitude),
+                Filter.Gte(a => a.MaxLatitude, latitude),
+                Filter.Lte(a => a.MinLongitude, longitude),
+                Filter.Gte(a => a.MaxLongitude, longitude)
+            );
+
+            var agencies = await _collection
+                .Find(filter)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return agencies.ToArray();
+        }
+
+        /// <inheritdoc />
+        public async Task UpdateAsync(
+            Agency agency,
+            CancellationToken cancellationToken = default
+        )
+        {
+            var filter = Filter.Eq("_id", new ObjectId(agency.Id));
+
+            var updateDef = Builders<Agency>.Update;
+            var update = updateDef.Combine(
+                updateDef.Set(a => a.MinLatitude, agency.MinLatitude),
+                updateDef.Set(a => a.MaxLatitude, agency.MaxLatitude),
+                updateDef.Set(a => a.MaxLongitude, agency.MaxLongitude),
+                updateDef.Set(a => a.MinLongitude, agency.MinLongitude)
+            );
+
+            await _collection.UpdateOneAsync(filter, update, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
         }
 
 //        /// <inheritdoc />

@@ -18,7 +18,7 @@ namespace BusV.Telegram.Handlers.Commands
 
         public override async Task HandleAsync(IUpdateContext context, UpdateDelegate next, string[] args)
         {
-            var userChat = (UserChat)context.Update;
+            var userchat = context.Update.ToUserchat();
 //            if (await _userContextManager.ShouldSendInstructionsToAsync(userChat))
             {
                 await context.Bot.Client.SendTextMessageAsync(
