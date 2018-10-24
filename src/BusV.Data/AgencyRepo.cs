@@ -82,6 +82,24 @@ namespace BusV.Data
         }
 
         /// <inheritdoc />
+        public async Task<Agency[]> GetByCountryAsync(
+            string country,
+            CancellationToken cancellationToken = default
+        )
+        {
+            // ToDo take an argument to allow pagination e.g. (after: a34fd, take: 4)
+
+            var filter = Filter.Regex(a => a.Country, new BsonRegularExpression($"^{country}$", "i"));
+
+            var agencies = await _collection
+                .Find(filter)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return agencies.ToArray();
+        }
+
+        /// <inheritdoc />
         public async Task UpdateAsync(
             Agency agency,
             CancellationToken cancellationToken = default

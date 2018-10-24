@@ -31,7 +31,7 @@
 
                 public const string CountryPrefix = UserProfileSetupPrefix + "c:"; // ups/c:{country}
 
-                public const string RegionPrefix = UserProfileSetupPrefix + "r:"; // ups/r:{name}
+                public const string RegionPrefix = UserProfileSetupPrefix + "r:"; // ups/r:{region}
 
                 public const string AgencyPrefix = UserProfileSetupPrefix + "a:"; // ups/a:{id}
 

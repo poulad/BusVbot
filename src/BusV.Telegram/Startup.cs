@@ -36,6 +36,7 @@ namespace BusV.Telegram
                 .AddScoped<StartCommand>()
                 .AddScoped<HelpCommand>()
                 .AddScoped<UserProfileSetupHandler>()
+                .AddScoped<UserProfileSetupMenuHandler>()
 //                .AddScoped<BusCommand>()
 //                .AddScoped<BusDirectionCallbackQueryHandler>()
 //                .AddScoped<PredictionRefreshCqHandler>()
@@ -103,7 +104,8 @@ namespace BusV.Telegram
                     .UseCommand<StartCommand>("start")
                 )
                 // ensure the user has a profile loaded for the rest of the handlers
-                .Use<UserProfileSetupHandler>()
+                .UseWhen<UserProfileSetupHandler>(UserProfileSetupHandler.CanHandle)
+                .UseWhen<UserProfileSetupMenuHandler>(UserProfileSetupMenuHandler.CanHandle)
         /*
                 // for new messages...
                 .MapWhen(When.NewMessage, msgBranch => msgBranch

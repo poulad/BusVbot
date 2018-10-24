@@ -37,6 +37,11 @@ namespace BusV.Data
             CancellationToken cancellationToken = default
         );
 
+        Task<Agency[]> GetByCountryAsync(
+            string country,
+            CancellationToken cancellationToken = default
+        );
+
         Task UpdateAsync(
             Agency agency,
             CancellationToken cancellationToken = default

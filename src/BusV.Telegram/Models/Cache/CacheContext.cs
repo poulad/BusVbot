@@ -2,6 +2,11 @@
 {
     public class CacheContext
     {
+        public UserProfileSetupCache ProfileSetup { get; set; }
+    }
+
+    public class UserProfileSetupCache
+    {
         public bool IsInstructionsSent { get; set; }
     }
 }

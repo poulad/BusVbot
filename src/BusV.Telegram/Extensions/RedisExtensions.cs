@@ -13,11 +13,7 @@ namespace BusV.Telegram.Extensions
             IConfigurationSection dataSection
         )
         {
-            services.AddDistributedRedisCache(options =>
-            {
-                options.Configuration = "localhost";
-                options.InstanceName = "busvbot";
-            });
+            services.AddDistributedRedisCache(options => { options.Configuration = "localhost"; });
         }
     }
 }

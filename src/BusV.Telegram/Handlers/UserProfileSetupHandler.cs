@@ -5,7 +5,6 @@ using BusV.Data;
 using BusV.Data.Entities;
 using BusV.Ops;
 using BusV.Telegram.Models.Cache;
-using BusV.Telegram.Services;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot.Framework.Abstractions;
@@ -23,8 +22,6 @@ namespace BusV.Telegram.Handlers
         private readonly IUserProfileRepo _userProfileRepo;
 
         private readonly IDistributedCache _cache;
-
-        private readonly UserContextManager _userContextManager;
 
         private readonly ILocationService _locationService;
 
@@ -44,17 +41,39 @@ namespace BusV.Telegram.Handlers
         }
 
         /// <summary>
+        /// Determines whether this handler can operate on the given bot update.
+        /// It can handle the update when userchat info is available, and either a callback query or a
+        /// location(Location or Text) is sent.
+        /// </summary>
+        public static bool CanHandle(IUpdateContext context)
+        {
+            bool canHandle;
+            var userchat = context.Update.ToUserchat();
+
+            if (userchat is null)
+                canHandle = false;
+            else if (context.Update.Message?.Location != null)
+                canHandle = true;
+            // ToDo don't parse text or find better regex for geolocation in text
+            else if (context.Update.Message?.Text != null)
+                canHandle = true;
+            else if (context.Update.CallbackQuery?.Data != null)
+                canHandle = context.Update.CallbackQuery.Data.StartsWith(
+                    Constants.CallbackQueries.UserProfileSetup.UserProfileSetupPrefix
+                );
+            else
+                canHandle = false;
+
+            return canHandle;
+        }
+
+        /// <summary>
         /// Gets user profile and inserts it into the context items.
         /// If user does not have a profile yet, instructs user to set it up.
         /// </summary>
         public async Task HandleAsync(IUpdateContext context, UpdateDelegate next)
         {
             var userchat = context.Update.ToUserchat();
-            if (userchat is null)
-            {
-                await next(context).ConfigureAwait(false);
-                return;
-            }
 
             var userProfile = await _userProfileRepo.GetByUserchatAsync(
                 userchat.UserId.ToString(),
@@ -75,7 +94,10 @@ namespace BusV.Telegram.Handlers
                     await SendInstructionsAsync(context.Bot, userchat.ChatId)
                         .ConfigureAwait(false);
 
-                    var newContext = new CacheContext { IsInstructionsSent = true };
+                    var newContext = new CacheContext
+                    {
+                        ProfileSetup = new UserProfileSetupCache { IsInstructionsSent = true }
+                    };
                     await _cache.SetAsync(userchat, newContext)
                         .ConfigureAwait(false);
                 }
@@ -130,43 +152,27 @@ namespace BusV.Telegram.Handlers
             }
         }
 
-        public async Task HandleCallbackQuery(IBot bot, Update update, string query)
+        private async Task SendInstructionsAsync(IBot bot, ChatId chat)
         {
-            if (await _userContextManager.TryReplyIfOldSetupInstructionMessageAsync(bot, update))
-            {
-                return;
-            }
+            IReplyMarkup inlineMarkup = UserProfileSetupMenuHandler.CreateCountriesInlineKeyboard();
 
-            if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.CountryPrefix))
+            await bot.Client.SendTextMessageAsync(
+                chat,
+                "Select a country and then a region to find your local transit agency",
+                replyMarkup: inlineMarkup
+            ).ConfigureAwait(false);
+
+            IReplyMarkup keyboardMarkup = new ReplyKeyboardMarkup(new[]
             {
-                string country =
-                    query.TrimStart(Constants.CallbackQueries.UserProfileSetup.CountryPrefix.ToCharArray());
-                await _userContextManager.ReplyQueryWithRegionsForCountryAsync(bot, update, country);
-            }
-            else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.RegionPrefix))
-            {
-                string region = query.Replace(Constants.CallbackQueries.UserProfileSetup.RegionPrefix,
-                    string.Empty);
-                await _userContextManager.ReplyQueryWithAgenciesForRegionAsync(bot, update, region);
-            }
-            else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.AgencyPrefix))
-            {
-                string agencyIdStr = query.Replace(Constants.CallbackQueries.UserProfileSetup.AgencyPrefix,
-                    string.Empty);
-                int agencyId = int.Parse(agencyIdStr);
-                await _userContextManager.ReplyWithSettingUserAgencyAsync(bot, update, agencyId);
-            }
-            else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.BackToCountries))
-            {
-                await _userContextManager.ReplyQueryWithCountriesAsync(bot, update);
-            }
-            else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix))
-            {
-                string country =
-                    query.Replace(Constants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix,
-                        string.Empty);
-                await _userContextManager.ReplyQueryWithRegionsForCountryAsync(bot, update, country);
-            }
+                new KeyboardButton("Share my location") { RequestLocation = true },
+            }, true, true);
+
+            await bot.Client.SendTextMessageAsync(
+                chat,
+                "or *Share your location* so I can find it for you",
+                ParseMode.Markdown,
+                replyMarkup: keyboardMarkup
+            ).ConfigureAwait(false);
         }
 
         private async Task HandleLocationUpdate(IBot bot, ChatId chat, Location location)
@@ -174,15 +180,15 @@ namespace BusV.Telegram.Handlers
             var agencies = await _locationService.FindAgenciesForLocationAsync(location.Latitude, location.Longitude)
                 .ConfigureAwait(false);
 
-            string agenciesTitles = string.Join("\n", agencies.Select(a => $"{a.Title} in {a.Region}, {a.Country}"));
-
             string text;
+
             IReplyMarkup replyMarkup;
             if (agencies.Length == 0)
             {
                 text = "Sorry. I didn't find any transit agency nearby.";
-                replyMarkup = new ReplyKeyboardRemove();
+                replyMarkup = null;
             }
+
             else if (agencies.Length == 1)
             {
                 var a = agencies[0];
@@ -191,13 +197,12 @@ namespace BusV.Telegram.Handlers
 
                 // ToDo set agency automatically and end profile set up
             }
+
             else
             {
                 text = $"I found {agencies.Length} agencies around you.";
-                if (agencies.Length > 3)
-                {
-                    text += " Here are the top 3.";
-                }
+                if (agencies.Length > 3) text += " Here are the top 3:";
+                text += "\n\n_click on one to choose it._";
 
                 var inlineButtons = agencies
                         .Take(3)
@@ -220,29 +225,6 @@ namespace BusV.Telegram.Handlers
 
             await bot.Client.SendTextMessageAsync(chat, text, ParseMode.Markdown, replyMarkup: replyMarkup)
                 .ConfigureAwait(false);
-        }
-
-        private async Task SendInstructionsAsync(IBot bot, ChatId chat)
-        {
-//            IReplyMarkup inlineMarkup = await GetCountriesReplyMarkupAsync();
-
-            await bot.Client.SendTextMessageAsync(
-                chat,
-                "Select a country and then a region to find your local transit agency"
-//                , replyMarkup: inlineMarkup
-            );
-
-            IReplyMarkup keyboardMarkup = new ReplyKeyboardMarkup(new[]
-            {
-                new KeyboardButton("Share my location") { RequestLocation = true },
-            }, true, true);
-
-            await bot.Client.SendTextMessageAsync(
-                chat,
-                "or *Share your location* so I can find it for you",
-                ParseMode.Markdown,
-                replyMarkup: keyboardMarkup
-            ).ConfigureAwait(false);
         }
     }
 }
