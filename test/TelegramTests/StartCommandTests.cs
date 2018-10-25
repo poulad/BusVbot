@@ -20,7 +20,7 @@ namespace TelegramTests
             _factory = factory;
         }
 
-        [OrderedFact(DisplayName = "Should reply with start instructions")]
+        [OrderedFact(DisplayName = "Should reply with the start instructions")]
         public async Task Should_Reply_Start_Instructions()
         {
             string update = @"{

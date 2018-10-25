@@ -17,11 +17,12 @@ namespace TelegramTests.Shared
         {
             MockBotClient = new Mock<ITelegramBotClient>();
 
-            // Skip setting the webhook
+            // Mock setting the webhook by default
             MockBotClient
-                .Setup(client =>
-                    client.SetWebhookAsync(It.IsAny<string>(), default, default, default, default)
-                )
+                .Setup(client => client.SetWebhookAsync(
+                    "https://busvbot.herokuapp.com/api/bots/1234567:4TT8bAc8GHUspu3ERYn-KGcvsvGB9u_n4ddy/webhook",
+                    default, default, default, default
+                ))
                 .Returns(Task.CompletedTask);
         }
 
@@ -33,6 +34,7 @@ namespace TelegramTests.Shared
 
         private void ConfigureServices(IServiceCollection services)
         {
+            // Replace BusVbot with its mock
             services.AddTransient<BusVbot, MockBot>(_ => new MockBot(MockBotClient));
         }
     }
