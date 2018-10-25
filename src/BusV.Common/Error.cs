@@ -1,4 +1,4 @@
-﻿namespace BusV.Framework
+﻿namespace BusV
 {
     public class Error
     {

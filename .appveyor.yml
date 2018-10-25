@@ -8,3 +8,5 @@ configuration:
 
 build:
   project: BusVbot.sln
+
+test: off

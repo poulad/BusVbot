@@ -8,6 +8,6 @@
         <PackageReference Include="MongoDB.Driver" Version="2.7.0" />
     </ItemGroup>
     <ItemGroup>
-      <ProjectReference Include="..\BusV.Framework\BusV.Framework.csproj" />
+      <ProjectReference Include="..\BusV.Common\BusV.Common.csproj" />
     </ItemGroup>
 </Project>
