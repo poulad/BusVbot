@@ -82,11 +82,12 @@ namespace BusV.Telegram
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.EnsureDatabaseSeededAsync();
+                app.EnsureDatabaseSeeded();
                 app.UseTelegramBotLongPolling<BusVbot>(ConfigureBot(), startAfter: TimeSpan.FromSeconds(2));
             }
             else
             {
+                app.EnsureDatabaseSchema();
                 app.UseTelegramBotWebhook<BusVbot>(ConfigureBot());
                 app.EnsureWebhookSet<BusVbot>();
             }

@@ -9,6 +9,7 @@ namespace TelegramTests.Shared
             "channel updates",
             "start command",
             "user profile setup",
+            "user profile setup menu",
         };
 
         public TestCollectionOrderer()

@@ -1,10 +1,8 @@
-using System;
-using System.Linq.Expressions;
 using Newtonsoft.Json.Linq;
 using Xunit;
-using Xunit.Sdk;
 
-namespace Framework.Assertions
+// ReSharper disable once CheckNamespace
+namespace Framework
 {
     public static class Asserts
     {
@@ -19,22 +17,6 @@ namespace Framework.Assertions
             {
                 // throws an exception with a consistent message from xUnit
                 Assert.Equal(expected, actual);
-            }
-        }
-
-        public static Expression<Func<T, bool>> JsonEqual<T>(T expected) =>
-            actual => _JsonEqual(expected, actual);
-
-        private static bool _JsonEqual<T>(T expected, T actual)
-        {
-            try
-            {
-                JsonEqual(expected, actual);
-                return true;
-            }
-            catch (AssertActualExpectedException)
-            {
-                return false;
             }
         }
     }

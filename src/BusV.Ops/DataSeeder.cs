@@ -66,9 +66,13 @@ namespace BusV.Ops
                     mongoAgency = Converter.FromNextBusAgency(nextbusAgency);
 
                     // ToDo find a better way to assign countries
-                    if (mongoAgency.Tag.Equals("ttc", StringComparison.OrdinalIgnoreCase))
+                    if (new[] { "Quebec", "Ontario" }.Contains(mongoAgency.Region))
                     {
                         mongoAgency.Country = "Canada";
+                    }
+                    else if (mongoAgency.Region == "Other")
+                    {
+                        mongoAgency.Country = "Test";
                     }
                     else
                     {

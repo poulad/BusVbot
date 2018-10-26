@@ -42,33 +42,14 @@ namespace BusV.Data
             CancellationToken cancellationToken = default
         );
 
+        Task<Agency[]> GetByRegionAsync(
+            string region,
+            CancellationToken cancellationToken = default
+        );
+
         Task UpdateAsync(
             Agency agency,
             CancellationToken cancellationToken = default
         );
-
-//        /// <summary>
-//        /// Gets a single chat bot via its unique identifier
-//        /// </summary>
-//        /// <param name="id">Object ID in the database</param>
-//        /// <param name="cancellationToken">The cancellation token to cancel operation</param>
-//        /// <returns>Chat bot having the ID or null if doesn't exist</returns>
-//        Task<Agency> GetByIdAsync(
-//            string id,
-//            CancellationToken cancellationToken = default
-//        );
-//
-
-//
-//        /// <summary>
-//        /// Gets a single chat bot via its unique token
-//        /// </summary>
-//        /// <param name="token">Authentication token for the bot</param>
-//        /// <param name="cancellationToken">The cancellation token to cancel operation</param>
-//        /// <returns>Chat bot having the token or null if doesn't exist</returns>
-//        Task<Agency> GetByTokenAsync(
-//            string token,
-//            CancellationToken cancellationToken = default
-//        );
     }
 }

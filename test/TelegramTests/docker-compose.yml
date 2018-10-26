@@ -16,16 +16,6 @@ services:
     networks:
       - busvbot-network
 
-  # mongo-script:
-  #   image: mongo
-  #   depends_on:
-  #     - mongo
-  #   command: mongo --nodb /app/mongo.js
-  #   volumes:
-  #     - ./mongo.js:/app/mongo.js:ro
-  #   networks:
-  #     - busvbot-network
-
 networks:
   busvbot-network:
     driver: bridge

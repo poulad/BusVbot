@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BusV.Data;
+using BusV.Data.Entities;
 using BusV.Telegram.Extensions;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot.Framework.Abstractions;
@@ -31,15 +33,13 @@ namespace BusV.Telegram.Handlers
         }
 
         public static bool CanHandle(IUpdateContext context) =>
-            context.Update.CallbackQuery?.Data?.StartsWith(
-                Constants.CallbackQueries.UserProfileSetup.UserProfileSetupPrefix
-            ) == true;
+            context.Update.CallbackQuery?.Data?.StartsWith("ups/") == true;
 
         public async Task HandleAsync(IUpdateContext context, UpdateDelegate next)
         {
             string query = context.Update.CallbackQuery.Data;
 
-            // todo
+            // ToDo if user already has profile set, ignore this
             // if (await _userContextManager.TryReplyIfOldSetupInstructionMessageAsync(bot, update)) return;
 
             InlineKeyboardMarkup inlineKeyboard = null;
@@ -58,12 +58,14 @@ namespace BusV.Telegram.Handlers
 
                 inlineKeyboard = CreateRegionsInlineKeyboard(regions);
             }
-            else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.RegionPrefix))
+            else if (query.StartsWith("ups/r:"))
             {
-                // ToDo show agencies for a region
-//                string region = query.Replace(Constants.CallbackQueries.UserProfileSetup.RegionPrefix,
-//                    string.Empty);
-//                await _userContextManager.ReplyQueryWithAgenciesForRegionAsync(bot, update, region);
+                _logger.LogTrace("Updating the menu with all agencies in the region");
+                string region = query.Substring("ups/r:".Length);
+                var agencies = await _agencyRepo.GetByRegionAsync(region)
+                    .ConfigureAwait(false);
+
+                inlineKeyboard = CreateAgenciesInlineKeyboard(agencies);
             }
             else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.AgencyPrefix))
             {
@@ -146,6 +148,17 @@ namespace BusV.Telegram.Handlers
             new InlineKeyboardMarkup(
                 regions
                     .Select(r => new[] { InlineKeyboardButton.WithCallbackData(r, $"ups/r:{r}") })
+                    .Prepend(new[] { InlineKeyboardButton.WithCallbackData("🌐 Back to countries", "ups/c") })
+            );
+
+        // ToDo paginate
+        public static InlineKeyboardMarkup CreateAgenciesInlineKeyboard(IEnumerable<Agency> agencies) =>
+            new InlineKeyboardMarkup(
+                agencies
+                    .Select(a => new[]
+                    {
+                        InlineKeyboardButton.WithCallbackData(a.ShortTitle ?? a.Title, $"ups/a:{a.Tag}")
+                    })
                     .Prepend(new[] { InlineKeyboardButton.WithCallbackData("🌐 Back to countries", "ups/c") })
             );
     }

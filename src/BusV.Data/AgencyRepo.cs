@@ -100,6 +100,24 @@ namespace BusV.Data
         }
 
         /// <inheritdoc />
+        public async Task<Agency[]> GetByRegionAsync(
+            string region,
+            CancellationToken cancellationToken = default
+        )
+        {
+            // ToDo take an argument to allow pagination e.g. (after: a34fd, take: 4)
+
+            var filter = Filter.Regex(a => a.Region, new BsonRegularExpression($"^{region}$", "i"));
+
+            var agencies = await _collection
+                .Find(filter)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return agencies.ToArray();
+        }
+
+        /// <inheritdoc />
         public async Task UpdateAsync(
             Agency agency,
             CancellationToken cancellationToken = default
@@ -118,37 +136,5 @@ namespace BusV.Data
             await _collection.UpdateOneAsync(filter, update, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
         }
-
-//        /// <inheritdoc />
-//        public async Task<ChatBot> GetByIdAsync(
-//            string id,
-//            CancellationToken cancellationToken = default
-//        )
-//        {
-//            var filter = Filter.Eq(_ => _.Id, id);
-//
-//            ChatBot bot = await _collection
-//                .Find(filter)
-//                .SingleOrDefaultAsync(cancellationToken)
-//                .ConfigureAwait(false);
-//
-//            return bot;
-//        }
-//
-
-//
-//        /// <inheritdoc />
-//        public async Task<ChatBot> GetByTokenAsync(
-//            string token,
-//            CancellationToken cancellationToken = default
-//        )
-//        {
-//            var filter = Builders<ChatBot>.Filter.Eq(b => b.Token, token);
-//            var bot = await _collection.Find(filter)
-//                .SingleOrDefaultAsync(cancellationToken)
-//                .ConfigureAwait(false);
-//
-//            return bot;
-//        }
     }
 }

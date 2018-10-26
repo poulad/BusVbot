@@ -44,10 +44,10 @@ namespace TelegramTests
 
             _fixture.MockBotClient
                 .Setup(botClient => botClient.SendTextMessageAsync(
-                    It.Is<ChatId>(id => id == "333"),
-                    "Hello Alice!\n" +
-                    "BusV bot is at your service ☺\n\n" +
-                    "Try /help command to get some info",
+                    /* chatId: */ Is.SameJson<ChatId>("333"),
+                    /* text: */ "Hello Alice!\n" +
+                                "BusV bot is at your service ☺\n\n" +
+                                "Try /help command to get some info",
                     ParseMode.Markdown,
                     default, default, default, default, default
                 ))
