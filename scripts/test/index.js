@@ -1,15 +1,13 @@
-const $ = require('shelljs')
+const $ = require('shelljs');
+const path = require('path');
 require('../logging')
 
 $.config.fatal = true
 
-const unit_test_script = require('./unit_tests')
 
 try {
-    unit_test_script.run_unit_tests('Release')
+    require('./telegram.integration.test')
 } catch (e) {
     console.error(e)
     process.exit(1)
 }
-
-console.info(`Tests succeeded.`)

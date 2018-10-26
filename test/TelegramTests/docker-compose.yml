@@ -1,0 +1,31 @@
+version: '2'
+
+services:
+
+  mongo:
+    image: mongo
+    ports:
+      - 27017:27017
+    networks:
+      - busvbot-network
+
+  redis:
+    image: redis
+    ports:
+      - 6379:6379
+    networks:
+      - busvbot-network
+
+  # mongo-script:
+  #   image: mongo
+  #   depends_on:
+  #     - mongo
+  #   command: mongo --nodb /app/mongo.js
+  #   volumes:
+  #     - ./mongo.js:/app/mongo.js:ro
+  #   networks:
+  #     - busvbot-network
+
+networks:
+  busvbot-network:
+    driver: bridge

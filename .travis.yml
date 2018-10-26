@@ -20,6 +20,17 @@ jobs:
       env:
         # DEPLOY_SETTINGS_JSON='{"CI":[{"type":"docker","options":{"user":"","pass":""}}]}'
         - secure: axsfNJRvzMxFJ82qM1ySMXGXK3H5Z/WyZYATTZ1Hb7y6YdyJiK02V2eosAHl7dBOP493/8lpi6p9AzjzKC0kG3OldPcXz+oazVHj7Y0uLpfeg6tkHWqedDek2q+WbykmKwIuH8AkXZw4bXEVp78TADCCtEtQLaSmMFSifApkttiUjztR3mb8MSZ9CjLIi8bdlR1pV9DX9CzwzNZFFwPmnwTPboSey7qvu23/bIjdZh+AXCVX1tLe5yRle7aganjekkE1lm4VrdAH1EwJo+m9BGQombVIWn/HfM3cbHsoReAObDqeB4oIZ4HzOUW3ANa1788JeTak/71p0iSmAhUvtQOOMjEKDY1UmHrZRvwq09jHLUnTPRlJboUn0nnTyR67D8nllApWm5+LFYq912jOmDdBESC64yY965K21XQ0nMo2fQRddx8tMoupq2CvGchV5pqfKAcVU3mL4pR5Nr3VE/ixd93LLrbsvj39L2JNshKrl6yGzhRype0MES2Jw8V+FXEQPoXMGBpbLP3RMydmOHo7ifKduTn8qlAFOb/NyT6giWw6A+R6EbrYZ+BOpLf+CQv1xZrnMyH3GUWNRaloMBczgWaohqL+3JqHkthk1Re5phswhEsK8pQ65D1FXG+O4y8P1ScaTC7wuLkPCChxYF0p8WUc6+AS3OU8YcG3BOs=
+    - stage: Test
+      name: Unit Tests
+      install: cd scripts && npm ci && cd ..
+      script: echo ToDo
+    - name: "Telegram Bot - Integration Tests"
+      install:
+        - cd scripts && npm ci && cd ..
+        - docker pull poulad/busvbot:unstable-solution
+      env:
+        - image_tag=poulad/busvbot:unstable-solution
+      script: node scripts/test/telegram.integration.test.js
     - stage: Deploy
       name: "Deploy"
       script: skip
