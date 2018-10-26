@@ -92,10 +92,12 @@ namespace BusV.Telegram
                 app.EnsureWebhookSet<BusVbot>();
             }
 
+            app.EnsureRedisConnection();
+
             app.Run(async context => { await context.Response.WriteAsync("Hello World!"); });
         }
 
-        private IBotBuilder ConfigureBot() => // .Use<ExceptionHandler>() // ToDo
+        private IBotBuilder ConfigureBot() => // ToDo .Use<ExceptionHandler>()
             new BotBuilder()
                 // ignore channel posts
                 .MapWhen<ChannelMessageHandler>(When.ChannelPost)

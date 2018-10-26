@@ -69,6 +69,7 @@ namespace BusV.Telegram.Handlers
             }
             else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.AgencyPrefix))
             {
+                return;
                 // ToDo set an agency and notify user
 //                string agencyIdStr = query.Replace(Constants.CallbackQueries.UserProfileSetup.AgencyPrefix,
 //                    string.Empty);

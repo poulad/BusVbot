@@ -6,8 +6,8 @@
     public class RedisOptions
     {
         /// <summary>
-        /// Redis connection string
+        /// Redis connection configuration. For more info see https://stackexchange.github.io/StackExchange.Redis/Configuration
         /// </summary>
-        public string Endpoint { get; set; }
+        public string Configuration { get; set; }
     }
 }

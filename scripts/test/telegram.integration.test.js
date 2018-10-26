@@ -21,7 +21,7 @@ try {
                 ConnectionString: "mongodb://mongo/busvbot-telegram-tests"
             },
             Redis: {
-                Endpoint: "redis"
+                Configuration: "redis"
             }
         }))
 

@@ -33,7 +33,6 @@ namespace BusV.Telegram.Extensions
         {
             var logger = app.ApplicationServices.GetRequiredService<ILogger<Startup>>();
 
-
             using (IServiceScope scope = app.ApplicationServices.CreateScope())
             {
                 var database = scope.ServiceProvider.GetRequiredService<IMongoDatabase>();
