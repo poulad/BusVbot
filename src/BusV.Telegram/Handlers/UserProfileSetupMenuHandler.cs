@@ -6,6 +6,7 @@ using BusV.Data;
 using BusV.Data.Entities;
 using BusV.Telegram.Extensions;
 using Microsoft.Extensions.Logging;
+using Telegram.Bot.Exceptions;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -125,22 +126,28 @@ namespace BusV.Telegram.Handlers
                 context.Update.CallbackQuery.Message.MessageId,
                 inlineKeyboard
             ).ConfigureAwait(false);
+
+            try
+            {
+                await context.Bot.Client.AnswerCallbackQueryAsync(
+                    context.Update.CallbackQuery.Id
+                ).ConfigureAwait(false);
+            }
+            catch (BadRequestException e)
+                when (e.Message.Contains("inline_query_id"))
+            {
+                _logger.LogWarning(e, "It took too long to answer the callback query");
+            }
         }
 
-//        string[] countries = { "Canada", "USA" };
-//        inlineKeyboard = new InlineKeyboardMarkup(
-//            countries
-//                .Select(UserProfileSetupMenuHandler.CreateCountriesInlineKeyboard)
-//        .Select(b => new[] { b })
-//        );
-
-//        // ToDo read countries from the db
+        // ToDo read countries from the db
+        // ToDo remove Test country!
         public static InlineKeyboardMarkup CreateCountriesInlineKeyboard() =>
             new InlineKeyboardMarkup(
-                new[] { "Canada", "USA" }
+                new[] { "Canada", "USA", "Test" }
                     .Select(c => new[]
                     {
-                        InlineKeyboardButton.WithCallbackData($"{c} {c.FindCountryFlagEmoji()}", $"ups/c:{c}")
+                        InlineKeyboardButton.WithCallbackData($"{c.FindCountryFlagEmoji()} {c}", $"ups/c:{c}")
                     })
             );
 

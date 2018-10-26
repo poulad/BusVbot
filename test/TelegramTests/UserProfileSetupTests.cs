@@ -60,8 +60,9 @@ namespace TelegramTests
                         default, default, default, default,
                         /* replyMarkup: */ Is.SameJson<IReplyMarkup>(@"{
                         inline_keyboard: [
-                            [{ text: ""Canada 🇨🇦"", callback_data: ""ups/c:Canada"" }],
-                            [{ text: ""USA 🇺🇸"", callback_data: ""ups/c:USA"" }]
+                            [{ text: ""🇨🇦 Canada"", callback_data: ""ups/c:Canada"" }],
+                            [{ text: ""🇺🇸 USA"", callback_data: ""ups/c:USA"" }],
+                            [{ text: ""🏁 Test"", callback_data: ""ups/c:Test"" }]
                         ]
                         }"),
                         default

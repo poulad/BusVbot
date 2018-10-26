@@ -16,13 +16,6 @@
             public const string ValidTtcBusTagRegex = @"^\d{1,3}[a-z]?$";
         }
 
-        public static class FlagEmojis
-        {
-            public const string Canada = "🇨🇦";
-
-            public const string UnitedStates = "🇺🇸";
-        }
-
         public static class CallbackQueries
         {
             public static class UserProfileSetup

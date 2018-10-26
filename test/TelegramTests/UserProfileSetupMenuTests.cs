@@ -76,6 +76,13 @@ namespace TelegramTests
                 ))
                 .ReturnsAsync(null as Message);
 
+            // mock answering the callback query
+            _fixture.MockBotClient
+                .Setup(botClient => botClient.AnswerCallbackQueryAsync(
+                    /* callbackQueryId: */ "5399",
+                    default, default, default, default, default
+                ));
+
             HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
 
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -93,7 +100,7 @@ namespace TelegramTests
             string update = @"{
                 update_id: 1,
                 callback_query: {
-                    id: ""5399"",
+                    id: ""5400"",
                     data: ""ups/r:ontario"",
                     from: {
                         id: 1234,
@@ -138,6 +145,13 @@ namespace TelegramTests
                     default
                 ))
                 .ReturnsAsync(null as Message);
+
+            // mock answering the callback query
+            _fixture.MockBotClient
+                .Setup(botClient => botClient.AnswerCallbackQueryAsync(
+                    /* callbackQueryId: */ "5400",
+                    default, default, default, default, default
+                ));
 
             HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
 

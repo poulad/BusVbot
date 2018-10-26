@@ -47,7 +47,7 @@ namespace BusV.Telegram.Extensions
                     msgId = update.CallbackQuery.Message.MessageId;
                     break;
                 default:
-                    msgId = default(int);
+                    msgId = default;
                     break;
             }
 
@@ -73,10 +73,13 @@ namespace BusV.Telegram.Extensions
                 case "U.S.":
                 case "USA":
                 case "UNITED STATES":
-                    flag = Constants.FlagEmojis.UnitedStates;
+                    flag = "🇺🇸";
                     break;
                 case "CANADA":
-                    flag = Constants.FlagEmojis.Canada;
+                    flag = "🇨🇦";
+                    break;
+                case "TEST":
+                    flag = "🏁";
                     break;
                 default:
                     flag = null;
