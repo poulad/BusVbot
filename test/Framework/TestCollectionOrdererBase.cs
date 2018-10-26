@@ -40,8 +40,11 @@ namespace Framework
 
             foreach (var collectionName in _definedCollections)
             {
-                var collection = testCollections.Single(c => c.DisplayName == collectionName);
-                yield return collection;
+                // not all collections might be selected for testing
+                var collection = testCollections.SingleOrDefault(c => c.DisplayName == collectionName);
+
+                if (collection != null)
+                    yield return collection;
             }
         }
     }

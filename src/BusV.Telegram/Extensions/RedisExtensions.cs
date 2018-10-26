@@ -1,3 +1,4 @@
+using BusV.Telegram.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,7 +14,10 @@ namespace BusV.Telegram.Extensions
             IConfigurationSection dataSection
         )
         {
-            services.AddDistributedRedisCache(options => { options.Configuration = "localhost"; });
+            services.AddDistributedRedisCache(options =>
+            {
+                options.Configuration = dataSection[nameof(RedisOptions.Endpoint)];
+            });
         }
     }
 }

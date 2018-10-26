@@ -30,6 +30,17 @@ namespace BusV.Ops
         }
 
         /// <inheritdoc />
+        public Task<bool> IsEmptyAsync(
+            CancellationToken cancellationToken = default
+        ) =>
+            _agencyRepo
+                .GetByCountryAsync("USA", cancellationToken)
+                .ContinueWith(
+                    t => t.Result.Length == 0,
+                    TaskContinuationOptions.OnlyOnRanToCompletion
+                );
+
+        /// <inheritdoc />
         public async Task UpdateAllAgenciesAsync(
             CancellationToken cancellationToken = default
         )

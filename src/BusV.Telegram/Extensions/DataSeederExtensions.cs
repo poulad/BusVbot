@@ -17,7 +17,11 @@ namespace BusV.Telegram.Extensions
             using (IServiceScope scope = app.ApplicationServices.CreateScope())
             {
                 var seeder = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
-                seeder.UpdateAllAgenciesAsync().GetAwaiter().GetResult();
+                bool isEmpty = seeder.IsEmptyAsync().GetAwaiter().GetResult();
+                if (isEmpty)
+                {
+                    seeder.UpdateAllAgenciesAsync().GetAwaiter().GetResult();
+                }
             }
         }
     }

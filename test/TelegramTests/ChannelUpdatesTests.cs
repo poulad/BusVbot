@@ -8,13 +8,13 @@ using Xunit;
 namespace TelegramTests
 {
     [Collection("channel updates")]
-    public class ChannelUpdatesTests : IClassFixture<WebAppFactory>
+    public class ChannelUpdatesTests : IClassFixture<TestsFixture>
     {
-        private readonly WebAppFactory _factory;
+        private readonly TestsFixture _fixture;
 
-        public ChannelUpdatesTests(WebAppFactory factory)
+        public ChannelUpdatesTests(TestsFixture fixture)
         {
-            _factory = factory;
+            _fixture = fixture;
         }
 
         [OrderedFact(DisplayName = "Should ignore a new channel post")]
@@ -34,12 +34,11 @@ namespace TelegramTests
                 }
             }";
 
-            HttpClient client = _factory.CreateClient();
-            HttpResponseMessage response = await client.PostWebhookUpdateAsync(update);
+            HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
 
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-            _factory.MockBotClient.VerifyAll();
-            _factory.MockBotClient.VerifyNoOtherCalls();
+            _fixture.MockBotClient.VerifyAll();
+            _fixture.MockBotClient.VerifyNoOtherCalls();
         }
 
         [OrderedFact(DisplayName = "Should ignore an edited channel post")]
@@ -60,12 +59,11 @@ namespace TelegramTests
                 }
             }";
 
-            HttpClient client = _factory.CreateClient();
-            HttpResponseMessage response = await client.PostWebhookUpdateAsync(update);
+            HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
 
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-            _factory.MockBotClient.VerifyAll();
-            _factory.MockBotClient.VerifyNoOtherCalls();
+            _fixture.MockBotClient.VerifyAll();
+            _fixture.MockBotClient.VerifyNoOtherCalls();
         }
     }
 }

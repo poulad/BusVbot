@@ -19,13 +19,13 @@ namespace BusV.Telegram.Extensions
             IConfigurationSection dataSection
         )
         {
-            string connectionString = dataSection.GetValue<string>(nameof(DataOptions.ConnectionString));
+            string connectionString = dataSection.GetValue<string>(nameof(MongoOptions.ConnectionString));
             if (string.IsNullOrWhiteSpace(connectionString))
             {
                 throw new ArgumentException($@"Invalid MongoDB connection string: ""{connectionString}"".");
             }
 
-            services.Configure<DataOptions>(dataSection);
+            services.Configure<MongoOptions>(dataSection);
 
             string dbName = new ConnectionString(connectionString).DatabaseName;
             services.AddSingleton<IMongoClient, MongoClient>(_ => new MongoClient(connectionString));

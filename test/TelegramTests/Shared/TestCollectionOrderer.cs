@@ -8,6 +8,7 @@ namespace TelegramTests.Shared
         {
             "channel updates",
             "start command",
+            "user profile setup",
         };
 
         public TestCollectionOrderer()

@@ -1,12 +1,12 @@
 ﻿namespace BusV.Telegram.Options
 {
     /// <summary>
-    /// Contains application settings for connecting to a data store
+    /// Contains application settings for connecting to an MongoDB instance
     /// </summary>
-    public class DataOptions
+    public class MongoOptions
     {
         /// <summary>
-        /// MongoDB connection string 
+        /// MongoDB connection string
         /// </summary>
         public string ConnectionString { get; set; }
     }

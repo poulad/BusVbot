@@ -58,9 +58,7 @@ namespace BusV.Telegram.Handlers
             else if (context.Update.Message?.Text != null)
                 canHandle = true;
             else if (context.Update.CallbackQuery?.Data != null)
-                canHandle = context.Update.CallbackQuery.Data.StartsWith(
-                    Constants.CallbackQueries.UserProfileSetup.UserProfileSetupPrefix
-                );
+                canHandle = context.Update.CallbackQuery.Data.StartsWith("ups/");
             else
                 canHandle = false;
 
@@ -154,12 +152,10 @@ namespace BusV.Telegram.Handlers
 
         private async Task SendInstructionsAsync(IBot bot, ChatId chat)
         {
-            IReplyMarkup inlineMarkup = UserProfileSetupMenuHandler.CreateCountriesInlineKeyboard();
-
             await bot.Client.SendTextMessageAsync(
                 chat,
                 "Select a country and then a region to find your local transit agency",
-                replyMarkup: inlineMarkup
+                replyMarkup: UserProfileSetupMenuHandler.CreateCountriesInlineKeyboard()
             ).ConfigureAwait(false);
 
             IReplyMarkup keyboardMarkup = new ReplyKeyboardMarkup(new[]
@@ -188,7 +184,6 @@ namespace BusV.Telegram.Handlers
                 text = "Sorry. I didn't find any transit agency nearby.";
                 replyMarkup = null;
             }
-
             else if (agencies.Length == 1)
             {
                 var a = agencies[0];
@@ -197,7 +192,6 @@ namespace BusV.Telegram.Handlers
 
                 // ToDo set agency automatically and end profile set up
             }
-
             else
             {
                 text = $"I found {agencies.Length} agencies around you.";

@@ -8,6 +8,10 @@ namespace BusV.Ops
     /// </summary>
     public interface IDataSeeder
     {
+        Task<bool> IsEmptyAsync(
+            CancellationToken cancellationToken = default
+        );
+
         Task UpdateAllAgenciesAsync(
             CancellationToken cancellationToken = default
         );

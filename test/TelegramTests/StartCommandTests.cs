@@ -11,13 +11,13 @@ using Xunit;
 namespace TelegramTests
 {
     [Collection("start command")]
-    public class StartCommandTests : IClassFixture<WebAppFactory>
+    public class StartCommandTests : IClassFixture<TestsFixture>
     {
-        private readonly WebAppFactory _factory;
+        private readonly TestsFixture _fixture;
 
-        public StartCommandTests(WebAppFactory factory)
+        public StartCommandTests(TestsFixture fixture)
         {
-            _factory = factory;
+            _fixture = fixture;
         }
 
         [OrderedFact(DisplayName = "Should reply with the start instructions")]
@@ -42,7 +42,7 @@ namespace TelegramTests
                 }
             }";
 
-            _factory.MockBotClient
+            _fixture.MockBotClient
                 .Setup(botClient => botClient.SendTextMessageAsync(
                     It.Is<ChatId>(id => id == "333"),
                     "Hello Alice!\n" +
@@ -53,12 +53,11 @@ namespace TelegramTests
                 ))
                 .ReturnsAsync(null as Message);
 
-            HttpClient client = _factory.CreateClient();
-            HttpResponseMessage response = await client.PostWebhookUpdateAsync(update);
+            HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
 
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-            _factory.MockBotClient.VerifyAll();
-            _factory.MockBotClient.VerifyNoOtherCalls();
+            _fixture.MockBotClient.VerifyAll();
+            _fixture.MockBotClient.VerifyNoOtherCalls();
         }
     }
 }

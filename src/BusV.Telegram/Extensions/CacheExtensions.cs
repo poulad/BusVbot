@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using BusV.Ops;
 using BusV.Telegram.Models;
 using BusV.Telegram.Models.Cache;
 using Microsoft.Extensions.Caching.Distributed;
@@ -39,5 +38,12 @@ namespace BusV.Telegram.Extensions
                 },
                 cancellationToken
             );
+
+        public static Task RemoveAsync(
+            this IDistributedCache cache,
+            UserChat userchat,
+            CancellationToken cancellationToken = default
+        ) =>
+            cache.RemoveAsync(userchat.ToJson(), cancellationToken);
     }
 }
