@@ -7,9 +7,6 @@ namespace BusV.Telegram
 {
     public static class When
     {
-        public static bool ChannelPost(IUpdateContext context)
-            => context.Update.ChannelPost != null || context.Update.EditedChannelPost != null;
-
         public static bool NewMessage(IUpdateContext context) =>
             context.Update.Message != null;
 
@@ -18,12 +15,6 @@ namespace BusV.Telegram
 
         public static bool NewCommand(IUpdateContext context) =>
             context.Update.Message?.Entities?.FirstOrDefault()?.Type == MessageEntityType.BotCommand;
-
-        public static bool LocationOrCoordinates(IUpdateContext context) =>
-            context.Update.Message?.Location != null ^ (
-                !string.IsNullOrWhiteSpace(context.Update.Message?.Text) &&
-                Regex.IsMatch(context.Update.Message.Text, Constants.Location.OsmAndLocationRegex, RegexOptions.IgnoreCase)
-            );
 
         public static bool IsBusDirectionCq(IUpdateContext context) =>
             context.Update.CallbackQuery?.Data

@@ -20,6 +20,11 @@ namespace BusV.Data
             CancellationToken cancellationToken = default
         );
 
+        Task<Agency> GetByIdAsync(
+            string id,
+            CancellationToken cancellationToken = default
+        );
+
         /// <summary>
         /// Gets an agency by its unique tag (case-insensitive)
         /// </summary>

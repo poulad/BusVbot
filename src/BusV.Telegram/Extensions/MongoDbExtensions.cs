@@ -38,11 +38,15 @@ namespace BusV.Telegram.Extensions
                 .GetCollection<Agency>(BusV.Data.Constants.Collections.Agencies.Name)
             );
 
+            services.AddTransient<IRouteRepo, RouteRepo>();
+            services.AddTransient(provider => provider.GetRequiredService<IMongoDatabase>()
+                .GetCollection<Route>(BusV.Data.Constants.Collections.Routes.Name)
+            );
+
             services.AddTransient<IUserProfileRepo, UserProfileRepo>();
             services.AddTransient(provider => provider.GetRequiredService<IMongoDatabase>()
                 .GetCollection<UserProfile>(BusV.Data.Constants.Collections.Users.Name)
             );
-
 
             Initializer.RegisterClassMaps();
         }

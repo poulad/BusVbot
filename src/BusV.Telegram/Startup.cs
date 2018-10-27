@@ -33,7 +33,6 @@ namespace BusV.Telegram
                 .Configure<BotOptions<BusVbot>>(Configuration.GetSection("Bot"))
                 .Configure<CustomBotOptions<BusVbot>>(Configuration.GetSection("Bot"))
                 .AddScoped<WebhookResponse>()
-                .AddScoped<ChannelMessageHandler>()
                 .AddScoped<StartCommand>()
                 .AddScoped<HelpCommand>()
                 .AddScoped<UserProfileSetupHandler>()
@@ -83,17 +82,21 @@ namespace BusV.Telegram
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+            }
+
+            app.EnsureDatabaseSchema();
+            app.EnsureRedisConnection();
+
+            if (env.IsDevelopment())
+            {
                 app.EnsureDatabaseSeeded();
                 app.UseTelegramBotLongPolling<BusVbot>(ConfigureBot(), startAfter: TimeSpan.FromSeconds(2));
             }
             else
             {
-                app.EnsureDatabaseSchema();
                 app.UseTelegramBotWebhook<BusVbot>(ConfigureBot());
                 app.EnsureWebhookSet<BusVbot>();
             }
-
-            app.EnsureRedisConnection();
 
             app.Run(async context => { await context.Response.WriteAsync("Hello World!"); });
         }
@@ -102,8 +105,6 @@ namespace BusV.Telegram
             new BotBuilder()
                 // respond to the webhook with a request, if available
                 .Use<WebhookResponse>()
-                // ignore channel posts
-                .MapWhen<ChannelMessageHandler>(When.ChannelPost)
                 // global commands. these don't require loading the user profile
                 .MapWhen(When.NewCommand, branch => branch
                     .UseCommand<HelpCommand>("help")
@@ -111,24 +112,25 @@ namespace BusV.Telegram
                 )
                 // ensure the user has a profile loaded for the rest of the handlers
                 .UseWhen<UserProfileSetupHandler>(UserProfileSetupHandler.CanHandle)
+                // update the "Set User Agency" inline keyboard menu
                 .UseWhen<UserProfileSetupMenuHandler>(UserProfileSetupMenuHandler.CanHandle)
-        /*
                 // for new messages...
                 .MapWhen(When.NewMessage, msgBranch => msgBranch
                     // accept locations as a location or a text coordinates(OSM)
-                    .MapWhen<LocationHandler>(When.LocationOrCoordinates)
+                    .MapWhen<LocationHandler>(LocationHandler.HasLocationOrCoordinates)
                     // for new text messages...
                     .MapWhen(When.NewTextMessage, txtBranch => txtBranch
-                        // handle new commands
-                        .MapWhen(When.NewCommand, cmdBranch => cmdBranch
-                            .UseCommand<BusCommand>("bus")
-                            .UseCommand<SaveCommand>("save")
-                            .UseCommand<DeleteCommand>("del")
-                        )
+                            // handle new commands
+                            .MapWhen(When.NewCommand, cmdBranch => cmdBranch
+                                    .UseCommand<BusCommand>("bus")
+//                            .UseCommand<SaveCommand>("save")
+//                            .UseCommand<DeleteCommand>("del")
+                            )
                         // try to handle a frequent location (from reply markup keyboard)
-                        .UseWhen<SavedLocationHandler>(When.HasSavedLocationPrefix)
+//                        .UseWhen<SavedLocationHandler>(When.HasSavedLocationPrefix)
                     )
                 )
+        /*
                 // for callback queries...
                 .MapWhen(When.CallbackQuery, cqBranch => cqBranch
                     .MapWhen<BusDirectionCallbackQueryHandler>(When.IsBusDirectionCq)

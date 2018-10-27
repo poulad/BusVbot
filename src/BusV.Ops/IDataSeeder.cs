@@ -12,7 +12,7 @@ namespace BusV.Ops
             CancellationToken cancellationToken = default
         );
 
-        Task UpdateAllAgenciesAsync(
+        Task SeedAgenciesAsync(
             CancellationToken cancellationToken = default
         );
 

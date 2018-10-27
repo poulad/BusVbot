@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BusV.Data;
 using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
 using NextBus.NET;
 using Polly;
 using Polly.Retry;
@@ -15,17 +16,20 @@ namespace BusV.Ops
     {
         private readonly INextBusClient _nextbusClient;
         private readonly IAgencyRepo _agencyRepo;
+        private readonly IRouteRepo _routeRepo;
         private readonly ILogger _logger;
 
         /// <inheritdoc />
         public DataSeeder(
             INextBusClient nextbusClient,
             IAgencyRepo agencyRepo,
+            IRouteRepo routeRepo,
             ILogger<DataSeeder> logger
         )
         {
             _nextbusClient = nextbusClient;
             _agencyRepo = agencyRepo;
+            _routeRepo = routeRepo;
             _logger = logger;
         }
 
@@ -41,7 +45,7 @@ namespace BusV.Ops
                 );
 
         /// <inheritdoc />
-        public async Task UpdateAllAgenciesAsync(
+        public async Task SeedAgenciesAsync(
             CancellationToken cancellationToken = default
         )
         {
@@ -109,6 +113,9 @@ namespace BusV.Ops
             CancellationToken cancellationToken = default
         )
         {
+            var mongoAgency = await _agencyRepo.GetByTagAsync(agencyTag, cancellationToken)
+                .ConfigureAwait(false);
+
             var nextbusResponse = await GetNextBusPolicy()
                 .ExecuteAsync(_ => _nextbusClient.GetRoutesForAgency(agencyTag), cancellationToken)
                 .ConfigureAwait(false);
@@ -117,7 +124,7 @@ namespace BusV.Ops
 
             _logger.LogInformation("{0} routes for {1} are loaded from NextBus", nextbusRoutes.Length, agencyTag);
 
-            // setting the max/min value helps with the comparisons in the for loop below
+            // setting the max/min default values helps with the comparisons in the for loop below
             (double MinLat, double MaxLat, double MinLon, double MaxLon) boundaries =
                 (double.MaxValue, Double.MinValue, double.MaxValue, Double.MinValue);
 
@@ -129,7 +136,22 @@ namespace BusV.Ops
                     .ExecuteAsync(_ => _nextbusClient.GetRouteConfig(agencyTag, nextbusRoute.Tag), cancellationToken)
                     .ConfigureAwait(false);
 
-                // todo
+                var mongoRoute = Converter.FromNextBusRoute(nextbusRoute, routeConfig);
+                mongoRoute.AgencyDbRef = new MongoDBRef(Data.Constants.Collections.Agencies.Name, mongoAgency.Id);
+
+                _logger.LogInformation("Inserting route {0} ({1})", mongoRoute.Title, mongoRoute.Tag);
+                Error error = await _routeRepo.AddAsync(mongoRoute, cancellationToken)
+                    .ConfigureAwait(false);
+                if (error != null)
+                {
+                    _logger.LogError(
+                        "Failed to persist the route {0}: {1}", mongoRoute.Title ?? mongoRoute.Tag, error.Message
+                    );
+                }
+
+                // todo persist its bus stops
+
+                // todo add its directions with refs to the bus stops
 
                 if ((double) routeConfig.LatMin < boundaries.MinLat) boundaries.MinLat = (double) routeConfig.LatMin;
                 if ((double) routeConfig.LonMin < boundaries.MinLon) boundaries.MinLon = (double) routeConfig.LonMin;
@@ -143,7 +165,7 @@ namespace BusV.Ops
         private RetryPolicy GetNextBusPolicy() => Policy
             .Handle<NextBusException>()
             .WaitAndRetryAsync(
-                new[] { TimeSpan.FromSeconds(20) },
+                new[] { TimeSpan.FromSeconds(21) },
                 (exception, span) =>
                     _logger.LogWarning(exception, "Hitting NextBus limits. Waiting for {0} seconds", span.Seconds)
             );

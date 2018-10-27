@@ -23,6 +23,16 @@
                     public const string UserChat = "user_chat";
                 }
             }
+
+            public static class Routes
+            {
+                public const string Name = "routes";
+
+                public static class Indexes
+                {
+                    public const string TagAgency = "tag_agency";
+                }
+            }
         }
     }
 }

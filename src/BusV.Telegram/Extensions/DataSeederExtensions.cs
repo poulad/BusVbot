@@ -22,7 +22,7 @@ namespace BusV.Telegram.Extensions
                 bool isEmpty = seeder.IsEmptyAsync().GetAwaiter().GetResult();
                 if (isEmpty)
                 {
-                    seeder.UpdateAllAgenciesAsync().GetAwaiter().GetResult();
+                    seeder.SeedAgenciesAsync().GetAwaiter().GetResult();
                 }
             }
         }
