@@ -17,18 +17,16 @@ namespace BusV.Telegram.Handlers
         {
             await next(context).ConfigureAwait(false);
 
-            dynamic request = context.Items[nameof(WebhookResponse)];
-            if (request is null)
+            if (!context.Items.ContainsKey(nameof(WebhookResponse)))
                 return;
 
-            var httpContext = context.Items[nameof(HttpContext)] as HttpContext;
-            if (httpContext is null)
+            dynamic request = context.Items[nameof(WebhookResponse)];
+
+            bool isWebhook = context.Items.ContainsKey(nameof(HttpContext));
+            if (isWebhook)
             {
-                await context.Bot.Client.MakeRequestAsync(request)
-                    .ConfigureAwait(false);
-            }
-            else
-            {
+                var httpContext = (HttpContext) context.Items[nameof(HttpContext)];
+
                 if (httpContext.Response.HasStarted)
                 {
                     // ToDo use logger and ignore
@@ -45,6 +43,11 @@ namespace BusV.Telegram.Handlers
                 httpContext.Response.StatusCode = 201;
                 httpContext.Response.ContentType = "application/json";
                 await httpContext.Response.WriteAsync(json, Encoding.UTF8)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await context.Bot.Client.MakeRequestAsync(request)
                     .ConfigureAwait(false);
             }
         }

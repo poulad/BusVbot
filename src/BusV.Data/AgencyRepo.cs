@@ -89,6 +89,7 @@ namespace BusV.Data
         {
             // ToDo take an argument to allow pagination e.g. (after: a34fd, take: 4)
 
+            country = Regex.Escape(country);
             var filter = Filter.Regex(a => a.Country, new BsonRegularExpression($"^{country}$", "i"));
 
             var agencies = await _collection
@@ -106,7 +107,7 @@ namespace BusV.Data
         )
         {
             // ToDo take an argument to allow pagination e.g. (after: a34fd, take: 4)
-
+            region = Regex.Escape(region);
             var filter = Filter.Regex(a => a.Region, new BsonRegularExpression($"^{region}$", "i"));
 
             var agencies = await _collection

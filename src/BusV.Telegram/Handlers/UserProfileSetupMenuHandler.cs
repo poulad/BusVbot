@@ -4,10 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using BusV.Data;
 using BusV.Data.Entities;
+using BusV.Ops;
 using BusV.Telegram.Extensions;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Requests;
+using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BusV.Telegram.Handlers
@@ -17,18 +19,17 @@ namespace BusV.Telegram.Handlers
     /// </summary>
     public class UserProfileSetupMenuHandler : IUpdateHandler
     {
-//        private readonly IUserProfileRepo _userProfileRepo;
-
+        private readonly IUserService _userService;
         private readonly IAgencyRepo _agencyRepo;
         private readonly ILogger _logger;
 
         public UserProfileSetupMenuHandler(
-//            IUserProfileRepo userProfileRepo,
+            IUserService userService,
             IAgencyRepo agencyRepo,
             ILogger<UserProfileSetupMenuHandler> logger
         )
         {
-//            _userProfileRepo = userProfileRepo;
+            _userService = userService;
             _agencyRepo = agencyRepo;
             _logger = logger;
         }
@@ -38,96 +39,103 @@ namespace BusV.Telegram.Handlers
 
         public async Task HandleAsync(IUpdateContext context, UpdateDelegate next)
         {
-            string query = context.Update.CallbackQuery.Data;
+            string queryData = context.Update.CallbackQuery.Data;
 
-            // ToDo if user already has profile set, ignore this
+            // ToDo if user already has profile set, ignore this. check if "instructions sent" is set in cache
             // if (await _userContextManager.TryReplyIfOldSetupInstructionMessageAsync(bot, update)) return;
 
-            InlineKeyboardMarkup inlineKeyboard = null;
-            if (query.StartsWith("ups/c:"))
+            if (queryData.StartsWith("ups/a:"))
             {
-                _logger.LogTrace("Update the menu with unique regions for a country");
-                string country = query.Substring("ups/c:".Length);
-                var agencies = await _agencyRepo.GetByCountryAsync(country)
+                _logger.LogTrace("Setting the agency for user");
+
+                var userchat = context.Update.ToUserchat();
+
+                string agencyTag = queryData.Substring("ups/a:".Length);
+                Agency agency = await _agencyRepo.GetByTagAsync(agencyTag)
                     .ConfigureAwait(false);
 
-                string[] regions = agencies
-                    .Select(a => a.Region)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .OrderBy(r => r)
-                    .ToArray();
+                var error = await _userService.SetDefaultAgencyAsync(
+                    userchat.UserId.ToString(),
+                    userchat.ChatId.ToString(),
+                    agency.Tag
+                ).ConfigureAwait(false);
 
-                inlineKeyboard = CreateRegionsInlineKeyboard(regions);
+                if (error is null)
+                {
+                    await context.Bot.Client.SendTextMessageAsync(
+                        context.Update.CallbackQuery.Message.Chat,
+                        $"Great! Your default agency is now set to *{agency.Title}* " +
+                        $"in {agency.Region}, {agency.Country}.\n\n\n" +
+                        "💡 *Pro Tip*: You can always view or modify it using the /profile command",
+                        ParseMode.Markdown,
+                        replyMarkup: new ReplyKeyboardRemove()
+                    );
+
+                    context.Items[nameof(WebhookResponse)] = new EditMessageReplyMarkupRequest(
+                        context.Update.CallbackQuery.Message.Chat,
+                        context.Update.CallbackQuery.Message.MessageId
+                    );
+                }
+                else
+                {
+                    context.Items[nameof(WebhookResponse)] = new AnswerCallbackQueryRequest
+                        (context.Update.CallbackQuery.Id)
+                        {
+                            Text = "Oops! failed to set the agency. Try again later",
+                            CacheTime = 10,
+                        };
+                }
             }
-            else if (query.StartsWith("ups/r:"))
+            else
             {
-                _logger.LogTrace("Updating the menu with all agencies in the region");
-                string region = query.Substring("ups/r:".Length);
-                var agencies = await _agencyRepo.GetByRegionAsync(region)
-                    .ConfigureAwait(false);
+                _logger.LogTrace("Updating the inline keyboard of the profile setup message");
 
-                inlineKeyboard = CreateAgenciesInlineKeyboard(agencies);
+                InlineKeyboardMarkup inlineKeyboard;
+
+                if (queryData.StartsWith("ups/c:"))
+                {
+                    _logger.LogTrace("Update the menu with unique regions for a country");
+                    string country = queryData.Substring("ups/c:".Length);
+                    var agencies = await _agencyRepo.GetByCountryAsync(country)
+                        .ConfigureAwait(false);
+
+                    string[] regions = agencies
+                        .Select(a => a.Region)
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .OrderBy(r => r)
+                        .ToArray();
+
+                    inlineKeyboard = CreateRegionsInlineKeyboard(regions);
+                }
+                else if (queryData.StartsWith("ups/r:"))
+                {
+                    _logger.LogTrace("Updating the menu with all agencies in the region");
+                    string region = queryData.Substring("ups/r:".Length);
+                    var agencies = await _agencyRepo.GetByRegionAsync(region)
+                        .ConfigureAwait(false);
+
+                    inlineKeyboard = CreateAgenciesInlineKeyboard(agencies);
+                }
+                else if (queryData == "ups/c")
+                {
+                    _logger.LogTrace("Updating the menu with the list of countries");
+                    inlineKeyboard = CreateCountriesInlineKeyboard();
+                }
+                else
+                {
+                    _logger.LogError("Invalid callback query data {0} is passed", queryData);
+                    return;
+                }
+
+                await context.Bot.Client.EditMessageReplyMarkupAsync(
+                    context.Update.CallbackQuery.Message.Chat,
+                    context.Update.CallbackQuery.Message.MessageId,
+                    inlineKeyboard
+                ).ConfigureAwait(false);
+
+                context.Items[nameof(WebhookResponse)] =
+                    new AnswerCallbackQueryRequest(context.Update.CallbackQuery.Id);
             }
-            else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.AgencyPrefix))
-            {
-                return;
-                // ToDo set an agency and notify user
-//                string agencyIdStr = query.Replace(Constants.CallbackQueries.UserProfileSetup.AgencyPrefix,
-//                    string.Empty);
-//                int agencyId = int.Parse(agencyIdStr);
-//                await _userContextManager.ReplyWithSettingUserAgencyAsync(bot, update, agencyId);
-            }
-            else if (query == "ups/c")
-            {
-                _logger.LogTrace("Updating the menu with the list of countries");
-                inlineKeyboard = CreateCountriesInlineKeyboard();
-            }
-            else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix))
-            {
-//                string country =
-//                    query.Replace(Constants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix,
-//                        string.Empty);
-//                await _userContextManager.ReplyQueryWithRegionsForCountryAsync(bot, update, country);
-            }
-
-
-//            if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.CountryPrefix))
-//            {
-//                string country = query.Substring(Constants.CallbackQueries.UserProfileSetup.CountryPrefix.Length);
-//                await _userContextManager.ReplyQueryWithRegionsForCountryAsync(bot, update, country);
-//            }
-//            else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.RegionPrefix))
-//            {
-//                string region = query.Replace(Constants.CallbackQueries.UserProfileSetup.RegionPrefix,
-//                    string.Empty);
-//                await _userContextManager.ReplyQueryWithAgenciesForRegionAsync(bot, update, region);
-//            }
-//            else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.AgencyPrefix))
-//            {
-//                string agencyIdStr = query.Replace(Constants.CallbackQueries.UserProfileSetup.AgencyPrefix,
-//                    string.Empty);
-//                int agencyId = int.Parse(agencyIdStr);
-//                await _userContextManager.ReplyWithSettingUserAgencyAsync(bot, update, agencyId);
-//            }
-//            else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.BackToCountries))
-//            {
-//                await _userContextManager.ReplyQueryWithCountriesAsync(bot, update);
-//            }
-//            else if (query.StartsWith(Constants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix))
-//            {
-//                string country =
-//                    query.Replace(Constants.CallbackQueries.UserProfileSetup.BackToRegionsForCountryPrefix,
-//                        string.Empty);
-//                await _userContextManager.ReplyQueryWithRegionsForCountryAsync(bot, update, country);
-//            }
-
-            await context.Bot.Client.EditMessageReplyMarkupAsync(
-                context.Update.CallbackQuery.Message.Chat,
-                context.Update.CallbackQuery.Message.MessageId,
-                inlineKeyboard
-            ).ConfigureAwait(false);
-
-            context.Items[nameof(WebhookResponse)] = new AnswerCallbackQueryRequest(context.Update.CallbackQuery.Id);
         }
 
         // ToDo read countries from the db

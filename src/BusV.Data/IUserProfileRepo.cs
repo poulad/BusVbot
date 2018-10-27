@@ -22,17 +22,28 @@ namespace BusV.Data
             CancellationToken cancellationToken = default
         );
 
-//        /// <summary>
-//        /// Creates a new user registration document
-//        /// </summary>
-//        /// <param name="profile">Registration to be added</param>
-//        /// <param name="cancellationToken">The cancellation token to cancel operation</param>
-//        /// <exception cref="DuplicateKeyException"></exception>
-//        Task AddAsync(
-//            UserProfile profile,
-//            CancellationToken cancellationToken = default
-//        );
-//
+        /// <summary>
+        /// Creates a new user profile document
+        /// </summary>
+        /// <param name="profile">profile to be added</param>
+        /// <param name="cancellationToken">The cancellation token to cancel operation</param>
+        Task<Error> AddAsync(
+            UserProfile profile,
+            CancellationToken cancellationToken = default
+        );
+
+        /// <summary>
+        /// Deletes a user profile
+        /// </summary>
+        /// <param name="userId">ID of user</param>
+        /// <param name="chatId">ID of chat</param>
+        /// <param name="cancellationToken">The cancellation token to cancel operation</param>
+        Task<bool> DeleteAsync(
+            string userId,
+            string chatId,
+            CancellationToken cancellationToken = default
+        );
+
 //        /// <summary>
 //        /// Gets a unique registration document by its bot id and username
 //        /// </summary>
@@ -54,16 +65,6 @@ namespace BusV.Data
 //        /// <returns>List of registrations. List could be empty.</returns>
 //        Task<IEnumerable<UserProfile>> GetAllForUserAsync(
 //            string username,
-//            CancellationToken cancellationToken = default
-//        );
-//
-//        /// <summary>
-//        /// Deletes a user registration
-//        /// </summary>
-//        /// <param name="userProfile">Document to delete</param>
-//        /// <param name="cancellationToken">The cancellation token to cancel operation</param>
-//        Task DeleteAsync(
-//            UserProfile userProfile,
 //            CancellationToken cancellationToken = default
 //        );
     }

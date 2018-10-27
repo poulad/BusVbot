@@ -1,8 +1,10 @@
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using BusV.Data;
 using Framework;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -43,50 +45,47 @@ namespace TelegramTests
                 }
             }";
 
-            // ToDo ensure user profile is removed
-            // IUserProfileRepo profileRepo = _factory.Server.Host.Services.GetRequiredService<IUserProfileRepo>();
-            // UserProfile a = await profileRepo.GetByUserchatAsync("1234", "1234");
+            // ensure user profile does not exist in the db
+            IUserProfileRepo userRepo = _fixture.Services.GetRequiredService<IUserProfileRepo>();
+            await userRepo.DeleteAsync("1234", "1234");
 
             // ensure cache is clear
             await _fixture.Cache.RemoveAsync(@"{""u"":1234,""c"":1234}");
 
-            // mock calls to the bot client
-            {
-                // first message with the country inline buttons
-                _fixture.MockBotClient
-                    .Setup(botClient => botClient.SendTextMessageAsync(
-                        /* chatId: */ Is.SameJson<ChatId>("1234"),
-                        /* text: */ "Select a country and then a region to find your local transit agency",
-                        default, default, default, default,
-                        /* replyMarkup: */ Is.SameJson<IReplyMarkup>(@"{
+            // mock the first message with the country inline buttons
+            _fixture.MockBotClient
+                .Setup(botClient => botClient.SendTextMessageAsync(
+                    /* chatId: */ Is.SameJson<ChatId>("1234"),
+                    /* text: */ "Select a country and then a region to find your local transit agency",
+                    default, default, default, default,
+                    /* replyMarkup: */ Is.SameJson<IReplyMarkup>(@"{
                         inline_keyboard: [
                             [{ text: ""🇨🇦 Canada"", callback_data: ""ups/c:Canada"" }],
                             [{ text: ""🇺🇸 USA"", callback_data: ""ups/c:USA"" }],
                             [{ text: ""🏁 Test"", callback_data: ""ups/c:Test"" }]
                         ]
                         }"),
-                        default
-                    ))
-                    .ReturnsAsync(null as Message);
+                    default
+                ))
+                .ReturnsAsync(null as Message);
 
-                // second message for sharing the location
-                _fixture.MockBotClient
-                    .Setup(botClient => botClient.SendTextMessageAsync(
-                        /* chatId: */ Is.SameJson<ChatId>("1234"),
-                        /* text: */ "or *Share your location* so I can find it for you",
-                        /* parseMode: */ ParseMode.Markdown,
-                        default, default, default,
-                        /* replyMarkup: */ Is.SameJson<IReplyMarkup>(@"{
+            // mock the second message for sharing the location
+            _fixture.MockBotClient
+                .Setup(botClient => botClient.SendTextMessageAsync(
+                    /* chatId: */ Is.SameJson<ChatId>("1234"),
+                    /* text: */ "or *Share your location* so I can find it for you",
+                    /* parseMode: */ ParseMode.Markdown,
+                    default, default, default,
+                    /* replyMarkup: */ Is.SameJson<IReplyMarkup>(@"{
                             keyboard: [
                                 [{ text: ""Share my location"", request_location: true }]
                             ],
                             resize_keyboard: true,
                             one_time_keyboard: true
                         }"),
-                        default
-                    ))
-                    .ReturnsAsync(null as Message);
-            }
+                    default
+                ))
+                .ReturnsAsync(null as Message);
 
             HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
 

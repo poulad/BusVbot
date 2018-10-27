@@ -17,6 +17,7 @@ namespace BusV.Telegram.Extensions
 
             services.AddScoped<IDataSeeder, DataSeeder>();
 
+            services.AddScoped<IUserService, UserService>();
             services.AddScoped<ILocationService, LocationService>();
         }
     }

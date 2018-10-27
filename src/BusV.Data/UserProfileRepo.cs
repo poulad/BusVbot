@@ -45,27 +45,31 @@ namespace BusV.Data
             return userProfile;
         }
 
-//        /// <inheritdoc />
-//        public async Task AddAsync(
-//            UserProfile profile,
-//            CancellationToken cancellationToken = default
-//        )
-//        {
-//            try
-//            {
-//                await _collection.InsertOneAsync(profile, cancellationToken: cancellationToken)
-//                    .ConfigureAwait(false);
-//            }
-//            catch (MongoWriteException e)
-//                when (e.WriteError.Category == ServerErrorCategory.DuplicateKey &&
-//                      e.WriteError.Message
-//                          .Contains($" index: {Constants.Collections.Users.Indexes.UserChat} ")
-//                )
-//            {
-//                throw new DuplicateKeyException("bot", nameof(UserProfile.UserId));
-//            }
-//        }
-//
+        /// <inheritdoc />
+        public async Task<Error> AddAsync(
+            UserProfile profile,
+            CancellationToken cancellationToken = default
+        )
+        {
+            Error error;
+            try
+            {
+                await _collection.InsertOneAsync(profile, cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
+                error = null;
+            }
+            catch (MongoWriteException e)
+                when (e.WriteError.Category == ServerErrorCategory.DuplicateKey &&
+                      e.WriteError.Message
+                          .Contains($" index: {Constants.Collections.Users.Indexes.UserChat} ")
+                )
+            {
+                error = new Error("data.duplicate_key", $@"Duplicate keys: ""user, chat""");
+            }
+
+            return error;
+        }
+
 //        /// <inheritdoc />
 //        public async Task<UserProfile> GetSingleAsync(
 //            string botId,
@@ -105,18 +109,27 @@ namespace BusV.Data
 //
 //            return registrations;
 //        }
-//
-//        /// <inheritdoc />
-//        public async Task DeleteAsync(
-//            UserProfile userProfile,
-//            CancellationToken cancellationToken = default
-//        )
-//        {
-//            var filter = Filter.Eq(_ => _.Id, userProfile.Id);
-//
-//            await _collection
-//                .FindOneAndDeleteAsync(filter, cancellationToken: cancellationToken)
-//                .ConfigureAwait(false);
-//        }
+
+        /// <inheritdoc />
+        public async Task<bool> DeleteAsync(
+            string userId,
+            string chatId,
+            CancellationToken cancellationToken = default
+        )
+        {
+            userId = Regex.Unescape(userId);
+            chatId = Regex.Unescape(chatId);
+
+            var filter = Filter.And(
+                Filter.Regex(u => u.UserId, new BsonRegularExpression($"^{userId}$", "i")),
+                Filter.Regex(u => u.ChatId, new BsonRegularExpression($"^{chatId}$", "i"))
+            );
+
+            var profile = await _collection
+                .FindOneAndDeleteAsync(filter, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+
+            return profile != null;
+        }
     }
 }
