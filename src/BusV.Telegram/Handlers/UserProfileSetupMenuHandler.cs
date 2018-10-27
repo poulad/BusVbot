@@ -6,8 +6,8 @@ using BusV.Data;
 using BusV.Data.Entities;
 using BusV.Telegram.Extensions;
 using Microsoft.Extensions.Logging;
-using Telegram.Bot.Exceptions;
 using Telegram.Bot.Framework.Abstractions;
+using Telegram.Bot.Requests;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BusV.Telegram.Handlers
@@ -127,17 +127,7 @@ namespace BusV.Telegram.Handlers
                 inlineKeyboard
             ).ConfigureAwait(false);
 
-            try
-            {
-                await context.Bot.Client.AnswerCallbackQueryAsync(
-                    context.Update.CallbackQuery.Id
-                ).ConfigureAwait(false);
-            }
-            catch (BadRequestException e)
-                when (e.Message.Contains("inline_query_id"))
-            {
-                _logger.LogWarning(e, "It took too long to answer the callback query");
-            }
+            context.Items[nameof(WebhookResponse)] = new AnswerCallbackQueryRequest(context.Update.CallbackQuery.Id);
         }
 
         // ToDo read countries from the db

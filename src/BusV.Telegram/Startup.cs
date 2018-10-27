@@ -32,6 +32,7 @@ namespace BusV.Telegram
             services.AddTransient<BusVbot>()
                 .Configure<BotOptions<BusVbot>>(Configuration.GetSection("Bot"))
                 .Configure<CustomBotOptions<BusVbot>>(Configuration.GetSection("Bot"))
+                .AddScoped<WebhookResponse>()
                 .AddScoped<ChannelMessageHandler>()
                 .AddScoped<StartCommand>()
                 .AddScoped<HelpCommand>()
@@ -99,6 +100,8 @@ namespace BusV.Telegram
 
         private IBotBuilder ConfigureBot() => // ToDo .Use<ExceptionHandler>()
             new BotBuilder()
+                // respond to the webhook with a request, if available
+                .Use<WebhookResponse>()
                 // ignore channel posts
                 .MapWhen<ChannelMessageHandler>(When.ChannelPost)
                 // global commands. these don't require loading the user profile

@@ -76,16 +76,18 @@ namespace TelegramTests
                 ))
                 .ReturnsAsync(null as Message);
 
-            // mock answering the callback query
-            _fixture.MockBotClient
-                .Setup(botClient => botClient.AnswerCallbackQueryAsync(
-                    /* callbackQueryId: */ "5399",
-                    default, default, default, default, default
-                ));
-
             HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
-
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+            // responds to the webhook with a bot API request
+            string responseContent = await response.Content.ReadAsStringAsync();
+            Asserts.IsJson(responseContent);
+            Asserts.JsonEqual(@"{
+                    callback_query_id: ""5399"",
+                    method: ""answerCallbackQuery""
+                }",
+                responseContent
+            );
 
             _fixture.MockBotClient.VerifyAll();
             _fixture.MockBotClient.VerifyNoOtherCalls();
@@ -146,16 +148,19 @@ namespace TelegramTests
                 ))
                 .ReturnsAsync(null as Message);
 
-            // mock answering the callback query
-            _fixture.MockBotClient
-                .Setup(botClient => botClient.AnswerCallbackQueryAsync(
-                    /* callbackQueryId: */ "5400",
-                    default, default, default, default, default
-                ));
-
             HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
 
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+            // responds to the webhook with a bot API request
+            string responseContent = await response.Content.ReadAsStringAsync();
+            Asserts.IsJson(responseContent);
+            Asserts.JsonEqual(@"{
+                    callback_query_id: ""5400"",
+                    method: ""answerCallbackQuery""
+                }",
+                responseContent
+            );
 
             _fixture.MockBotClient.VerifyAll();
             _fixture.MockBotClient.VerifyNoOtherCalls();
