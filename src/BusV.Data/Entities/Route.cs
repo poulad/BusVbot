@@ -13,6 +13,9 @@ namespace BusV.Data.Entities
         public string Tag { get; set; }
 
         [Required]
+        public string AgencyTag { get; set; }
+
+        [Required]
         public string Title { get; set; }
 
         public string ShortTitle { get; set; }
@@ -34,7 +37,6 @@ namespace BusV.Data.Entities
 
         public DateTime? ModifiedAt { get; set; }
 
-        [Required]
-        public MongoDBRef AgencyDbRef { get; set; }
+        public RouteDirection[] Directions { get; set; }
     }
 }

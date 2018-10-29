@@ -28,6 +28,17 @@ namespace BusV.Ops
                 MinLongitude = (double) nextbusRouteConfig.LonMin,
             };
 
+        public static RouteDirection FromNextBusDirection(
+            NextBus.NET.Models.Direction nextbusDirection
+        ) =>
+            new RouteDirection
+            {
+                Tag = NonEmptyValue(nextbusDirection.Tag),
+                Title = NonEmptyValue(nextbusDirection.Title),
+                Name = NonEmptyValue(nextbusDirection.Name),
+                Stops = nextbusDirection.StopTags,
+            };
+
         private static string NonEmptyValue(string value)
             => string.IsNullOrWhiteSpace(value) ? null : value;
     }

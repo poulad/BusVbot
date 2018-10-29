@@ -45,7 +45,7 @@ namespace BusV.Data
                 var indexBuilder = Builders<Route>.IndexKeys;
                 var key = indexBuilder.Combine(
                     indexBuilder.Ascending(r => r.Tag),
-                    indexBuilder.Ascending(r => r.AgencyDbRef)
+                    indexBuilder.Ascending(r => r.AgencyTag)
                 );
                 await routesCollection.Indexes.CreateOneAsync(new CreateIndexModel<Route>(
                         key,
@@ -109,15 +109,27 @@ namespace BusV.Data
                         .SetIdGenerator(StringObjectIdGenerator.Instance)
                         .SetSerializer(new StringSerializer(BsonType.ObjectId));
                     map.MapProperty(r => r.Tag).SetElementName("tag").SetOrder(1);
+                    map.MapProperty(r => r.AgencyTag).SetElementName("agency").SetOrder(2);
                     map.MapProperty(r => r.CreatedAt).SetElementName("created_at");
-                    map.MapProperty(r => r.AgencyDbRef).SetElementName("agency");
                     map.MapProperty(r => r.Title).SetElementName("title").SetIgnoreIfDefault(true);
                     map.MapProperty(r => r.ShortTitle).SetElementName("short_title").SetIgnoreIfDefault(true);
+                    map.MapProperty(r => r.Directions).SetElementName("directions").SetIgnoreIfDefault(true);
                     map.MapProperty(r => r.MaxLatitude).SetElementName("max_lat").SetIgnoreIfDefault(true);
                     map.MapProperty(r => r.MinLatitude).SetElementName("min_lat").SetIgnoreIfDefault(true);
                     map.MapProperty(r => r.MaxLongitude).SetElementName("max_lon").SetIgnoreIfDefault(true);
                     map.MapProperty(r => r.MinLongitude).SetElementName("min_lon").SetIgnoreIfDefault(true);
                     map.MapProperty(r => r.ModifiedAt).SetElementName("modified_at").SetIgnoreIfDefault(true);
+                });
+            }
+
+            if (!BsonClassMap.IsClassMapRegistered(typeof(RouteDirection)))
+            {
+                BsonClassMap.RegisterClassMap<RouteDirection>(map =>
+                {
+                    map.MapProperty(d => d.Tag).SetElementName("tag");
+                    map.MapProperty(d => d.Title).SetElementName("title");
+                    map.MapProperty(d => d.Name).SetElementName("name").SetIgnoreIfDefault(true);
+                    map.MapProperty(d => d.Stops).SetElementName("stops");
                 });
             }
 
@@ -130,7 +142,7 @@ namespace BusV.Data
                         .SetSerializer(new StringSerializer(BsonType.ObjectId));
                     map.MapProperty(u => u.UserId).SetElementName("user");
                     map.MapProperty(u => u.ChatId).SetElementName("chat");
-                    map.MapProperty(u => u.AgencyDbRef).SetElementName("agency");
+                    map.MapProperty(u => u.DefaultAgencyTag).SetElementName("agency");
                     map.MapProperty(u => u.CreatedAt).SetElementName("created_at");
                     map.MapProperty(u => u.ModifiedAt).SetElementName("modified_at").SetIgnoreIfDefault(true);
                 });

@@ -1,10 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BusV.Data;
+using BusV.Data.Entities;
 using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
 using NextBus.NET;
 using Polly;
 using Polly.Retry;
@@ -38,7 +39,7 @@ namespace BusV.Ops
             CancellationToken cancellationToken = default
         ) =>
             _agencyRepo
-                .GetByCountryAsync("USA", cancellationToken)
+                .GetByCountryAsync("Canada", cancellationToken)
                 .ContinueWith(
                     t => t.Result.Length == 0,
                     TaskContinuationOptions.OnlyOnRanToCompletion
@@ -59,6 +60,8 @@ namespace BusV.Ops
             for (int i = 0; i < nextbusAgencies.Length; i++)
             {
                 var nextbusAgency = nextbusAgencies[i];
+
+                if (nextbusAgency.Tag != "ttc") continue;
 
                 var mongoAgency = await _agencyRepo.GetByTagAsync(nextbusAgency.Tag, cancellationToken)
                     .ConfigureAwait(false);
@@ -113,9 +116,6 @@ namespace BusV.Ops
             CancellationToken cancellationToken = default
         )
         {
-            var mongoAgency = await _agencyRepo.GetByTagAsync(agencyTag, cancellationToken)
-                .ConfigureAwait(false);
-
             var nextbusResponse = await GetNextBusPolicy()
                 .ExecuteAsync(_ => _nextbusClient.GetRoutesForAgency(agencyTag), cancellationToken)
                 .ConfigureAwait(false);
@@ -132,12 +132,12 @@ namespace BusV.Ops
             {
                 var nextbusRoute = nextbusRoutes[i];
 
-                var routeConfig = await GetNextBusPolicy()
+                var nextbusRouteConfig = await GetNextBusPolicy()
                     .ExecuteAsync(_ => _nextbusClient.GetRouteConfig(agencyTag, nextbusRoute.Tag), cancellationToken)
                     .ConfigureAwait(false);
 
-                var mongoRoute = Converter.FromNextBusRoute(nextbusRoute, routeConfig);
-                mongoRoute.AgencyDbRef = new MongoDBRef(Data.Constants.Collections.Agencies.Name, mongoAgency.Id);
+                var mongoRoute = Converter.FromNextBusRoute(nextbusRoute, nextbusRouteConfig);
+                mongoRoute.AgencyTag = agencyTag;
 
                 _logger.LogInformation("Inserting route {0} ({1})", mongoRoute.Title, mongoRoute.Tag);
                 Error error = await _routeRepo.AddAsync(mongoRoute, cancellationToken)
@@ -149,17 +149,54 @@ namespace BusV.Ops
                     );
                 }
 
+                await UpdateDirectionsForRouteAsync(agencyTag, mongoRoute.Tag, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if ((double) nextbusRouteConfig.LatMin < boundaries.MinLat)
+                    boundaries.MinLat = (double) nextbusRouteConfig.LatMin;
+                if ((double) nextbusRouteConfig.LonMin < boundaries.MinLon)
+                    boundaries.MinLon = (double) nextbusRouteConfig.LonMin;
+                if (boundaries.MaxLat < (double) nextbusRouteConfig.LatMax)
+                    boundaries.MaxLat = (double) nextbusRouteConfig.LatMax;
+                if (boundaries.MaxLon < (double) nextbusRouteConfig.LonMax)
+                    boundaries.MaxLon = (double) nextbusRouteConfig.LonMax;
+            }
+
+            return boundaries;
+        }
+
+        /// <inheritdoc />
+        public async Task<object> UpdateDirectionsForRouteAsync(
+            string agencyTag,
+            string routeTag,
+            CancellationToken cancellationToken = default
+        )
+        {
+            var nextbusRouteConfig = await GetNextBusPolicy()
+                .ExecuteAsync(_ => _nextbusClient.GetRouteConfig(agencyTag, routeTag), cancellationToken)
+                .ConfigureAwait(false);
+
+            var mongoRoute = await _routeRepo.GetByTagAsync(agencyTag, routeTag, cancellationToken)
+                .ConfigureAwait(false);
+
+            var directions = new List<RouteDirection>(nextbusRouteConfig.Directions.Length);
+            foreach (var nextbusDirection in nextbusRouteConfig.Directions)
+            {
+                var mongoDirection = Converter.FromNextBusDirection(nextbusDirection);
+
                 // todo persist its bus stops
 
                 // todo add its directions with refs to the bus stops
 
-                if ((double) routeConfig.LatMin < boundaries.MinLat) boundaries.MinLat = (double) routeConfig.LatMin;
-                if ((double) routeConfig.LonMin < boundaries.MinLon) boundaries.MinLon = (double) routeConfig.LonMin;
-                if (boundaries.MaxLat < (double) routeConfig.LatMax) boundaries.MaxLat = (double) routeConfig.LatMax;
-                if (boundaries.MaxLon < (double) routeConfig.LonMax) boundaries.MaxLon = (double) routeConfig.LonMax;
+                directions.Add(mongoDirection);
             }
 
-            return boundaries;
+            mongoRoute.Directions = directions.ToArray();
+
+            await _routeRepo.UpdateAsync(mongoRoute, cancellationToken)
+                .ConfigureAwait(false);
+
+            return null;
         }
 
         private RetryPolicy GetNextBusPolicy() => Policy

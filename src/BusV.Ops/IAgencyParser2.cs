@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using BusV.Data.Entities;
 
 namespace BusV.Ops
 {
@@ -14,10 +15,11 @@ namespace BusV.Ops
 
 //        (bool Success, string DirectionName) TryParseToDirectionName(string routeTag, string directionText);
 
-//        Task<object> FindMatchingRoutesAsync(
-//            string routeText,
-//            CancellationToken cancellationToken = default
-//        );
+        Task<(Route[] Routes, Error Error)> FindMatchingRoutesAsync(
+            string agencyTag,
+            string routeText,
+            CancellationToken cancellationToken = default
+        );
 
 //        Task<string[]> FindMatchingDirectionsForRouteAsync(string routeTag, string directionText = null);
     }

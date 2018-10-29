@@ -1,6 +1,9 @@
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using BusV.Data;
+using BusV.Data.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace BusV.Ops
 {
@@ -9,44 +12,63 @@ namespace BusV.Ops
     {
         public string AgencyTag => "ttc";
 
-        public const string RouteRegex = @"^(?<route>\d{1,3})(?:\s*(?<branch>[A-Z]))?$";
+        public const string RouteRegex = @"^(?<route>\d{1,3})(?:\s*(?<direction>[A-Z]))?$";
+
+        private readonly IRouteRepo _routeRepo;
+        private readonly ILogger _logger;
 
         public TtcAgencyParser(
-        ) { }
+            IRouteRepo routeRepo,
+            ILogger<TtcAgencyParser> logger
+        )
+        {
+            _routeRepo = routeRepo;
+            _logger = logger;
+        }
 
-        public Task<(object, Error)> FindMatchingRoutesAsync(
+        public async Task<(Route[] Routes, Error Error)> FindMatchingRoutesAsync(
+            string agencyTag,
             string routeText,
             CancellationToken cancellationToken = default
         )
         {
-            (object, Error) result;
+            (Route[], Error) result;
 
             var match = Regex.Match(routeText, RouteRegex, RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 // route always exists in here
-                string route = match.Groups["route"].Value;
+                string routeTag = match.Groups["route"].Value;
 
-                // todo validate this route
+                var route = await _routeRepo.GetByTagAsync(agencyTag, routeTag, cancellationToken)
+                    .ConfigureAwait(false);
 
-                // branch is optional in the regex
-                string branch = match.Groups["branch"]?.Value;
-
-                if (branch is null)
+                if (route is null)
                 {
-                    // todo get all branches for this route
+                    result = (null, new Error("")); // todo
                 }
                 else
                 {
-                    // todo validate the branch
+                    // direction is optional in the regex
+                    if (match.Groups["direction"].Success)
+                    {
+                        // todo validate the branch
+                        result = (null, new Error("")); // todo
+                    }
+                    else
+                    {
+                        _logger.LogTrace("Showing all the branches to the user");
+                        result = (new[] { route }, null);
+                    }
                 }
             }
             else
             {
+                // todo try partial matches on the tag/title/short_title text
                 result = (null, new Error("")); // ToDo
             }
 
-            return null;
+            return result;
         }
     }
 }

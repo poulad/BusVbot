@@ -8,9 +8,10 @@ namespace BusV.Telegram.Services.Agency.TTC
 {
     public class TtcMessageFormatter : AgencyMessageFormatterBase
     {
-        public TtcMessageFormatter(IOptions<AgencyTimeZonesAccessor> timezoneOptions)
-            : base(Constants.Tag, timezoneOptions)
-        { }
+        public TtcMessageFormatter(
+            IOptions<AgencyTimeZonesAccessor> timezoneOptions
+        )
+            : base("ttc", timezoneOptions) { }
 
         public override InlineKeyboardMarkup CreateInlineKeyboardForDirections(string routeTag, string[] directions)
         {
@@ -43,18 +44,13 @@ namespace BusV.Telegram.Services.Agency.TTC
                     .Skip(i * keysPerRow)
                     .Take(keysPerRow)
                     .Select(d => InlineKeyboardButton.WithCallbackData(
-                        d, Telegram.Constants.CallbackQueries.BusCommand.BusDirectionPrefix + d
+                        d, Constants.CallbackQueries.BusCommand.BusDirectionPrefix + d
                     ))
                     .ToArray();
                 keyboard[i] = buttons;
             }
 
             return new InlineKeyboardMarkup(keyboard);
-        }
-
-        private static class Constants
-        {
-            public const string Tag = "ttc";
         }
     }
 }

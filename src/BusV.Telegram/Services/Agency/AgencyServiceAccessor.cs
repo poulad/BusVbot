@@ -15,15 +15,16 @@ namespace BusV.Telegram.Services.Agency
         public IEnumerable<IAgencyMessageFormatter> MessageFormatters { get; }
 
         public AgencyServiceAccessor(
-            IDefaultAgencyDataParser defaultParser,
-            IDefaultAgencyMessageFormatter defaultFormatter,
-            IEnumerable<IAgencyDataParser> dataParsers,
-            IEnumerable<IAgencyMessageFormatter> messageFormatters)
+//            IDefaultAgencyDataParser defaultParser,
+//            IDefaultAgencyMessageFormatter defaultFormatter,
+//            IEnumerable<IAgencyDataParser> dataParsers,
+            IEnumerable<IAgencyMessageFormatter> messageFormatters
+        )
         {
-            DefaultDataParser = defaultParser;
-            DataParsers = dataParsers;
+//            DefaultDataParser = defaultParser;
+//            DataParsers = dataParsers;
 
-            DefaultMessageFormatter = defaultFormatter;
+//            DefaultMessageFormatter = defaultFormatter;
             MessageFormatters = messageFormatters;
         }
 
@@ -41,7 +42,7 @@ namespace BusV.Telegram.Services.Agency
             return dataParser;
         }
 
-        public IAgencyMessageFormatter GetAgencyOrDefaultMessageFormatter(string agencyTag)
+        public IAgencyMessageFormatter GetAgencyMessageFormatterOrDefault(string agencyTag)
         {
             IAgencyMessageFormatter msgFormatter = MessageFormatters
                 .SingleOrDefault(p => p.AgencyTag.Equals(agencyTag, StringComparison.OrdinalIgnoreCase));

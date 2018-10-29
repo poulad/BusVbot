@@ -106,7 +106,7 @@ namespace BusV.Telegram.Services
 
             if (result.Predictions.Any() && result.Predictions.All(p => p.HasPredictions))
             {
-                replyText = _agencyServiceAccessor.GetAgencyOrDefaultMessageFormatter(agencyTag)
+                replyText = _agencyServiceAccessor.GetAgencyMessageFormatterOrDefault(agencyTag)
                     .FormatBusPredictionsReplyText(result.Predictions);
             }
             else
@@ -146,7 +146,7 @@ namespace BusV.Telegram.Services
 
             if (result.Predictions.Any() && result.Predictions.All(p => p.HasPredictions))
             {
-                string replyText = _agencyServiceAccessor.GetAgencyOrDefaultMessageFormatter(agency)
+                string replyText = _agencyServiceAccessor.GetAgencyMessageFormatterOrDefault(agency)
                     .FormatBusPredictionsReplyText(result.Predictions);
 
                 await bot.Client.EditMessageTextAsync(chatId, messageId, replyText, ParseMode.Markdown,
@@ -274,7 +274,7 @@ namespace BusV.Telegram.Services
                 //                    directions = await dataParser.FindMatchingDirectionsForRouteAsync(routeTagInput);
                 result.ReplyText = Constants.ValidationMessages.BusDirectionMissing;
 
-                var formatter = _agencyServiceAccessor.GetAgencyOrDefaultMessageFormatter(cachedContext.AgencyTag);
+                var formatter = _agencyServiceAccessor.GetAgencyMessageFormatterOrDefault(cachedContext.AgencyTag);
 
                 result.ReplyMarkup = formatter.CreateInlineKeyboardForDirections(routeTagInput, directions);
 

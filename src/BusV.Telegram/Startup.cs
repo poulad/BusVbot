@@ -37,7 +37,7 @@ namespace BusV.Telegram
                 .AddScoped<HelpCommand>()
                 .AddScoped<UserProfileSetupHandler>()
                 .AddScoped<UserProfileSetupMenuHandler>()
-//                .AddScoped<BusCommand>()
+                .AddScoped<BusCommand>()
 //                .AddScoped<BusDirectionCallbackQueryHandler>()
 //                .AddScoped<PredictionRefreshCqHandler>()
 //                .AddScoped<LocationHandler>()
@@ -45,25 +45,9 @@ namespace BusV.Telegram
 //                .AddScoped<SavedLocationHandler>()
 //                .AddScoped<DeleteCommand>()
                 ;
-//
-//            services.Configure<AgencyTimeZonesAccessor>(Configuration.GetSection("Agencies"));
-//
-//            // ToDo Use extension method and chained methods for this
-//            services.AddTransient<IDefaultAgencyDataParser, DefaultAgencyDataParser>();
-//            services.AddTransient<IDefaultAgencyMessageFormatter, DefaultAgencyMessageFormatter>();
-//            services.AddTransient<TtcDataParser>();
-//            services.AddTransient<TtcMessageFormatter>();
-//            services.AddTransient<IAgencyServiceAccessor, AgencyServiceAccessor>(factory =>
-//            {
-//                var parsers = new IAgencyDataParser[] {factory.GetRequiredService<TtcDataParser>()};
-//                var formatters = new IAgencyMessageFormatter[] {factory.GetRequiredService<TtcMessageFormatter>()};
-//                return new AgencyServiceAccessor(
-//                    factory.GetRequiredService<IDefaultAgencyDataParser>(),
-//                    factory.GetRequiredService<IDefaultAgencyMessageFormatter>(),
-//                    parsers,
-//                    formatters
-//                );
-//            });
+
+            services.AddMessageFormattingServices(Configuration.GetSection("Agencies"));
+
 //
 //            services.AddTransient<ICachingService, CachingService>();
 //
@@ -82,14 +66,12 @@ namespace BusV.Telegram
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-            }
 
-            app.EnsureDatabaseSchema();
-            app.EnsureRedisConnection();
+                app.EnsureRedisConnection();
 
-            if (env.IsDevelopment())
-            {
+                app.EnsureDatabaseSchema();
                 app.EnsureDatabaseSeeded();
+
                 app.UseTelegramBotLongPolling<BusVbot>(ConfigureBot(), startAfter: TimeSpan.FromSeconds(2));
             }
             else
@@ -106,14 +88,15 @@ namespace BusV.Telegram
                 // respond to the webhook with a request, if available
                 .Use<WebhookResponse>()
                 // global commands. these don't require loading the user profile
-                .MapWhen(When.NewCommand, branch => branch
-                    .UseCommand<HelpCommand>("help")
+                // ToDo remove this branch: https://github.com/TelegramBots/Telegram.Bot.Framework/issues/17
+                .UseWhen(When.NewTextMessage, txtBranch => txtBranch
                     .UseCommand<StartCommand>("start")
+                    .UseCommand<HelpCommand>("help")
                 )
                 // ensure the user has a profile loaded for the rest of the handlers
                 .UseWhen<UserProfileSetupHandler>(UserProfileSetupHandler.CanHandle)
                 // update the "Set User Agency" inline keyboard menu
-                .UseWhen<UserProfileSetupMenuHandler>(UserProfileSetupMenuHandler.CanHandle)
+                .MapWhen<UserProfileSetupMenuHandler>(UserProfileSetupMenuHandler.CanHandle)
                 // for new messages...
                 .MapWhen(When.NewMessage, msgBranch => msgBranch
                     // accept locations as a location or a text coordinates(OSM)
@@ -121,11 +104,9 @@ namespace BusV.Telegram
                     // for new text messages...
                     .MapWhen(When.NewTextMessage, txtBranch => txtBranch
                             // handle new commands
-                            .MapWhen(When.NewCommand, cmdBranch => cmdBranch
-                                    .UseCommand<BusCommand>("bus")
-//                            .UseCommand<SaveCommand>("save")
-//                            .UseCommand<DeleteCommand>("del")
-                            )
+                            .UseCommand<BusCommand>("bus")
+//                        .UseCommand<SaveCommand>("save")
+//                        .UseCommand<DeleteCommand>("del")
                         // try to handle a frequent location (from reply markup keyboard)
 //                        .UseWhen<SavedLocationHandler>(When.HasSavedLocationPrefix)
                     )

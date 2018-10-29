@@ -1,21 +1,23 @@
 ﻿using BusV.Telegram.Configurations;
 using Microsoft.Extensions.Options;
+using NextBus.NET.Models;
+using Telegram.Bot.Types.ReplyMarkups;
 
 // ReSharper disable once CheckNamespace
 namespace BusV.Telegram.Services.Agency
 {
-    public class DefaultAgencyMessageFormatter : AgencyMessageFormatterBase, IDefaultAgencyMessageFormatter
+    public class AgencyMessageFormatter : IAgencyMessageFormatter
     {
-        public new string AgencyTag
+        public string AgencyTag { get; }
+
+        public InlineKeyboardMarkup CreateInlineKeyboardForDirections(string routeTag, string[] directions)
         {
-            get { return base.AgencyTag; }
-            set { base.AgencyTag = value; }
+            throw new System.NotImplementedException();
         }
 
-        public DefaultAgencyMessageFormatter(IOptions<AgencyTimeZonesAccessor> timezoneOptions)
-            : base(null, timezoneOptions)
+        public string FormatBusPredictionsReplyText(RoutePrediction[] routePredictions)
         {
-
+            throw new System.NotImplementedException();
         }
     }
 }

@@ -1,6 +1,8 @@
-﻿using System.Threading;
+﻿using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using BusV.Data.Entities;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace BusV.Data
@@ -43,6 +45,45 @@ namespace BusV.Data
             }
 
             return error;
+        }
+
+        /// <inheritdoc />
+        public async Task<Route> GetByTagAsync(
+            string agencyTag,
+            string routeTag,
+            CancellationToken cancellationToken = default
+        )
+        {
+            routeTag = Regex.Escape(routeTag);
+            agencyTag = Regex.Escape(agencyTag);
+            var filter = Filter.And(
+                Filter.Regex(r => r.AgencyTag, new BsonRegularExpression($"^{agencyTag}$", "i")),
+                Filter.Regex(r => r.Tag, new BsonRegularExpression($"^{routeTag}$", "i"))
+            );
+
+            Route route = await _collection
+                .Find(filter)
+                .SingleOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return route;
+        }
+
+        /// <inheritdoc />
+        public async Task UpdateAsync(
+            Route route,
+            CancellationToken cancellationToken = default
+        )
+        {
+            var filter = Filter.Eq("_id", new ObjectId(route.Id));
+
+            var updateDef = Builders<Route>.Update;
+            var update = updateDef.Combine(
+                updateDef.Set(r => r.Directions, route.Directions)
+            );
+
+            await _collection.UpdateOneAsync(filter, update, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 }

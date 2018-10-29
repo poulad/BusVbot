@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
-using BusV.Data;
+using BusV.Ops;
 using BusV.Telegram.Services;
 using Telegram.Bot.Framework.Abstractions;
 
@@ -8,35 +8,74 @@ namespace BusV.Telegram.Handlers.Commands
 {
     public class BusCommand : CommandBase
     {
-        private readonly IAgencyRepo _agencyRepo;
+        private readonly IAgencyParser2 _agencyParser;
+        private readonly IRouteMessageFormatter _routeMessageFormatter;
 
         public BusCommand(
-            IAgencyRepo agencyRepo
+            IAgencyParser2 agencyParser,
+            IRouteMessageFormatter routeMessageFormatter
         )
         {
-            _agencyRepo = agencyRepo;
+            _agencyParser = agencyParser;
+            _routeMessageFormatter = routeMessageFormatter;
         }
 
         public override async Task HandleAsync(IUpdateContext context, UpdateDelegate next, string[] args)
         {
-            var userProfile = context.GetUserProfile();
+            string agencyTag = context.GetUserProfile().DefaultAgencyTag;
 
             bool hasValidFormat;
-            if (args.Length <= 2)
+            if (args.Any())
             {
-                hasValidFormat = false;
+                // ToDo include other agencies as well
+                // ToDo find what agency that is first
+                var matchingRoutes = await _agencyParser.FindMatchingRoutesAsync(agencyTag, args[0])
+                    .ConfigureAwait(false);
+
+                if (matchingRoutes.Error is null)
+                {
+                    if (matchingRoutes.Routes.Length == 0)
+                    {
+                        await context.Bot.Client.SendTextMessageAsync(
+                            context.Update.Message.Chat,
+                            "Sorry! couldn't find anything",
+                            replyToMessageId: context.Update.Message.MessageId
+                        ).ConfigureAwait(false);
+                    }
+                    else if (matchingRoutes.Routes.Length == 1)
+                    {
+                        var route = matchingRoutes.Routes[0];
+                        var formattedMessage = _routeMessageFormatter.CreateMessageForRoute(route);
+
+                        await context.Bot.Client.SendTextMessageAsync(
+                            context.Update.Message.Chat,
+                            formattedMessage.Text,
+                            replyMarkup: formattedMessage.keyboard,
+                            replyToMessageId: context.Update.Message.MessageId
+                        ).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        await context.Bot.Client.SendTextMessageAsync(
+                            context.Update.Message.Chat,
+                            "Found multiple routes: " + matchingRoutes.Routes.Length,
+                            replyToMessageId: context.Update.Message.MessageId
+                        ).ConfigureAwait(false);
+                    }
+                }
+                else
+                {
+                    await context.Bot.Client.SendTextMessageAsync(
+                        context.Update.Message.Chat,
+                        "ERROR",
+                        replyToMessageId: context.Update.Message.MessageId
+                    ).ConfigureAwait(false);
+                }
             }
             else
             {
-                string cmdArgs = args[0].Substring(args[0].IndexOf(' ') + 1);
-
-                // ToDo include other agencies as well
-                const string routeRegex = @"^(?<route>\d{1,3})(?:\s*(?<branch>[A-Z]))?$";
+                hasValidFormat = false;
             }
-
-            var agency = await _agencyRepo.GetByIdAsync(userProfile.AgencyDbRef.Id.ToString())
-                .ConfigureAwait(false);
-
 
 //            string argsValue = string.Join(' ', args.Skip(1));
 //            var cmdArgs = _predictionsManager.TryParseToRouteDirection(argsValue);

@@ -128,8 +128,7 @@ namespace BusV.Telegram.Handlers
                         }
                         else
                         {
-                            _logger.LogDebug("Message text does not have a location");
-                            await next(context).ConfigureAwait(false);
+                            _logger.LogTrace("Message text does not have a location. Ignoring the update.");
                             return;
                         }
                     }

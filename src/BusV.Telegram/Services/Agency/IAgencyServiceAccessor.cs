@@ -14,6 +14,6 @@ namespace BusV.Telegram.Services.Agency
 
         IAgencyDataParser GetAgencyOrDefaultDataParser(string agencyTag);
 
-        IAgencyMessageFormatter GetAgencyOrDefaultMessageFormatter(string agencyTag);
+        IAgencyMessageFormatter GetAgencyMessageFormatterOrDefault(string agencyTag);
     }
 }

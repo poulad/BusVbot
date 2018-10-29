@@ -14,12 +14,12 @@ namespace BusV.Telegram.Extensions
         /// </summary>
         public static void AddRedisCache(
             this IServiceCollection services,
-            IConfigurationSection dataSection
+            IConfigurationSection redisSection
         )
         {
             services.AddDistributedRedisCache(options =>
             {
-                options.Configuration = dataSection[nameof(RedisOptions.Configuration)];
+                options.Configuration = redisSection[nameof(RedisOptions.Configuration)];
             });
         }
 

@@ -16,11 +16,11 @@ namespace BusV.Data.Entities
         public string ChatId { get; set; }
 
         [Required]
+        public string DefaultAgencyTag { get; set; }
+
+        [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime ModifiedAt { get; set; }
-
-        [Required]
-        public MongoDBRef AgencyDbRef { get; set; }
     }
 }

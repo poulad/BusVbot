@@ -43,22 +43,6 @@ namespace BusV.Data
         }
 
         /// <inheritdoc />
-        public async Task<Agency> GetByIdAsync(
-            string id,
-            CancellationToken cancellationToken = default
-        )
-        {
-            var filter = Filter.Eq("_id", new ObjectId(id));
-
-            Agency agency = await _collection
-                .Find(filter)
-                .SingleOrDefaultAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            return agency;
-        }
-
-        /// <inheritdoc />
         public async Task<Agency> GetByTagAsync(
             string tag,
             CancellationToken cancellationToken = default
