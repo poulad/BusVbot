@@ -10,6 +10,7 @@ using BusV.Telegram.Handlers.Commands;
 using BusV.Telegram.Options;
 using Telegram.Bot.Framework;
 using Telegram.Bot.Framework.Abstractions;
+using Telegram.Bot.Types;
 
 namespace BusV.Telegram
 {
@@ -91,9 +92,15 @@ namespace BusV.Telegram
                 .Use<WebhookResponse>()
                 // global commands. these don't require loading the user profile
                 // ToDo remove this branch: https://github.com/TelegramBots/Telegram.Bot.Framework/issues/17
-                .UseWhen(When.NewTextMessage, txtBranch => txtBranch
-                    .UseCommand<StartCommand>("start")
-                    .UseCommand<HelpCommand>("help")
+//                    .UseCommand<StartCommand>("start")
+//                    .UseCommand<HelpCommand>("help")
+                .MapWhen(
+                    ctx => ctx.Bot.CanHandleCommand("start", ctx.Update.Message ?? new Message()),
+                    botBuilder => botBuilder.Use<StartCommand>()
+                )
+                .MapWhen(
+                    ctx => ctx.Bot.CanHandleCommand("help", ctx.Update.Message ?? new Message()),
+                    botBuilder => botBuilder.Use<HelpCommand>()
                 )
                 // ensure the user has a profile loaded for the rest of the handlers
                 .UseWhen<UserProfileSetupHandler>(UserProfileSetupHandler.CanHandle)
