@@ -86,7 +86,37 @@ psql -U busvbot < nextbus-dump.sql
 
 Run the app and start chatting with the bot on Telegram.
 
+## Tests
+
+### Systems Integration Tests
+
+Telegram bot tests mock the calls to the Telegram Bot API and use Docker Compose to run containers for other dependencies.
+
+Before running the tests, MongoDB and Redis should be up and running.
+
+```sh
+cd test/TelegramTests
+# run the containers in the background
+docker-compose --project-name tg up -d --force-recreate --remove-orphans
+
+# optionally, see the logs while running the tests
+# docker-compose --project-name tg logs --follow
+```
+
+Tests cases can be run now from the IDE or the console.
+
+```sh
+dotnet test --verbosity normal
+```
+
+Containers can be removed after the tests are done.
+
+```sh
+docker-compose --project-name tg down
+docker-compose --project-name tg rm -fv
+```
+
 [tg badge]: https://img.shields.io/badge/@BusVbot-Telegram-blue.svg?style=flat-square
-[travis badge]: https://img.shields.io/travis/poulad/BusVbot/master.svg?style=flat-square
+[travis badge]: https://img.shields.io/travis/poulad/BusVbot/master.svg?style=flat-square&label=Build
 [Telegram]: https://www.telegram.org
 [NextBus]: https://www.nextbus.com

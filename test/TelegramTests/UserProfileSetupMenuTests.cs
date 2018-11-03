@@ -219,7 +219,7 @@ namespace TelegramTests
                     /* chatId: */ Is.SameJson<ChatId>("1234"),
                     /* text: */ "Great! Your default agency is now set to *Toronto Transit Commission* " +
                                 "in Ontario, Canada.\n\n\n" +
-                                "💡 *Pro Tip*: You can always view or modify it using the /profile command",
+                                "💡 *Pro Tip*: You can always view or modify it using the /profile command.",
                     /* parseMode: */ ParseMode.Markdown,
                     default, default, default,
                     /* replyMarkup: */ Is.SameJson<IReplyMarkup>(@"{ remove_keyboard: true }"),
