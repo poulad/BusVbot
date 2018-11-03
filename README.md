@@ -1,23 +1,30 @@
-[![BusVbot on Telegram](https://img.shields.io/badge/BusVbot-Telegram-blue.svg)](https://t.me/BusVbot)
-[![Build Status](https://travis-ci.org/pouladpld/BusVbot.svg?branch=master)](https://travis-ci.org/pouladpld/BusVbot)
-
 # 🚍 BusV Bot 🤖
+
+[![tg badge]](https://t.me/BusVbot)
+[![travis badge]](https://travis-ci.org/pouladpld/BusVbot)
 
 [![BusVbot logo](./docs/logo.png)](https://t.me/BusVbot)
 
-**BusV** is a Telegram chat bot 🤖 that helps you catch your bus 🚍 by providing you route information and bus predictions. Start chatting with it on Telegram to find out more: [`@BusVbot`](https://t.me/BusVbot).
+**BusV** is a [Telegram] chat bot 🤖 that helps you catch your bus 🚍 by providing you route information and bus predictions. Start chatting with it on Telegram to find out more: [`@BusVbot`](https://t.me/BusVbot).
 
 This bot works best for passengers who take frequent routes and already know what bus they should take to reach their destinations.
 
 [![BusVbot demo](./docs/demo.gif)](https://t.me/BusVbot)
 
-Supporting 60 transit agencies in North America, the real-time bus predictions are powered by [NextBus](https://www.nextbus.com).
+Supporting 70+ transit agencies in North America, the real-time bus predictions are powered by [NextBus].
 
 Here are the regions that agencies operate in:
 
 | Canada | U.S |
 | :----- | :-- |
 | Ontario, Quebec | California-Northern, California-Southern, District of Columbia, Florida, Georgia, Indiana, Iowa, Kentucky, Maryland, Massachusetts, Mississippi, Nevada, New Jersey, New York, North Carolina, Oregon, Pennsylvania, Texas, Virginia, Washington |
+
+## Getting Started
+
+> You can take a look at the Redis instance via:
+> ```sh
+> docker run -it --link busvbot-redis:redis --rm redis redis-cli -h redis -p 6379
+> ```
 
 ## Build and Run
 
@@ -78,3 +85,8 @@ psql -U busvbot < nextbus-dump.sql
 ### Run
 
 Run the app and start chatting with the bot on Telegram.
+
+[tg badge]: https://img.shields.io/badge/@BusVbot-Telegram-blue.svg?style=flat-square
+[travis badge]: https://img.shields.io/travis/poulad/BusVbot/master.svg?style=flat-square
+[Telegram]: https://www.telegram.org
+[NextBus]: https://www.nextbus.com

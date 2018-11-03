@@ -37,6 +37,8 @@ namespace BusV.Telegram
                 .AddScoped<HelpCommand>()
                 .AddScoped<UserProfileSetupHandler>()
                 .AddScoped<UserProfileSetupMenuHandler>()
+                .AddScoped<UserProfileRemovalHandler>()
+                .AddScoped<ProfileCommand>()
                 .AddScoped<BusCommand>()
 //                .AddScoped<BusDirectionCallbackQueryHandler>()
 //                .AddScoped<PredictionRefreshCqHandler>()
@@ -103,12 +105,14 @@ namespace BusV.Telegram
                     .MapWhen<LocationHandler>(LocationHandler.HasLocationOrCoordinates)
                     // for new text messages...
                     .MapWhen(When.NewTextMessage, txtBranch => txtBranch
-                            // handle new commands
-                            .UseCommand<BusCommand>("bus")
+                        // handle new commands
+                        .UseCommand<ProfileCommand>("profile")
+                        .UseCommand<BusCommand>("bus")
 //                        .UseCommand<SaveCommand>("save")
 //                        .UseCommand<DeleteCommand>("del")
                         // try to handle a frequent location (from reply markup keyboard)
 //                        .UseWhen<SavedLocationHandler>(When.HasSavedLocationPrefix)
+                        .UseWhen<UserProfileRemovalHandler>(UserProfileRemovalHandler.CanHandle)
                     )
                 )
         /*

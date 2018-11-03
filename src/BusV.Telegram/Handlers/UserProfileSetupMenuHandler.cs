@@ -66,7 +66,7 @@ namespace BusV.Telegram.Handlers
                         context.Update.CallbackQuery.Message.Chat,
                         $"Great! Your default agency is now set to *{agency.Title}* " +
                         $"in {agency.Region}, {agency.Country}.\n\n\n" +
-                        "💡 *Pro Tip*: You can always view or modify it using the /profile command",
+                        "💡 *Pro Tip*: You can always view or modify it using the /profile command.",
                         ParseMode.Markdown,
                         replyMarkup: new ReplyKeyboardRemove()
                     );

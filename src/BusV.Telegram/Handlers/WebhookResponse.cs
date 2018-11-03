@@ -22,8 +22,7 @@ namespace BusV.Telegram.Handlers
 
             dynamic request = context.Items[nameof(WebhookResponse)];
 
-            bool isWebhook = context.Items.ContainsKey(nameof(HttpContext));
-            if (isWebhook)
+            if (context.IsWebhook())
             {
                 var httpContext = (HttpContext) context.Items[nameof(HttpContext)];
 
