@@ -15,7 +15,7 @@ Supporting 70+ transit agencies in North America, the real-time bus predictions 
 
 Here are the regions that agencies operate in:
 
-| Canada | U.S |
+| Canada | U.S. |
 | :----- | :-- |
 | Ontario, Quebec | California-Northern, California-Southern, District of Columbia, Florida, Georgia, Indiana, Iowa, Kentucky, Maryland, Massachusetts, Mississippi, Nevada, New Jersey, New York, North Carolina, Oregon, Pennsylvania, Texas, Virginia, Washington |
 
