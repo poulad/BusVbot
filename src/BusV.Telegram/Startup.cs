@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using BusV.Data.Entities;
 using BusV.Telegram.Extensions;
 using BusV.Telegram.Handlers;
 using BusV.Telegram.Handlers.Commands;
@@ -106,6 +107,12 @@ namespace BusV.Telegram
                 .UseWhen<UserProfileSetupHandler>(UserProfileSetupHandler.CanHandle)
                 // update the "Set User Agency" inline keyboard menu
                 .MapWhen<UserProfileSetupMenuHandler>(UserProfileSetupMenuHandler.CanHandle)
+                // stop the pipeline if the user profile isn't set
+                // ToDo remove after fixed: https://github.com/TelegramBots/Telegram.Bot.Framework/issues/18
+                .MapWhen(
+                    context => !context.Items.ContainsKey(nameof(UserProfile)),
+                    builder => { }
+                )
                 // for new messages...
                 .MapWhen(When.NewMessage, msgBranch => msgBranch
                     // accept locations as a location or a text coordinates(OSM)

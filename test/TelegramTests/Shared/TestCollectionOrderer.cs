@@ -7,9 +7,11 @@ namespace TelegramTests.Shared
         private static readonly string[] Collections =
         {
             "channel updates",
-            "start command",
+            "/start command",
             "user profile setup",
             "user profile setup menu",
+            "/profile command",
+            "profile removal",
         };
 
         public TestCollectionOrderer()

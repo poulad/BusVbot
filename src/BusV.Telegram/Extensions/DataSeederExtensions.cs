@@ -44,7 +44,7 @@ namespace BusV.Telegram.Extensions
                 else
                 {
                     logger.LogInformation("Creating the database schema");
-                    Initializer.CreateSchemaAsync(database).GetAwaiter().GetResult();
+                    MongoInitializer.CreateSchemaAsync(database).GetAwaiter().GetResult();
                 }
             }
         }

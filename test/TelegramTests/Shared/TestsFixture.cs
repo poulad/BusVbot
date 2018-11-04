@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using BusV.Data;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
@@ -38,6 +39,9 @@ namespace TelegramTests.Shared
             long docsCount = await agencyCollection.CountDocumentsAsync(FilterDefinition<BsonDocument>.Empty);
 
             if (docsCount > 0) return;
+
+            MongoInitializer.RegisterClassMaps();
+            await MongoInitializer.CreateSchemaAsync(db);
 
             await agencyCollection.InsertManyAsync(new[]
             {

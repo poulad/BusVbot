@@ -48,7 +48,7 @@ namespace BusV.Telegram.Extensions
                 .GetCollection<UserProfile>(BusV.Data.Constants.Collections.Users.Name)
             );
 
-            Initializer.RegisterClassMaps();
+            MongoInitializer.RegisterClassMaps();
         }
     }
 }

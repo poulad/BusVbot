@@ -31,7 +31,7 @@ namespace BusV.Telegram.Handlers
         }
 
         /// <summary>
-        /// Determines whether the user is replying to a profile removal prompt message.
+        /// Determines whether the user is replying to a profile removal prompt message send by this bot.
         /// </summary>
         public static bool CanHandle(IUpdateContext context) =>
             context.Update.Message.ReplyToMessage != null &&

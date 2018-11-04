@@ -9,7 +9,7 @@ using MongoDB.Driver;
 
 namespace BusV.Data
 {
-    public static class Initializer
+    public static class MongoInitializer
     {
         public static async Task CreateSchemaAsync(
             IMongoDatabase database,

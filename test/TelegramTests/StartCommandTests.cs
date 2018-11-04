@@ -10,7 +10,7 @@ using Xunit;
 
 namespace TelegramTests
 {
-    [Collection("start command")]
+    [Collection("/start command")]
     public class StartCommandTests : IClassFixture<TestsFixture>
     {
         private readonly TestsFixture _fixture;
@@ -42,6 +42,7 @@ namespace TelegramTests
                 }
             }";
 
+            // should send the start instructions
             _fixture.MockBotClient
                 .Setup(botClient => botClient.SendTextMessageAsync(
                     /* chatId: */ Is.SameJson<ChatId>("333"),

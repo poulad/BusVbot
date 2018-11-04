@@ -64,7 +64,7 @@ namespace TelegramTests
                 @"{""ProfileSetup"":{""IsInstructionsSent"":true}}"
             );
 
-            // mock updating the menu
+            // should update the menu with Canada provinces
             _fixture.MockBotClient
                 .Setup(botClient => botClient.EditMessageReplyMarkupAsync(
                     /* chatId: */ Is.SameJson<ChatId>("1234"),
@@ -136,7 +136,7 @@ namespace TelegramTests
                 @"{""ProfileSetup"":{""IsInstructionsSent"":true}}"
             );
 
-            // mock updating the menu
+            // should update the menu with TTC agency
             _fixture.MockBotClient
                 .Setup(botClient => botClient.EditMessageReplyMarkupAsync(
                     /* chatId: */ Is.SameJson<ChatId>("1234"),
@@ -213,7 +213,7 @@ namespace TelegramTests
                 @"{""ProfileSetup"":{""IsInstructionsSent"":true}}"
             );
 
-            // mock acknowledging that the new agency is set
+            // should send a message acknowledging that the new agency is set
             _fixture.MockBotClient
                 .Setup(botClient => botClient.SendTextMessageAsync(
                     /* chatId: */ Is.SameJson<ChatId>("1234"),
@@ -228,7 +228,6 @@ namespace TelegramTests
                 .ReturnsAsync(null as Message);
 
             HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
-
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
             // responds to the webhook with a bot API request

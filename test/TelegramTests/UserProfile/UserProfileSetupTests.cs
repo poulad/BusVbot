@@ -52,7 +52,7 @@ namespace TelegramTests
             // ensure cache is clear
             await _fixture.Cache.RemoveAsync(@"{""u"":1234,""c"":1234}");
 
-            // mock the first message with the country inline buttons
+            // should send the first message with the country inline buttons
             _fixture.MockBotClient
                 .Setup(botClient => botClient.SendTextMessageAsync(
                     /* chatId: */ Is.SameJson<ChatId>("1234"),
@@ -69,7 +69,7 @@ namespace TelegramTests
                 ))
                 .ReturnsAsync(null as Message);
 
-            // mock the second message for sharing the location
+            // should send the second message for sharing the location
             _fixture.MockBotClient
                 .Setup(botClient => botClient.SendTextMessageAsync(
                     /* chatId: */ Is.SameJson<ChatId>("1234"),
@@ -88,7 +88,6 @@ namespace TelegramTests
                 .ReturnsAsync(null as Message);
 
             HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
-
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
             _fixture.MockBotClient.VerifyAll();

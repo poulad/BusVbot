@@ -112,8 +112,7 @@ dotnet test --verbosity normal
 Containers can be removed after the tests are done.
 
 ```sh
-docker-compose --project-name tg down
-docker-compose --project-name tg rm -fv
+docker-compose --project-name tg rm --stop -fv
 ```
 
 [tg badge]: https://img.shields.io/badge/@BusVbot-Telegram-blue.svg?style=flat-square

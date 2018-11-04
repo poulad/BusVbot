@@ -46,8 +46,7 @@ namespace BusV.Telegram.Handlers.Commands
             }
             else
             {
-                _logger.LogTrace(@"Removing user profile upon ""/profile remove"" command.");
-                // ToDo can profile be null at this point? e.g. user sending /profile directly
+                _logger.LogTrace(@"Showing the user his profile upon the ""/profile"" command.");
                 var profile = context.GetUserProfile();
 
                 var agency = await _agencyRepo.GetByTagAsync(profile.DefaultAgencyTag, cancellationToken)
@@ -58,8 +57,10 @@ namespace BusV.Telegram.Handlers.Commands
                     await context.Bot.Client.SendTextMessageAsync(
                         context.Update.Message.Chat,
                         $"Hey {context.Update.Message.From.FirstName}\n" +
-                        $"Your default transit agency is set to *{agency.Title}*.\n\n" +
-                        "You can remove your profile from my memory by sending the `/profile remove` message.",
+                        $"Your default transit agency is set to *{agency.Title}* " +
+                        $"in {agency.Region}, {agency.Country}.\n\n" +
+                        "💡 *Pro Tip*: You can remove your profile from my memory by sending " +
+                        "the `/profile remove` message.",
                         ParseMode.Markdown,
                         cancellationToken: cancellationToken
                     ).ConfigureAwait(false);
