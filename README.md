@@ -86,6 +86,18 @@ psql -U busvbot < nextbus-dump.sql
 
 Run the app and start chatting with the bot on Telegram.
 
+## Bot Configurations
+
+### Commands
+
+Set the commands for bot in a chat with `@BotFather`.
+
+```text
+bus - 🚍 Bus predictions
+profile - 👤 View/Modify my profile
+help - ❓ Help
+```
+
 ## Tests
 
 ### Systems Integration Tests
