@@ -68,6 +68,27 @@ namespace BusV.Ops
                     if (match.Groups["direction"].Success)
                     {
                         string directionName = match.Groups["direction"].Value;
+
+                        switch (directionName.ToLower())
+                        {
+                            case "n":
+                            case "northbound":
+                                directionName = "north";
+                                break;
+                            case "s":
+                            case "southbound":
+                                directionName = "south";
+                                break;
+                            case "w":
+                            case "westbound":
+                                directionName = "west";
+                                break;
+                            case "e":
+                            case "eastbound":
+                                directionName = "east";
+                                break;
+                        }
+
                         var matchingDirections = route.Directions
                             .Where(d => d.Name.Equals(directionName, StringComparison.OrdinalIgnoreCase))
                             .ToArray();

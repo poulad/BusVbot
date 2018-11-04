@@ -42,7 +42,7 @@ namespace BusV.Telegram
                 .AddScoped<UserProfileRemovalHandler>()
                 .AddScoped<ProfileCommand>()
                 .AddScoped<BusCommand>()
-//                .AddScoped<BusDirectionCallbackQueryHandler>()
+                .AddScoped<BusCQHandler>()
 //                .AddScoped<PredictionRefreshCqHandler>()
 //                .AddScoped<LocationHandler>()
 //                .AddScoped<SaveCommand>()
@@ -129,12 +129,11 @@ namespace BusV.Telegram
                         .UseWhen<UserProfileRemovalHandler>(UserProfileRemovalHandler.CanHandle)
                     )
                 )
-        /*
                 // for callback queries...
-                .MapWhen(When.CallbackQuery, cqBranch => cqBranch
-                    .MapWhen<BusDirectionCallbackQueryHandler>(When.IsBusDirectionCq)
-                    .MapWhen<PredictionRefreshCqHandler>(When.IsBusPredictionCq)
-                )
-            */;
+                .MapWhen<BusCQHandler>(BusCQHandler.CanHandle)
+//                .MapWhen(When.CallbackQuery, cqBranch => cqBranch
+//                    .MapWhen<PredictionRefreshCqHandler>(When.IsBusPredictionCq)
+//                )
+        ;
     }
 }

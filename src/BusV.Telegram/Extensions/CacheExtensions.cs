@@ -6,10 +6,12 @@ using BusV.Telegram.Models.Cache;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 
-namespace BusV.Telegram.Extensions
+// ReSharper disable once CheckNamespace
+namespace Microsoft.Extensions.Caching.Distributed
 {
     public static class CacheExtensions
     {
+        [Obsolete]
         public static Task<CacheContext> GetAsync(
             this IDistributedCache cache,
             UserChat userchat,
@@ -23,6 +25,7 @@ namespace BusV.Telegram.Extensions
                     TaskContinuationOptions.OnlyOnRanToCompletion
                 );
 
+        [Obsolete]
         public static Task SetAsync(
             this IDistributedCache cache,
             UserChat userchat,
@@ -39,11 +42,51 @@ namespace BusV.Telegram.Extensions
                 cancellationToken
             );
 
+        [Obsolete]
         public static Task RemoveAsync(
             this IDistributedCache cache,
             UserChat userchat,
             CancellationToken cancellationToken = default
         ) =>
             cache.RemoveAsync(userchat.ToJson(), cancellationToken);
+
+        public static Task<BusPredictionsContext> GetBusPredictionAsync(
+            this IDistributedCache cache,
+            UserChat userchat,
+            CancellationToken cancellationToken = default
+        )
+        {
+            string key = userchat.ToJson();
+            key = key.Insert(key.Length - 1, @",""k"":""bus""");
+
+            return cache.GetStringAsync(key, cancellationToken)
+                .ContinueWith(t =>
+                        t.Result == null
+                            ? null
+                            : JsonConvert.DeserializeObject<BusPredictionsContext>(t.Result),
+                    TaskContinuationOptions.OnlyOnRanToCompletion
+                );
+        }
+
+        public static Task SetBusPredictionAsync(
+            this IDistributedCache cache,
+            UserChat userchat,
+            BusPredictionsContext context,
+            CancellationToken cancellationToken = default
+        )
+        {
+            string key = userchat.ToJson();
+            key = key.Insert(key.Length - 1, @",""k"":""bus""");
+
+            return cache.SetStringAsync(
+                key,
+                JsonConvert.SerializeObject(context),
+                new DistributedCacheEntryOptions
+                {
+                    SlidingExpiration = TimeSpan.FromMinutes(20)
+                },
+                cancellationToken
+            );
+        }
     }
 }

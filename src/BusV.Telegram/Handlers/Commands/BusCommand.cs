@@ -1,10 +1,13 @@
 ﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using BusV.Telegram.Models.Cache;
 using BusV.Telegram.Services;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BusV.Telegram.Handlers.Commands
 {
@@ -12,16 +15,19 @@ namespace BusV.Telegram.Handlers.Commands
     {
         private readonly Ops.IAgencyRouteParser _agencyParser;
         private readonly IRouteMessageFormatter _routeMessageFormatter;
+        private readonly IDistributedCache _cache;
         private readonly ILogger _logger;
 
         public BusCommand(
             Ops.IAgencyRouteParser agencyParser,
             IRouteMessageFormatter routeMessageFormatter,
+            IDistributedCache cache,
             ILogger<BusCommand> logger
         )
         {
             _agencyParser = agencyParser;
             _routeMessageFormatter = routeMessageFormatter;
+            _cache = cache;
             _logger = logger;
         }
 
@@ -46,14 +52,26 @@ namespace BusV.Telegram.Handlers.Commands
                             match.Route, match.Direction
                         );
 
-                        // ToDo update the cache
-                        // ToDo and then ask for user location
+                        _logger.LogTrace("Inserting the route and direction in the cache for this userchat");
+                        var userchat = context.Update.ToUserchat();
+                        await _cache.SetBusPredictionAsync(userchat, new BusPredictionsContext
+                        {
+                            RouteTag = match.Route.Tag,
+                            DirectionTag = match.Direction.Tag,
+                        }, cancellationToken).ConfigureAwait(false);
+
+                        text += "\n\n*Send your current location* so I can find you the nearest bus stop 🚏 " +
+                                "and get the bus predictions for it.";
 
                         await context.Bot.Client.SendTextMessageAsync(
                             context.Update.Message.Chat,
                             text,
                             ParseMode.Markdown,
                             replyToMessageId: context.Update.Message.MessageId,
+                            replyMarkup: new ReplyKeyboardMarkup(new[]
+                            {
+                                KeyboardButton.WithRequestLocation("Share my location")
+                            }, true, true),
                             cancellationToken: cancellationToken
                         ).ConfigureAwait(false);
                     }
@@ -87,6 +105,7 @@ namespace BusV.Telegram.Handlers.Commands
                                 context.Update.Message.Chat,
                                 "Found multiple matching routes: " + result.Matches.Length,
                                 replyToMessageId: context.Update.Message.MessageId,
+                                replyMarkup: new ReplyKeyboardRemove(),
                                 cancellationToken: cancellationToken
                             ).ConfigureAwait(false);
                         }
@@ -109,6 +128,7 @@ namespace BusV.Telegram.Handlers.Commands
                         context.Update.Message.Chat,
                         errorMessageText,
                         replyToMessageId: context.Update.Message.MessageId,
+                        replyMarkup: new ReplyKeyboardRemove(),
                         cancellationToken: cancellationToken
                     ).ConfigureAwait(false);
                 }
@@ -165,6 +185,7 @@ namespace BusV.Telegram.Handlers.Commands
                 "This is not enough information.\n" + exampleUsage + "\n" + routesList,
                 ParseMode.Markdown,
                 replyToMessageId: context.Update.Message.MessageId,
+                replyMarkup: new ReplyKeyboardRemove(),
                 cancellationToken: cancellationToken
             ).ConfigureAwait(false);
         }

@@ -65,7 +65,7 @@ namespace BusV.Telegram.Services
                             .Skip(i * keysPerRow)
                             .Take(keysPerRow)
                             .Select(d => InlineKeyboardButton.WithCallbackData(
-                                d + "bound", Constants.CallbackQueries.BusCommand.BusDirectionPrefix + d
+                                d + "bound", $"bus/r:{route.Tag}/d:{d}"
                             ))
                             .ToArray();
                         keyboard[i] = buttons;

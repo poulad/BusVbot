@@ -16,10 +16,6 @@ namespace BusV.Telegram
         public static bool NewCommand(IUpdateContext context) =>
             context.Update.Message?.Entities?.FirstOrDefault()?.Type == MessageEntityType.BotCommand;
 
-        public static bool IsBusDirectionCq(IUpdateContext context) =>
-            context.Update.CallbackQuery?.Data
-                ?.StartsWith(Constants.CallbackQueries.BusCommand.BusCommandPrefix) == true;
-
         public static bool IsBusPredictionCq(IUpdateContext context) =>
             context.Update.CallbackQuery?.Data
                 ?.StartsWith(Constants.CallbackQueries.Prediction.PredictionPrefix) == true;

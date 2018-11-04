@@ -57,6 +57,8 @@ namespace BusV.Telegram.Handlers
             // ToDo don't parse text or find better regex for geolocation in text
             else if (context.Update.Message?.Text != null)
                 canHandle = true;
+            else if (context.Update.CallbackQuery != null)
+                canHandle = true;
             else
                 canHandle = false;
 
