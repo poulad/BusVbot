@@ -1,7 +1,8 @@
 ﻿using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
-using BusV.Ops;
 using BusV.Telegram.Services;
+using Microsoft.Extensions.Logging;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Types.Enums;
 
@@ -9,16 +10,19 @@ namespace BusV.Telegram.Handlers.Commands
 {
     public class BusCommand : CommandBase
     {
-        private readonly IAgencyParser2 _agencyParser;
+        private readonly Ops.IAgencyRouteParser _agencyParser;
         private readonly IRouteMessageFormatter _routeMessageFormatter;
+        private readonly ILogger _logger;
 
         public BusCommand(
-            IAgencyParser2 agencyParser,
-            IRouteMessageFormatter routeMessageFormatter
+            Ops.IAgencyRouteParser agencyParser,
+            IRouteMessageFormatter routeMessageFormatter,
+            ILogger<BusCommand> logger
         )
         {
             _agencyParser = agencyParser;
             _routeMessageFormatter = routeMessageFormatter;
+            _logger = logger;
         }
 
         public override async Task HandleAsync(IUpdateContext context, UpdateDelegate next, string[] args)
@@ -26,53 +30,84 @@ namespace BusV.Telegram.Handlers.Commands
             string agencyTag = context.GetUserProfile().DefaultAgencyTag;
             var cancellationToken = context.GetCancellationTokenOrDefault();
 
-            bool hasValidFormat;
             if (args.Any())
             {
-                // ToDo include other agencies as well
-                // ToDo find what agency that is first
-                var matchingRoutes = await _agencyParser.FindMatchingRoutesAsync(agencyTag, args[0], cancellationToken)
+                var result = await _agencyParser.FindMatchingRouteDirectionsAsync(agencyTag, args[0], cancellationToken)
                     .ConfigureAwait(false);
 
-                if (matchingRoutes.Error is null)
+                if (result.Error is null)
                 {
-                    if (matchingRoutes.Routes.Length == 0)
+                    if (result.Matches.Length == 1)
                     {
-                        await context.Bot.Client.SendTextMessageAsync(
-                            context.Update.Message.Chat,
-                            "Sorry! couldn't find anything",
-                            replyToMessageId: context.Update.Message.MessageId,
-                            cancellationToken: cancellationToken
-                        ).ConfigureAwait(false);
-                    }
-                    else if (matchingRoutes.Routes.Length == 1)
-                    {
-                        var route = matchingRoutes.Routes[0];
-                        var formattedMessage = _routeMessageFormatter.CreateMessageForRoute(route);
+                        _logger.LogTrace("The exact route and direction are found. Ask user for his location.");
+
+                        var match = result.Matches[0];
+                        string text = _routeMessageFormatter.GetMessageTextForRouteDirection(
+                            match.Route, match.Direction
+                        );
+
+                        // ToDo update the cache
+                        // ToDo and then ask for user location
 
                         await context.Bot.Client.SendTextMessageAsync(
                             context.Update.Message.Chat,
-                            formattedMessage.Text,
-                            replyMarkup: formattedMessage.keyboard,
+                            text,
+                            ParseMode.Markdown,
                             replyToMessageId: context.Update.Message.MessageId,
                             cancellationToken: cancellationToken
                         ).ConfigureAwait(false);
                     }
                     else
                     {
-                        await context.Bot.Client.SendTextMessageAsync(
-                            context.Update.Message.Chat,
-                            "Found multiple routes: " + matchingRoutes.Routes.Length,
-                            replyToMessageId: context.Update.Message.MessageId,
-                            cancellationToken: cancellationToken
-                        ).ConfigureAwait(false);
+                        bool areAllSameRoute = result.Matches
+                                                   .Select(m => m.Route.Tag)
+                                                   .Distinct()
+                                                   .Count() == 1;
+
+                        if (areAllSameRoute)
+                        {
+                            _logger.LogTrace("The exact route is found. Ask user for the direction to take.");
+
+                            var messageInfo = _routeMessageFormatter.CreateMessageForRoute(result.Matches[0].Route);
+
+                            await context.Bot.Client.SendTextMessageAsync(
+                                context.Update.Message.Chat,
+                                messageInfo.Text,
+                                ParseMode.Markdown,
+                                replyToMessageId: context.Update.Message.MessageId,
+                                replyMarkup: messageInfo.Keyboard,
+                                cancellationToken: cancellationToken
+                            ).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            // ToDo instruct on choosing one of the matching routes. inline keyboard maybe
+
+                            await context.Bot.Client.SendTextMessageAsync(
+                                context.Update.Message.Chat,
+                                "Found multiple matching routes: " + result.Matches.Length,
+                                replyToMessageId: context.Update.Message.MessageId,
+                                cancellationToken: cancellationToken
+                            ).ConfigureAwait(false);
+                        }
                     }
                 }
                 else
                 {
+                    string errorMessageText;
+                    if (result.Error.Code == Ops.ErrorCodes.RouteNotFound)
+                    {
+                        errorMessageText = "I can't find the route you are looking for. 🤷‍♂\n" +
+                                           "Click on this 👉 /bus command if you want to see an example.";
+                    }
+                    else
+                    {
+                        errorMessageText = "Sorry! Something went wrong while I was looking for the bus routes.";
+                    }
+
                     await context.Bot.Client.SendTextMessageAsync(
                         context.Update.Message.Chat,
-                        "ERROR",
+                        errorMessageText,
                         replyToMessageId: context.Update.Message.MessageId,
                         cancellationToken: cancellationToken
                     ).ConfigureAwait(false);
@@ -80,19 +115,8 @@ namespace BusV.Telegram.Handlers.Commands
             }
             else
             {
-                string exampleUsage = _routeMessageFormatter.GetDefaultFormatMessage(agencyTag);
-                string routesList = await _routeMessageFormatter.GetAllRoutesMessageAsync(agencyTag, cancellationToken)
+                await SendUsageInstructionsAsync(context, agencyTag, cancellationToken)
                     .ConfigureAwait(false);
-
-                await context.Bot.Client.SendTextMessageAsync(
-                    context.Update.Message.Chat,
-                    "This is not enough information.\n" +
-                    exampleUsage + "\n" +
-                    routesList,
-                    ParseMode.Markdown,
-                    replyToMessageId: context.Update.Message.MessageId,
-                    cancellationToken: cancellationToken
-                ).ConfigureAwait(false);
             }
 
 //            string argsValue = string.Join(' ', args.Skip(1));
@@ -126,10 +150,23 @@ namespace BusV.Telegram.Handlers.Commands
 //            }
         }
 
-        public static class Constants
+        private async Task SendUsageInstructionsAsync(
+            IUpdateContext context,
+            string agencyTag,
+            CancellationToken cancellationToken
+        )
         {
-            public const string InvalidArgumentsMessage = "_Invalid input_\n" +
-                                                          "Use bus command in one of these forms:\n";
+            string exampleUsage = _routeMessageFormatter.GetDefaultFormatMessage(agencyTag);
+            string routesList = await _routeMessageFormatter.GetAllRoutesMessageAsync(agencyTag, cancellationToken)
+                .ConfigureAwait(false);
+
+            await context.Bot.Client.SendTextMessageAsync(
+                context.Update.Message.Chat,
+                "This is not enough information.\n" + exampleUsage + "\n" + routesList,
+                ParseMode.Markdown,
+                replyToMessageId: context.Update.Message.MessageId,
+                cancellationToken: cancellationToken
+            ).ConfigureAwait(false);
         }
     }
 }

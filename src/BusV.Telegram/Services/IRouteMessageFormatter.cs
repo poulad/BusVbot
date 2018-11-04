@@ -7,8 +7,13 @@ namespace BusV.Telegram.Services
 {
     public interface IRouteMessageFormatter
     {
-        (string Text, InlineKeyboardMarkup keyboard) CreateMessageForRoute(
+        (string Text, InlineKeyboardMarkup Keyboard) CreateMessageForRoute(
             Route route
+        );
+
+        string GetMessageTextForRouteDirection(
+            Route route,
+            RouteDirection direction
         );
 
         string GetDefaultFormatMessage(

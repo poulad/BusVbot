@@ -4,18 +4,13 @@ using BusV.Data.Entities;
 
 namespace BusV.Ops
 {
-    // ToDo rename
-    public interface IAgencyParser2
+    public interface IAgencyRouteParser
     {
-        string AgencyTag { get; }
-
-//        string SampleRoutesMarkdownText { get; } // todo Store this message in database
-
 //        (bool Success, string RouteTag) FindPossibleRoutesAsync(string routeText);
 
 //        (bool Success, string DirectionName) TryParseToDirectionName(string routeTag, string directionText);
 
-        Task<(Route[] Routes, Error Error)> FindMatchingRoutesAsync(
+        Task<((Route Route, RouteDirection Direction)[] Matches, Error Error)> FindMatchingRouteDirectionsAsync(
             string agencyTag,
             string routeText,
             CancellationToken cancellationToken = default

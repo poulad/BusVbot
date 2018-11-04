@@ -19,50 +19,59 @@ namespace BusV.Telegram.Services
             _routeRepo = routeRepo;
         }
 
-        public (string Text, InlineKeyboardMarkup keyboard) CreateMessageForRoute(
+        public (string Text, InlineKeyboardMarkup Keyboard) CreateMessageForRoute(
             Route route
         )
         {
+            (string Text, InlineKeyboardMarkup keyboard) result;
+
             if (route.AgencyTag == "ttc")
             {
-                string[] directions = route.Directions
+                string[] directionNames = route.Directions
                     .Select(d => d.Name)
                     .Distinct()
                     .ToArray();
 
-                if (directions.Length == 2)
+                if (directionNames.Length == 1)
+                {
+                    // ToDo does it hit this path ever?
+                    string text = $"{route.Title} {route.Directions[0].Name}\n" +
+                                  string.Join('\n', route.Directions.Select(d => d.Title));
+                    result = (text, null);
+                }
+                else if (directionNames.Length == 2)
                 {
                     int keysPerRow = -1;
                     int keyboardRows = -1;
 
-                    if (directions.Contains("NORTH", StringComparer.OrdinalIgnoreCase))
+                    if (directionNames.Contains("NORTH", StringComparer.OrdinalIgnoreCase))
                     {
                         keyboardRows = 2;
                         keysPerRow = 1;
-                        directions = directions.OrderBy(d => d).ToArray();
+                        directionNames = directionNames.OrderBy(d => d).ToArray();
                     }
-                    else if (directions.Contains("WEST", StringComparer.OrdinalIgnoreCase))
+                    else if (directionNames.Contains("WEST", StringComparer.OrdinalIgnoreCase))
                     {
                         keyboardRows = 1;
                         keysPerRow = 2;
-                        directions = directions.OrderByDescending(d => d).ToArray();
+                        directionNames = directionNames.OrderByDescending(d => d).ToArray();
                     }
 
                     var keyboard = new InlineKeyboardButton[keyboardRows][];
 
                     for (int i = 0; i < keyboard.Length; i++)
                     {
-                        var buttons = directions
+                        var buttons = directionNames
                             .Skip(i * keysPerRow)
                             .Take(keysPerRow)
                             .Select(d => InlineKeyboardButton.WithCallbackData(
-                                d, Constants.CallbackQueries.BusCommand.BusDirectionPrefix + d
+                                d + "bound", Constants.CallbackQueries.BusCommand.BusDirectionPrefix + d
                             ))
                             .ToArray();
                         keyboard[i] = buttons;
                     }
 
-                    return (route.Title, new InlineKeyboardMarkup(keyboard));
+                    result = (route.Title, new InlineKeyboardMarkup(keyboard));
                 }
                 else
                 {
@@ -73,6 +82,35 @@ namespace BusV.Telegram.Services
             {
                 throw new NotImplementedException();
             }
+
+            return result;
+        }
+
+        public string GetMessageTextForRouteDirection(
+            Route route,
+            RouteDirection direction
+        )
+        {
+            string text;
+            if (route.AgencyTag == "ttc")
+            {
+                var allBranchesInDirection = route.Directions
+                    .Where(d => d.Name.Equals(direction.Name, StringComparison.OrdinalIgnoreCase))
+                    .ToArray();
+
+                text = allBranchesInDirection.Length > 1
+                    ? $"The *{direction.Name}bound {route.Title}* route has multiple branches:\n\n"
+                    : "";
+
+                text += string.Join('\n', allBranchesInDirection.Select(d => d.Title));
+            }
+            else
+            {
+                // ToDo
+                text = "DEFAULT";
+            }
+
+            return text;
         }
 
         public string GetDefaultFormatMessage(
