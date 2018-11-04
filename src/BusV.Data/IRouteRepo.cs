@@ -25,6 +25,11 @@ namespace BusV.Data
             CancellationToken cancellationToken = default
         );
 
+        Task<Route[]> GetAllForAgencyAsync(
+            string agencyTag,
+            CancellationToken cancellationToken = default
+        );
+
         Task UpdateAsync(
             Route route,
             CancellationToken cancellationToken = default

@@ -69,6 +69,22 @@ namespace BusV.Data
             return route;
         }
 
+        public async Task<Route[]> GetAllForAgencyAsync(
+            string agencyTag,
+            CancellationToken cancellationToken = default
+        )
+        {
+            agencyTag = Regex.Escape(agencyTag);
+            var filter = Filter.Regex(r => r.AgencyTag, new BsonRegularExpression($"^{agencyTag}$", "i"));
+
+            var routes = await _collection
+                .Find(filter)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return routes.ToArray();
+        }
+
         /// <inheritdoc />
         public async Task UpdateAsync(
             Route route,

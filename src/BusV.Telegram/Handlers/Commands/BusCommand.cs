@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using BusV.Ops;
 using BusV.Telegram.Services;
 using Telegram.Bot.Framework.Abstractions;
+using Telegram.Bot.Types.Enums;
 
 namespace BusV.Telegram.Handlers.Commands
 {
@@ -23,13 +24,14 @@ namespace BusV.Telegram.Handlers.Commands
         public override async Task HandleAsync(IUpdateContext context, UpdateDelegate next, string[] args)
         {
             string agencyTag = context.GetUserProfile().DefaultAgencyTag;
+            var cancellationToken = context.GetCancellationTokenOrDefault();
 
             bool hasValidFormat;
             if (args.Any())
             {
                 // ToDo include other agencies as well
                 // ToDo find what agency that is first
-                var matchingRoutes = await _agencyParser.FindMatchingRoutesAsync(agencyTag, args[0])
+                var matchingRoutes = await _agencyParser.FindMatchingRoutesAsync(agencyTag, args[0], cancellationToken)
                     .ConfigureAwait(false);
 
                 if (matchingRoutes.Error is null)
@@ -39,7 +41,8 @@ namespace BusV.Telegram.Handlers.Commands
                         await context.Bot.Client.SendTextMessageAsync(
                             context.Update.Message.Chat,
                             "Sorry! couldn't find anything",
-                            replyToMessageId: context.Update.Message.MessageId
+                            replyToMessageId: context.Update.Message.MessageId,
+                            cancellationToken: cancellationToken
                         ).ConfigureAwait(false);
                     }
                     else if (matchingRoutes.Routes.Length == 1)
@@ -51,7 +54,8 @@ namespace BusV.Telegram.Handlers.Commands
                             context.Update.Message.Chat,
                             formattedMessage.Text,
                             replyMarkup: formattedMessage.keyboard,
-                            replyToMessageId: context.Update.Message.MessageId
+                            replyToMessageId: context.Update.Message.MessageId,
+                            cancellationToken: cancellationToken
                         ).ConfigureAwait(false);
                     }
                     else
@@ -59,7 +63,8 @@ namespace BusV.Telegram.Handlers.Commands
                         await context.Bot.Client.SendTextMessageAsync(
                             context.Update.Message.Chat,
                             "Found multiple routes: " + matchingRoutes.Routes.Length,
-                            replyToMessageId: context.Update.Message.MessageId
+                            replyToMessageId: context.Update.Message.MessageId,
+                            cancellationToken: cancellationToken
                         ).ConfigureAwait(false);
                     }
                 }
@@ -68,13 +73,26 @@ namespace BusV.Telegram.Handlers.Commands
                     await context.Bot.Client.SendTextMessageAsync(
                         context.Update.Message.Chat,
                         "ERROR",
-                        replyToMessageId: context.Update.Message.MessageId
+                        replyToMessageId: context.Update.Message.MessageId,
+                        cancellationToken: cancellationToken
                     ).ConfigureAwait(false);
                 }
             }
             else
             {
-                hasValidFormat = false;
+                string exampleUsage = _routeMessageFormatter.GetDefaultFormatMessage(agencyTag);
+                string routesList = await _routeMessageFormatter.GetAllRoutesMessageAsync(agencyTag, cancellationToken)
+                    .ConfigureAwait(false);
+
+                await context.Bot.Client.SendTextMessageAsync(
+                    context.Update.Message.Chat,
+                    "This is not enough information.\n" +
+                    exampleUsage + "\n" +
+                    routesList,
+                    ParseMode.Markdown,
+                    replyToMessageId: context.Update.Message.MessageId,
+                    cancellationToken: cancellationToken
+                ).ConfigureAwait(false);
             }
 
 //            string argsValue = string.Join(' ', args.Skip(1));
