@@ -33,14 +33,16 @@ namespace TelegramTests.Shared
 
         private async Task InitDbAsync()
         {
+            MongoInitializer.RegisterClassMaps();
+
             var db = Services.GetRequiredService<IMongoDatabase>();
             var agencyCollection = db.GetCollection<BsonDocument>("agencies");
+            var routeCollection = db.GetCollection<BsonDocument>("routes");
 
             long docsCount = await agencyCollection.CountDocumentsAsync(FilterDefinition<BsonDocument>.Empty);
 
             if (docsCount > 0) return;
 
-            MongoInitializer.RegisterClassMaps();
             await MongoInitializer.CreateSchemaAsync(db);
 
             await agencyCollection.InsertManyAsync(new[]
@@ -105,6 +107,60 @@ namespace TelegramTests.Shared
                     max_lon: -118.28767,
                     min_lat: 33.7273099,
                     min_lon: -118.42314
+                }"),
+            });
+
+            await routeCollection.InsertManyAsync(new[]
+            {
+                // routes for TTC
+                BsonDocument.Parse(@"{
+                    tag : ""6"",
+                    agency : ""ttc"",
+                    created_at : new Date(),
+                    title : ""6-Bay"",
+                    max_lat : 43.6761999,
+                    min_lat : 43.64152,
+                    max_lon : -79.36538,
+                    min_lon : -79.40196,
+                    directions : [
+                        {
+                            tag : ""6_0_6A"",
+                            title : ""South - 6 Bay towards Queens Quay and Sherbourne"",
+                            name : ""South"",
+                            stops : [ ""264"", ""4165"", ""1642"", ""2410"", ""7542"" ]
+                        },
+                        {
+                            tag : ""6_1_6A"",
+                            title : ""North - 6a Bay towards Dupont"",
+                            name : ""North"",
+                            stops : [ ""14935"", ""4166"", ""14936"", ""14569"", ""5092"" ]
+                        }
+                    ]
+                }"),
+
+                BsonDocument.Parse(@"{
+                    tag : ""34"",
+                    agency : ""ttc"",
+                    created_at : new Date(),
+                    title : ""34-Eglinton East"",
+                    max_lat : 43.7368499,
+                    min_lat : 43.7047599,
+                    max_lon : -79.24785,
+                    min_lon : -79.4001099,
+                    directions : [
+                        {
+                            tag : ""34_1_34Akes"",
+                            title : ""West - 34a Eglinton East towards Eglinton Station"",
+                            name : ""West"",
+                            stops : [ ""2463"", ""317"", ""4194"", ""8550"", ""15211"" ]
+                        },
+                        {
+                            tag : ""34_0_34C"",
+                            title : ""East - 34c Eglinton East towards Flemingdon Park (Grenoble & Spanbridge)"",
+                            name : ""East"",
+                            stops : [ ""14191"", ""303"", ""24060"", ""6665"", ""24061"" ]
+                        }
+                    ]
                 }"),
             });
         }
