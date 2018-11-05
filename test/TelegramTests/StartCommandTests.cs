@@ -1,10 +1,13 @@
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Framework;
+using Framework.Extensions;
 using Moq;
+using Telegram.Bot.Requests;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 using TelegramTests.Shared;
 using Xunit;
 
@@ -43,20 +46,19 @@ namespace TelegramTests
             }";
 
             // should send the start instructions
+            string text = "Hello Alice!\n" +
+                          "BusV bot is at your service. ☺\n\n" +
+                          "Try /help command to get some info.";
             _fixture.MockBotClient
-                .Setup(botClient => botClient.SendTextMessageAsync(
-                    /* chatId: */ Is.SameJson<ChatId>("333"),
-                    /* text: */ "Hello Alice!\n" +
-                                "BusV bot is at your service ☺\n\n" +
-                                "Try /help command to get some info",
-                    ParseMode.Markdown,
-                    default, default, default, default, default
+                .Setup(botClient => botClient.MakeRequestAsync(
+                    Is.SameJson<SendMessageRequest>($@"{{ chat_id: 333, text: ""{text.Stringify()}"" }}"),
+                    It.IsAny<CancellationToken>()
                 ))
                 .ReturnsAsync(null as Message);
 
             HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
-
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
             _fixture.MockBotClient.VerifyAll();
             _fixture.MockBotClient.VerifyNoOtherCalls();
         }

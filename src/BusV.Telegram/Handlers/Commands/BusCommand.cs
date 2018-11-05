@@ -5,7 +5,9 @@ using BusV.Telegram.Models.Cache;
 using BusV.Telegram.Services;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using Telegram.Bot;
 using Telegram.Bot.Framework.Abstractions;
+using Telegram.Bot.Requests;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -180,13 +182,15 @@ namespace BusV.Telegram.Handlers.Commands
             string routesList = await _routeMessageFormatter.GetAllRoutesMessageAsync(agencyTag, cancellationToken)
                 .ConfigureAwait(false);
 
-            await context.Bot.Client.SendTextMessageAsync(
-                context.Update.Message.Chat,
-                "This is not enough information.\n" + exampleUsage + "\n" + routesList,
-                ParseMode.Markdown,
-                replyToMessageId: context.Update.Message.MessageId,
-                replyMarkup: new ReplyKeyboardRemove(),
-                cancellationToken: cancellationToken
+            await context.Bot.Client.MakeRequestWithRetryAsync(new SendMessageRequest(
+                    context.Update.Message.Chat,
+                    "This is not enough information.\n" + exampleUsage + "\n" + routesList
+                )
+                {
+                    ParseMode = ParseMode.Markdown,
+                    ReplyToMessageId = context.Update.Message.MessageId,
+                    ReplyMarkup = new ReplyKeyboardRemove()
+                }, cancellationToken
             ).ConfigureAwait(false);
         }
     }

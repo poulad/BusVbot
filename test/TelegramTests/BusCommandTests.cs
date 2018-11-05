@@ -5,8 +5,10 @@ using System.Threading.Tasks;
 using BusV.Data;
 using BusV.Data.Entities;
 using Framework;
+using Framework.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using Telegram.Bot.Requests;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using TelegramTests.Shared;
@@ -59,25 +61,27 @@ namespace TelegramTests
             });
 
             // should send the instructions message
+            string text = "This is not enough information.\n" +
+                          "You can check for a bus like the _6 Bay St. Southbound_ in any of these formats:\n" +
+                          "```\n" +
+                          "/bus 6\n" +
+                          "/bus 6 southbound\n" +
+                          "/bus 6 south\n" +
+                          "/bus 6 s\n" +
+                          "```\n" +
+                          "There are 2 routes.\n\n" +
+                          "6-Bay\n" +
+                          "34-Eglinton East";
             _fixture.MockBotClient
-                .Setup(botClient => botClient.SendTextMessageAsync(
-                    /* chatId: */ Is.SameJson<ChatId>("789"),
-                    /* text: */ "This is not enough information.\n" +
-                                "You can check for a bus like the _6 Bay St. Southbound_ in any of these formats:\n" +
-                                "```\n" +
-                                "/bus 6\n" +
-                                "/bus 6 southbound\n" +
-                                "/bus 6 south\n" +
-                                "/bus 6 s\n" +
-                                "```\n" +
-                                "There are 2 routes.\n\n" +
-                                "6-Bay\n" +
-                                "34-Eglinton East",
-                    /* parseMode: */ ParseMode.Markdown,
-                    default, default,
-                    /* replyToMessageId: */ 2,
-                    default,
-                    /* cancellationToken: */ It.IsAny<CancellationToken>()
+                .Setup(botClient => botClient.MakeRequestAsync(
+                    Is.SameJson<SendMessageRequest>($@"{{
+                        chat_id: 789,
+                        text: ""{text.Stringify()}"",
+                        parse_mode: ""Markdown"",
+                        reply_to_message_id: 2,
+                        reply_markup: {{ remove_keyboard: true }}
+                    }}"),
+                    It.IsAny<CancellationToken>()
                 ))
                 .ReturnsAsync(null as Message);
 

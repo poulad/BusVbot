@@ -9,10 +9,12 @@ namespace Framework
         public static T SameJson<T>(string json)
             => It.Is<T>(actual => JsonEqual(json, actual));
 
-        private static bool JsonEqual<T>(string json, T actual)
-            => JToken.DeepEquals(
-                JToken.Parse(json),
-                JToken.FromObject(actual)
-            );
+        private static bool JsonEqual<T>(string expected, T actual)
+        {
+            var expectedToken = JToken.Parse(expected);
+            var actualToken = JToken.FromObject(actual);
+
+            return JToken.DeepEquals(expectedToken, actualToken);
+        }
     }
 }
