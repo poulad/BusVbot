@@ -137,7 +137,6 @@ namespace TelegramTests.Shared
                         }
                     ]
                 }"),
-
                 BsonDocument.Parse(@"{
                     tag : ""34"",
                     agency : ""ttc"",

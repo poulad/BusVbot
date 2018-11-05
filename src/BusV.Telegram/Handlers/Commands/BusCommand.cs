@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using BusV.Data.Entities;
 using BusV.Telegram.Models.Cache;
 using BusV.Telegram.Services;
 using Microsoft.Extensions.Caching.Distributed;
@@ -79,38 +80,8 @@ namespace BusV.Telegram.Handlers.Commands
                     }
                     else
                     {
-                        bool areAllSameRoute = result.Matches
-                                                   .Select(m => m.Route.Tag)
-                                                   .Distinct()
-                                                   .Count() == 1;
-
-                        if (areAllSameRoute)
-                        {
-                            _logger.LogTrace("The exact route is found. Ask user for the direction to take.");
-
-                            var messageInfo = _routeMessageFormatter.CreateMessageForRoute(result.Matches[0].Route);
-
-                            await context.Bot.Client.SendTextMessageAsync(
-                                context.Update.Message.Chat,
-                                messageInfo.Text,
-                                ParseMode.Markdown,
-                                replyToMessageId: context.Update.Message.MessageId,
-                                replyMarkup: messageInfo.Keyboard,
-                                cancellationToken: cancellationToken
-                            ).ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            // ToDo instruct on choosing one of the matching routes. inline keyboard maybe
-
-                            await context.Bot.Client.SendTextMessageAsync(
-                                context.Update.Message.Chat,
-                                "Found multiple matching routes: " + result.Matches.Length,
-                                replyToMessageId: context.Update.Message.MessageId,
-                                replyMarkup: new ReplyKeyboardRemove(),
-                                cancellationToken: cancellationToken
-                            ).ConfigureAwait(false);
-                        }
+                        await AskUserToChooseOneRouteDirectionAsync(context, result.Matches, cancellationToken)
+                            .ConfigureAwait(false);
                     }
                 }
                 else
@@ -192,6 +163,47 @@ namespace BusV.Telegram.Handlers.Commands
                     ReplyMarkup = new ReplyKeyboardRemove()
                 }, cancellationToken
             ).ConfigureAwait(false);
+        }
+
+        private async Task AskUserToChooseOneRouteDirectionAsync(
+            IUpdateContext context,
+            (Route Route, RouteDirection Direction)[] matches,
+            CancellationToken cancellationToken
+        )
+        {
+            bool areAllSameRoute = matches
+                                       .Select(m => m.Route.Tag)
+                                       .Distinct()
+                                       .Count() == 1;
+
+            if (areAllSameRoute)
+            {
+                _logger.LogTrace("The exact route is found. Ask user for the direction to take.");
+
+                var messageInfo = _routeMessageFormatter.CreateMessageForRoute(matches[0].Route);
+
+                await context.Bot.Client.MakeRequestWithRetryAsync(new SendMessageRequest(
+                        context.Update.Message.Chat,
+                        messageInfo.Text
+                    )
+                    {
+                        ReplyToMessageId = context.Update.Message.MessageId,
+                        ReplyMarkup = messageInfo.Keyboard,
+                    }, cancellationToken
+                ).ConfigureAwait(false);
+            }
+            else
+            {
+                // ToDo instruct on choosing one of the matching routes. inline keyboard maybe
+
+                await context.Bot.Client.SendTextMessageAsync(
+                    context.Update.Message.Chat,
+                    "Found multiple matching routes: " + matches.Length,
+                    replyToMessageId: context.Update.Message.MessageId,
+                    replyMarkup: new ReplyKeyboardRemove(),
+                    cancellationToken: cancellationToken
+                ).ConfigureAwait(false);
+            }
         }
     }
 }

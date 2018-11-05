@@ -102,7 +102,9 @@ help - ❓ Help
 
 ### Systems Integration Tests
 
-Telegram bot tests mock the calls to the Telegram Bot API and use Docker Compose to run containers for other dependencies.
+[TelegramTests project] contains the Systems Integration test cases.
+The HTTP requests to the Telegram Bot API are mocked using([Moq])
+and [Docker Compose] is used to run containers for other dependencies.
 
 Before running the tests, MongoDB and Redis should be up and running.
 
@@ -131,3 +133,6 @@ docker-compose --project-name tg rm --stop -fv
 [travis badge]: https://img.shields.io/travis/poulad/BusVbot/master.svg?style=flat-square&label=Build
 [Telegram]: https://www.telegram.org
 [NextBus]: https://www.nextbus.com
+[TelegramTests project]: ./test/TelegramTests
+[Moq]: https://github.com/moq/moq4
+[Docker Compose]: https://docs.docker.com/compose
