@@ -48,38 +48,17 @@ namespace BusV.Telegram.Handlers.Commands
                 {
                     if (result.Matches.Length == 1)
                     {
-                        _logger.LogTrace("The exact route and direction are found. Ask user for his location.");
-
-                        var match = result.Matches[0];
-                        string text = _routeMessageFormatter.GetMessageTextForRouteDirection(
-                            match.Route, match.Direction
+                        _logger.LogTrace(
+                            "The exact route and the direction are found. Asking user to send his location."
                         );
-
-                        _logger.LogTrace("Inserting the route and direction in the cache for this userchat");
-                        var userchat = context.Update.ToUserchat();
-                        await _cache.SetBusPredictionAsync(userchat, new BusPredictionsContext
-                        {
-                            RouteTag = match.Route.Tag,
-                            DirectionTag = match.Direction.Tag,
-                        }, cancellationToken).ConfigureAwait(false);
-
-                        text += "\n\n*Send your current location* so I can find you the nearest bus stop 🚏 " +
-                                "and get the bus predictions for it.";
-
-                        await context.Bot.Client.SendTextMessageAsync(
-                            context.Update.Message.Chat,
-                            text,
-                            ParseMode.Markdown,
-                            replyToMessageId: context.Update.Message.MessageId,
-                            replyMarkup: new ReplyKeyboardMarkup(new[]
-                            {
-                                KeyboardButton.WithRequestLocation("Share my location")
-                            }, true, true),
-                            cancellationToken: cancellationToken
-                        ).ConfigureAwait(false);
+                        await AskUserForLocationAsync(context, result.Matches.Single(), cancellationToken)
+                            .ConfigureAwait(false);
                     }
                     else
                     {
+                        _logger.LogTrace(
+                            "There are multiple matching route-direction combinations. Asking user to choose one."
+                        );
                         await AskUserToChooseOneRouteDirectionAsync(context, result.Matches, cancellationToken)
                             .ConfigureAwait(false);
                     }
@@ -108,6 +87,7 @@ namespace BusV.Telegram.Handlers.Commands
             }
             else
             {
+                _logger.LogTrace("There is no argument provided. Instruct user on how to use this command.");
                 await SendUsageInstructionsAsync(context, agencyTag, cancellationToken)
                     .ConfigureAwait(false);
             }
@@ -153,7 +133,8 @@ namespace BusV.Telegram.Handlers.Commands
             string routesList = await _routeMessageFormatter.GetAllRoutesMessageAsync(agencyTag, cancellationToken)
                 .ConfigureAwait(false);
 
-            await context.Bot.Client.MakeRequestWithRetryAsync(new SendMessageRequest(
+            await context.Bot.Client.MakeRequestWithRetryAsync(
+                new SendMessageRequest(
                     context.Update.Message.Chat,
                     "This is not enough information.\n" + exampleUsage + "\n" + routesList
                 )
@@ -182,7 +163,8 @@ namespace BusV.Telegram.Handlers.Commands
 
                 var messageInfo = _routeMessageFormatter.CreateMessageForRoute(matches[0].Route);
 
-                await context.Bot.Client.MakeRequestWithRetryAsync(new SendMessageRequest(
+                await context.Bot.Client.MakeRequestWithRetryAsync(
+                    new SendMessageRequest(
                         context.Update.Message.Chat,
                         messageInfo.Text
                     )
@@ -204,6 +186,44 @@ namespace BusV.Telegram.Handlers.Commands
                     cancellationToken: cancellationToken
                 ).ConfigureAwait(false);
             }
+        }
+
+        private async Task AskUserForLocationAsync(
+            IUpdateContext context,
+            (Route Route, RouteDirection Direction) match,
+            CancellationToken cancellationToken
+        )
+        {
+            string text = _routeMessageFormatter.GetMessageTextForRouteDirection(
+                match.Route, match.Direction
+            );
+
+            _logger.LogTrace("Inserting the route and direction in the cache for this userchat");
+            var userchat = context.Update.ToUserchat();
+            await _cache.SetBusPredictionAsync(userchat, new BusPredictionsContext
+            {
+                RouteTag = match.Route.Tag,
+                DirectionTag = match.Direction.Tag,
+            }, cancellationToken).ConfigureAwait(false);
+
+            text += "\n\n*Send your current location* so I can find you the nearest bus stop 🚏 " +
+                    "and get the bus predictions for it.";
+
+            await context.Bot.Client.MakeRequestWithRetryAsync(
+                new SendMessageRequest(
+                    context.Update.Message.Chat,
+                    text
+                )
+                {
+                    ParseMode = ParseMode.Markdown,
+                    ReplyToMessageId = context.Update.Message.MessageId,
+                    ReplyMarkup = new ReplyKeyboardMarkup(new[]
+                    {
+                        KeyboardButton.WithRequestLocation("Share my location")
+                    }, true, true)
+                },
+                cancellationToken
+            ).ConfigureAwait(false);
         }
     }
 }

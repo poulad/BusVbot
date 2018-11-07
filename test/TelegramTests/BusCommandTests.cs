@@ -87,6 +87,9 @@ namespace TelegramTests
             HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
+            string responseContent = await response.Content.ReadAsStringAsync();
+            Assert.Empty(responseContent);
+
             _fixture.MockBotClient.VerifyAll();
             _fixture.MockBotClient.VerifyNoOtherCalls();
         }
@@ -144,6 +147,75 @@ namespace TelegramTests
 
             HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+            Assert.Empty(responseContent);
+
+            _fixture.MockBotClient.VerifyAll();
+            _fixture.MockBotClient.VerifyNoOtherCalls();
+        }
+
+        [OrderedFact(DisplayName = "Should ask for the user's location for a \"/bus 6 southbound\" command")]
+        public async Task Should_Ask_For_Location()
+        {
+            // "/bus" command with a valid route but no direction
+            string update = @"{
+                update_id: 1,
+                message: {
+                    message_id: 2,
+                    text: ""/bus 6 southbound"",
+                    chat: {
+                        id: 789,
+                        type: ""private""
+                    },
+                    from: {
+                        id: 789,
+                        first_name: ""Jack"",
+                        is_bot: false
+                    },
+                    entities: [ { offset: 0, length: 4, type: ""bot_command"" } ],
+                    date: 2680
+                }
+            }";
+
+            // ensure user profile is persisted in the db
+            IUserProfileRepo userRepo = _fixture.Services.GetRequiredService<IUserProfileRepo>();
+            await userRepo.DeleteAsync("789", "789");
+            await userRepo.AddAsync(new UserProfile
+            {
+                ChatId = "789",
+                UserId = "789",
+                DefaultAgencyTag = "ttc"
+            });
+
+            // ToDo ensure empty cache
+
+            // should send a message asking for a direction to choose
+            string text = "South - 6 Bay towards Queens Quay and Sherbourne\n\n" +
+                          "*Send your current location* so I can find you the nearest bus stop 🚏 " +
+                          "and get the bus predictions for it.";
+            _fixture.MockBotClient
+                .Setup(botClient => botClient.MakeRequestAsync(
+                    Is.SameJson<SendMessageRequest>($@"{{
+                        chat_id: 789,
+                        text: ""{text.Stringify()}"",
+                        parse_mode: ""Markdown"",
+                        reply_to_message_id: 2,
+                        reply_markup: {{
+                            keyboard: [ [ {{ text: ""Share my location"", request_location: true }} ] ],
+                            resize_keyboard: true,
+                            one_time_keyboard: true
+                        }}
+                    }}"),
+                    It.IsAny<CancellationToken>()
+                ))
+                .ReturnsAsync(null as Message);
+
+            HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+            Assert.Empty(responseContent);
 
             _fixture.MockBotClient.VerifyAll();
             _fixture.MockBotClient.VerifyNoOtherCalls();

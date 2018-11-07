@@ -90,6 +90,9 @@ namespace TelegramTests
             HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
+            string responseContent = await response.Content.ReadAsStringAsync();
+            Assert.Empty(responseContent);
+
             _fixture.MockBotClient.VerifyAll();
             _fixture.MockBotClient.VerifyNoOtherCalls();
 
