@@ -14,7 +14,7 @@ services:
 jobs:
   include:
     - stage: Build
-      name: "Buid Docker image"
+      name: "Build Docker image"
       install: cd scripts && npm ci && cd ..
       script: node scripts/build
       env:
