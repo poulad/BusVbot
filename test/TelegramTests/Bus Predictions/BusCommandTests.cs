@@ -220,5 +220,128 @@ namespace TelegramTests
             _fixture.MockBotClient.VerifyAll();
             _fixture.MockBotClient.VerifyNoOtherCalls();
         }
+
+        [OrderedFact(DisplayName = "Should send an error message for a \"/bus 999\" command with a non-existing route")]
+        public async Task Should_Send_Route_Not_Found_Error()
+        {
+            // "/bus" command with a non-existing route
+            string update = @"{
+                update_id: 1,
+                message: {
+                    message_id: 2,
+                    text: ""/bus 999"",
+                    chat: {
+                        id: 789,
+                        type: ""private""
+                    },
+                    from: {
+                        id: 789,
+                        first_name: ""Jack"",
+                        is_bot: false
+                    },
+                    entities: [ { offset: 0, length: 4, type: ""bot_command"" } ],
+                    date: 2680
+                }
+            }";
+
+            // ensure user profile is persisted in the db
+            IUserProfileRepo userRepo = _fixture.Services.GetRequiredService<IUserProfileRepo>();
+            await userRepo.DeleteAsync("789", "789");
+            await userRepo.AddAsync(new UserProfile
+            {
+                ChatId = "789",
+                UserId = "789",
+                DefaultAgencyTag = "ttc"
+            });
+
+            // ToDo ensure empty cache
+
+            // should send a message acknowledging the error in finding the route
+            string text = "I can't find the route you are looking for. 🤷‍♂\n" +
+                          "Click on this 👉 /bus command if you want to see an example.";
+            _fixture.MockBotClient
+                .Setup(botClient => botClient.MakeRequestAsync(
+                    Is.SameJson<SendMessageRequest>($@"{{
+                        chat_id: 789,
+                        text: ""{text.Stringify()}"",
+                        reply_to_message_id: 2,
+                        disable_notification: true,
+                        reply_markup: {{ remove_keyboard: true }}
+                    }}"),
+                    It.IsAny<CancellationToken>()
+                ))
+                .ReturnsAsync(null as Message);
+
+            HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+            Assert.Empty(responseContent);
+
+            _fixture.MockBotClient.VerifyAll();
+            _fixture.MockBotClient.VerifyNoOtherCalls();
+        }
+
+        [OrderedFact(DisplayName = "Should send an error message when app fails to find the route")]
+        public async Task Should_Send_General_Error()
+        {
+            // "/bus" command with a valid route
+            string update = @"{
+                update_id: 1,
+                message: {
+                    message_id: 2,
+                    text: ""/bus 6"",
+                    chat: {
+                        id: 789,
+                        type: ""private""
+                    },
+                    from: {
+                        id: 789,
+                        first_name: ""Jack"",
+                        is_bot: false
+                    },
+                    entities: [ { offset: 0, length: 4, type: ""bot_command"" } ],
+                    date: 2680
+                }
+            }";
+
+            // ensure user profile is persisted in the db
+            // agency tag is set to an non-existing agency
+            // ToDo mock this service and add it to the service collection, instead
+            IUserProfileRepo userRepo = _fixture.Services.GetRequiredService<IUserProfileRepo>();
+            await userRepo.DeleteAsync("789", "789");
+            await userRepo.AddAsync(new UserProfile
+            {
+                ChatId = "789",
+                UserId = "789",
+                DefaultAgencyTag = "foo-bar-agency"
+            });
+
+            // ToDo ensure empty cache
+
+            // should send a message acknowledging the error in finding the route
+            string text = "Sorry! Something went wrong while I was looking for the bus routes.";
+            _fixture.MockBotClient
+                .Setup(botClient => botClient.MakeRequestAsync(
+                    Is.SameJson<SendMessageRequest>($@"{{
+                        chat_id: 789,
+                        text: ""{text.Stringify()}"",
+                        reply_to_message_id: 2,
+                        disable_notification: true,
+                        reply_markup: {{ remove_keyboard: true }}
+                    }}"),
+                    It.IsAny<CancellationToken>()
+                ))
+                .ReturnsAsync(null as Message);
+
+            HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+            Assert.Empty(responseContent);
+
+            _fixture.MockBotClient.VerifyAll();
+            _fixture.MockBotClient.VerifyNoOtherCalls();
+        }
     }
 }

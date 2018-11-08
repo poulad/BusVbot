@@ -39,7 +39,13 @@ namespace BusV.Telegram.Handlers.Commands
             string agencyTag = context.GetUserProfile().DefaultAgencyTag;
             var cancellationToken = context.GetCancellationTokenOrDefault();
 
-            if (args.Any())
+            if (args.Length == 0)
+            {
+                _logger.LogTrace("There is no argument provided. Instructing the user on how to use this command.");
+                await SendUsageInstructionsAsync(context, agencyTag, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            else
             {
                 var result = await _agencyParser.FindMatchingRouteDirectionsAsync(agencyTag, args[0], cancellationToken)
                     .ConfigureAwait(false);
@@ -65,62 +71,13 @@ namespace BusV.Telegram.Handlers.Commands
                 }
                 else
                 {
-                    string errorMessageText;
-                    if (result.Error.Code == Ops.ErrorCodes.RouteNotFound)
-                    {
-                        errorMessageText = "I can't find the route you are looking for. 🤷‍♂\n" +
-                                           "Click on this 👉 /bus command if you want to see an example.";
-                    }
-                    else
-                    {
-                        errorMessageText = "Sorry! Something went wrong while I was looking for the bus routes.";
-                    }
-
-                    await context.Bot.Client.SendTextMessageAsync(
-                        context.Update.Message.Chat,
-                        errorMessageText,
-                        replyToMessageId: context.Update.Message.MessageId,
-                        replyMarkup: new ReplyKeyboardRemove(),
-                        cancellationToken: cancellationToken
-                    ).ConfigureAwait(false);
+                    _logger.LogTrace(
+                        "An error occured while trying to find the matching routes. Notifying the user via a message."
+                    );
+                    await SendErrorMessageAsync(context, result.Error, cancellationToken)
+                        .ConfigureAwait(false);
                 }
             }
-            else
-            {
-                _logger.LogTrace("There is no argument provided. Instruct user on how to use this command.");
-                await SendUsageInstructionsAsync(context, agencyTag, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-
-//            string argsValue = string.Join(' ', args.Skip(1));
-//            var cmdArgs = _predictionsManager.TryParseToRouteDirection(argsValue);
-//
-//            var userchat = context.Update.ToUserchat();
-//
-//            if (_predictionsManager.ValidateRouteFormat(cmdArgs.Route))
-//            {
-//                await _predictionsManager
-//                    .CacheRouteDirectionAsync(userchat, cmdArgs.Route, cmdArgs.Direction)
-//                    .ConfigureAwait(false);
-//
-//                await _predictionsManager.TryReplyWithPredictionsAsync(
-//                    context.Bot,
-//                    userchat,
-//                    context.Update.Message.MessageId
-//                ).ConfigureAwait(false);
-//            }
-//            else
-//            {
-//                string sampleRoutes = await _predictionsManager.GetSampleRouteTextAsync(userchat)
-//                    .ConfigureAwait(false);
-//
-//                await context.Bot.Client.SendTextMessageAsync(
-//                    context.Update.Message.Chat.Id,
-//                    Constants.InvalidArgumentsMessage + sampleRoutes,
-//                    ParseMode.Markdown,
-//                    replyToMessageId: context.Update.Message.MessageId
-//                ).ConfigureAwait(false);
-//            }
         }
 
         private async Task SendUsageInstructionsAsync(
@@ -177,7 +134,7 @@ namespace BusV.Telegram.Handlers.Commands
             else
             {
                 // ToDo instruct on choosing one of the matching routes. inline keyboard maybe
-
+                // ToDo Test this scenario
                 await context.Bot.Client.SendTextMessageAsync(
                     context.Update.Message.Chat,
                     "Found multiple matching routes: " + matches.Length,
@@ -210,10 +167,7 @@ namespace BusV.Telegram.Handlers.Commands
                     "and get the bus predictions for it.";
 
             await context.Bot.Client.MakeRequestWithRetryAsync(
-                new SendMessageRequest(
-                    context.Update.Message.Chat,
-                    text
-                )
+                new SendMessageRequest(context.Update.Message.Chat, text)
                 {
                     ParseMode = ParseMode.Markdown,
                     ReplyToMessageId = context.Update.Message.MessageId,
@@ -221,6 +175,34 @@ namespace BusV.Telegram.Handlers.Commands
                     {
                         KeyboardButton.WithRequestLocation("Share my location")
                     }, true, true)
+                },
+                cancellationToken
+            ).ConfigureAwait(false);
+        }
+
+        private async Task SendErrorMessageAsync(
+            IUpdateContext context,
+            Error error,
+            CancellationToken cancellationToken
+        )
+        {
+            string errorMessageText;
+            if (error.Code == Ops.ErrorCodes.RouteNotFound)
+            {
+                errorMessageText = "I can't find the route you are looking for. 🤷‍♂\n" +
+                                   "Click on this 👉 /bus command if you want to see an example.";
+            }
+            else
+            {
+                errorMessageText = "Sorry! Something went wrong while I was looking for the bus routes.";
+            }
+
+            await context.Bot.Client.MakeRequestWithRetryAsync(
+                new SendMessageRequest(context.Update.Message.Chat, errorMessageText)
+                {
+                    ReplyToMessageId = context.Update.Message.MessageId,
+                    DisableNotification = true,
+                    ReplyMarkup = new ReplyKeyboardRemove(),
                 },
                 cancellationToken
             ).ConfigureAwait(false);
