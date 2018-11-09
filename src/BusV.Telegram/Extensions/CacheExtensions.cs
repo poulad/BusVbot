@@ -18,7 +18,7 @@ namespace Microsoft.Extensions.Caching.Distributed
         ) =>
             cache.RemoveAsync(GetKey(userchat, ""), cancellationToken);
 
-        public static Task<UserProfileContext> GetUserProfileAsync(
+        public static Task<UserProfileContext> GetProfileAsync(
             this IDistributedCache cache,
             UserChat userchat,
             CancellationToken cancellationToken = default
@@ -31,7 +31,7 @@ namespace Microsoft.Extensions.Caching.Distributed
                     TaskContinuationOptions.OnlyOnRanToCompletion
                 );
 
-        public static Task SetUserProfileAsync(
+        public static Task SetProfileAsync(
             this IDistributedCache cache,
             UserChat userchat,
             UserProfileContext context,
@@ -72,6 +72,35 @@ namespace Microsoft.Extensions.Caching.Distributed
                 new DistributedCacheEntryOptions
                 {
                     SlidingExpiration = TimeSpan.FromMinutes(20)
+                },
+                cancellationToken
+            );
+
+        public static Task<UserLocationContext> GetLocationAsync(
+            this IDistributedCache cache,
+            UserChat userchat,
+            CancellationToken cancellationToken = default
+        ) =>
+            cache.GetStringAsync(GetKey(userchat, "location"), cancellationToken)
+                .ContinueWith(t =>
+                        t.Result == null
+                            ? null
+                            : JsonConvert.DeserializeObject<UserLocationContext>(t.Result),
+                    TaskContinuationOptions.OnlyOnRanToCompletion
+                );
+
+        public static Task SetLocationAsync(
+            this IDistributedCache cache,
+            UserChat userchat,
+            UserLocationContext context,
+            CancellationToken cancellationToken = default
+        ) =>
+            cache.SetStringAsync(
+                GetKey(userchat, "location"),
+                JsonConvert.SerializeObject(context),
+                new DistributedCacheEntryOptions
+                {
+                    SlidingExpiration = TimeSpan.FromMinutes(15)
                 },
                 cancellationToken
             );

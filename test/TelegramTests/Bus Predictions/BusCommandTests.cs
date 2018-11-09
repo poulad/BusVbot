@@ -6,6 +6,7 @@ using BusV.Data;
 using BusV.Data.Entities;
 using Framework;
 using Framework.Extensions;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Telegram.Bot.Requests;
@@ -15,6 +16,9 @@ using Xunit;
 
 namespace TelegramTests
 {
+    /// <summary>
+    /// Tests for <see cref="BusV.Telegram.Handlers.Commands.BusCommand"/>
+    /// </summary>
     [Collection("/bus command")]
     public class BusCommandTests : IClassFixture<TestsFixture>
     {
@@ -59,6 +63,9 @@ namespace TelegramTests
                 DefaultAgencyTag = "ttc"
             });
 
+            // ensure cache is not touched
+            string cachedContextBefore = await _fixture.Cache.GetStringAsync(@"{""u"":789,""c"":789,""k"":""bus""}");
+
             // should send the instructions message
             string text = "This is not enough information.\n" +
                           "You can check for a bus like the _6 Bay St. Southbound_ in any of these formats:\n" +
@@ -92,6 +99,10 @@ namespace TelegramTests
 
             _fixture.MockBotClient.VerifyAll();
             _fixture.MockBotClient.VerifyNoOtherCalls();
+
+            // ensure cached context is not changed
+            string cachedContextAfter = await _fixture.Cache.GetStringAsync(@"{""u"":789,""c"":789,""k"":""bus""}");
+            Assert.Equal(cachedContextBefore, cachedContextAfter);
         }
 
         [OrderedFact(DisplayName = "Should ask for the direction to take for a \"/bus 6\" command")]
@@ -127,6 +138,9 @@ namespace TelegramTests
                 DefaultAgencyTag = "ttc"
             });
 
+            // ensure cached context is not changed
+            string cachedContextBefore = await _fixture.Cache.GetStringAsync(@"{""u"":789,""c"":789,""k"":""bus""}");
+
             // should send a message asking for a direction to choose
             _fixture.MockBotClient
                 .Setup(botClient => botClient.MakeRequestAsync(
@@ -153,6 +167,10 @@ namespace TelegramTests
 
             _fixture.MockBotClient.VerifyAll();
             _fixture.MockBotClient.VerifyNoOtherCalls();
+
+            // ensure cached context is not changed
+            string cachedContextAfter = await _fixture.Cache.GetStringAsync(@"{""u"":789,""c"":789,""k"":""bus""}");
+            Assert.Equal(cachedContextBefore, cachedContextAfter);
         }
 
         [OrderedFact(DisplayName = "Should ask for the user's location for a \"/bus 6 southbound\" command")]
@@ -188,7 +206,8 @@ namespace TelegramTests
                 DefaultAgencyTag = "ttc"
             });
 
-            // ToDo ensure empty cache
+            // ensure cache is clear
+            await _fixture.Cache.RemoveAsync(@"{""u"":789,""c"":789,""k"":""bus""}");
 
             // should send a message asking for a direction to choose
             string text = "South - 6 Bay towards Queens Quay and Sherbourne\n\n" +
@@ -219,6 +238,9 @@ namespace TelegramTests
 
             _fixture.MockBotClient.VerifyAll();
             _fixture.MockBotClient.VerifyNoOtherCalls();
+
+            string cachedContext = await _fixture.Cache.GetStringAsync(@"{""u"":789,""c"":789,""k"":""bus""}");
+            Asserts.JsonEqual(@"{""route"":""6"",""dir"":""6_0_6A""}", cachedContext);
         }
 
         [OrderedFact(DisplayName = "Should send an error message for a \"/bus 999\" command with a non-existing route")]
@@ -254,6 +276,9 @@ namespace TelegramTests
                 DefaultAgencyTag = "ttc"
             });
 
+            // ensure cached context is not changed
+            string cachedContextBefore = await _fixture.Cache.GetStringAsync(@"{""u"":789,""c"":789,""k"":""bus""}");
+
             // ToDo ensure empty cache
 
             // should send a message acknowledging the error in finding the route
@@ -280,6 +305,10 @@ namespace TelegramTests
 
             _fixture.MockBotClient.VerifyAll();
             _fixture.MockBotClient.VerifyNoOtherCalls();
+
+            // ensure cached context is not changed
+            string cachedContextAfter = await _fixture.Cache.GetStringAsync(@"{""u"":789,""c"":789,""k"":""bus""}");
+            Assert.Equal(cachedContextBefore, cachedContextAfter);
         }
 
         [OrderedFact(DisplayName = "Should send an error message when app fails to find the route")]
@@ -317,6 +346,9 @@ namespace TelegramTests
                 DefaultAgencyTag = "foo-bar-agency"
             });
 
+            // ensure cached context is not changed
+            string cachedContextBefore = await _fixture.Cache.GetStringAsync(@"{""u"":789,""c"":789,""k"":""bus""}");
+
             // ToDo ensure empty cache
 
             // should send a message acknowledging the error in finding the route
@@ -342,6 +374,10 @@ namespace TelegramTests
 
             _fixture.MockBotClient.VerifyAll();
             _fixture.MockBotClient.VerifyNoOtherCalls();
+
+            // ensure cached context is not changed
+            string cachedContextAfter = await _fixture.Cache.GetStringAsync(@"{""u"":789,""c"":789,""k"":""bus""}");
+            Assert.Equal(cachedContextBefore, cachedContextAfter);
         }
     }
 }

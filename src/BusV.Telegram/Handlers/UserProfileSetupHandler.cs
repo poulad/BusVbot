@@ -52,14 +52,12 @@ namespace BusV.Telegram.Handlers
         public static bool CanHandle(IUpdateContext context)
         {
             bool canHandle;
-            var userchat = context.Update.ToUserchat();
 
-            if (userchat is null)
+            if (context.Update.ToUserchat() == null)
                 canHandle = false;
-            else if (context.Update.Message?.Location != null)
+            else if (context.Update.Message != null)
                 canHandle = true;
-            // ToDo don't parse text or find better regex for geolocation in text
-            else if (context.Update.Message?.Text != null)
+            else if (context.Items.ContainsKey(nameof(UserLocationContext)))
                 canHandle = true;
             else if (context.Update.CallbackQuery != null)
                 canHandle = true;
@@ -73,10 +71,9 @@ namespace BusV.Telegram.Handlers
         /// Gets user profile and inserts it into the context items.
         /// If user does not have a profile yet, instructs user to set it up.
         /// </summary>
-        public async Task HandleAsync(IUpdateContext context, UpdateDelegate next)
+        public async Task HandleAsync(IUpdateContext context, UpdateDelegate next, CancellationToken cancellationToken)
         {
             var userchat = context.Update.ToUserchat();
-            var cancellationToken = context.GetCancellationTokenOrDefault();
 
             var userProfile = await _userProfileRepo.GetByUserchatAsync(
                 userchat.UserId.ToString(),
@@ -88,12 +85,14 @@ namespace BusV.Telegram.Handlers
             {
                 _logger.LogTrace("User already has a profile. Putting the profile in the context.");
                 context.Items[nameof(UserProfile)] = userProfile;
+
+                await next(context, cancellationToken).ConfigureAwait(false);
             }
             else
             {
                 _logger.LogTrace("User does not have a profile in the database.");
 
-                var cachedContext = await _cache.GetUserProfileAsync(userchat, cancellationToken)
+                var cachedContext = await _cache.GetProfileAsync(userchat, cancellationToken)
                     .ConfigureAwait(false);
 
                 if (cachedContext?.IsInstructionsSent == true)
@@ -102,36 +101,17 @@ namespace BusV.Telegram.Handlers
                         "User has already seen the instructions. Checking whether this is a location update."
                     );
 
-                    if (context.Update.Message?.Location != null)
+                    if (context.Items.TryGetValue(nameof(UserLocationContext), out var locationContextObj))
                     {
+                        var locationContext = (UserLocationContext) locationContextObj;
+
                         await HandleLocationUpdateAsync(
                             context.Bot,
                             userchat,
-                            context.Update.Message.Location,
-                            context.Update.Message.MessageId,
+                            new Location { Latitude = locationContext.Latitude, Longitude = locationContext.Longitude },
+                            locationContext.LocationMessageId,
                             cancellationToken
                         ).ConfigureAwait(false);
-                    }
-                    else if (context.Update.Message?.Text != null)
-                    {
-                        _logger.LogTrace("Checking if this text message has location coordinates.");
-
-                        var result = _locationService.TryParseLocation(context.Update.Message.Text);
-                        if (result.Successful)
-                        {
-                            _logger.LogTrace("Location is shared from text");
-                            await HandleLocationUpdateAsync(
-                                context.Bot,
-                                userchat,
-                                new Location { Latitude = result.Lat, Longitude = result.Lon },
-                                context.Update.Message.MessageId,
-                                cancellationToken
-                            ).ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            _logger.LogTrace("Message text does not have a location. Ignoring the update.");
-                        }
                     }
                     else
                     {
@@ -176,7 +156,7 @@ namespace BusV.Telegram.Handlers
 
             _logger.LogTrace("Updating the cache with the profile setup instructions sent.");
 
-            await _cache.SetUserProfileAsync(userchat, new UserProfileContext
+            await _cache.SetProfileAsync(userchat, new UserProfileContext
                 {
                     IsInstructionsSent = true,
                     AgencySelectionMessageId = agencySelectionMsg.MessageId,
@@ -203,7 +183,7 @@ namespace BusV.Telegram.Handlers
             if (agencies.Length == 0)
             {
                 text = "Sorry. I didn't find any transit agency nearby.";
-                replyMarkup = null;
+                replyMarkup = new ReplyKeyboardRemove();
             }
 
             else if (agencies.Length == 1)
@@ -239,8 +219,12 @@ namespace BusV.Telegram.Handlers
                 replyMarkup = new InlineKeyboardMarkup(inlineButtons);
             }
 
-            await bot.Client
-                .SendTextMessageAsync(userchat.ChatId, text, ParseMode.Markdown, replyMarkup: replyMarkup,
+            await bot.Client.SendTextMessageAsync(
+                    userchat.ChatId,
+                    text,
+                    ParseMode.Markdown,
+                    replyToMessageId: locationMessageId,
+                    replyMarkup: replyMarkup,
                     cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
         }

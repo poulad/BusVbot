@@ -4,14 +4,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using BusV.Data.Entities;
 using BusV.Telegram.Extensions;
 using BusV.Telegram.Handlers;
 using BusV.Telegram.Handlers.Commands;
 using BusV.Telegram.Options;
 using Telegram.Bot.Framework;
 using Telegram.Bot.Framework.Abstractions;
-using Telegram.Bot.Types;
 
 namespace BusV.Telegram
 {
@@ -37,12 +35,14 @@ namespace BusV.Telegram
                 .AddScoped<WebhookResponse>()
                 .AddScoped<StartCommand>()
                 .AddScoped<HelpCommand>()
+                .AddScoped<LocationHandler>()
                 .AddScoped<UserProfileSetupHandler>()
                 .AddScoped<UserProfileSetupMenuHandler>()
                 .AddScoped<UserProfileRemovalHandler>()
                 .AddScoped<ProfileCommand>()
                 .AddScoped<BusCommand>()
                 .AddScoped<BusCQHandler>()
+                .AddScoped<BusPredictionsHandler>()
 //                .AddScoped<PredictionRefreshCqHandler>()
 //                .AddScoped<LocationHandler>()
 //                .AddScoped<SaveCommand>()
@@ -91,34 +91,23 @@ namespace BusV.Telegram
             new BotBuilder()
                 // respond to the webhook with a request, if available
                 .Use<WebhookResponse>()
+
                 // global commands. these don't require loading the user profile
-                // ToDo remove this branch: https://github.com/TelegramBots/Telegram.Bot.Framework/issues/17
-//                    .UseCommand<StartCommand>("start")
-//                    .UseCommand<HelpCommand>("help")
-                .MapWhen(
-                    ctx => ctx.Bot.CanHandleCommand("start", ctx.Update.Message ?? new Message()),
-                    botBuilder => botBuilder.Use<StartCommand>()
-                )
-                .MapWhen(
-                    ctx => ctx.Bot.CanHandleCommand("help", ctx.Update.Message ?? new Message()),
-                    botBuilder => botBuilder.Use<HelpCommand>()
-                )
+                .UseCommand<StartCommand>("start")
+                .UseCommand<HelpCommand>("help")
+
+                // accept locations as a location or a text coordinates(OSM)
+                .UseWhen<LocationHandler>(LocationHandler.HasLocationOrCoordinates)
+
+                // update the "Set User Agency" inline keyboard menu
+                .UseWhen<UserProfileSetupMenuHandler>(UserProfileSetupMenuHandler.CanHandle)
                 // ensure the user has a profile loaded for the rest of the handlers
                 .UseWhen<UserProfileSetupHandler>(UserProfileSetupHandler.CanHandle)
-                // update the "Set User Agency" inline keyboard menu
-                .MapWhen<UserProfileSetupMenuHandler>(UserProfileSetupMenuHandler.CanHandle)
-                // stop the pipeline if the user profile isn't set
-                // ToDo remove after fixed: https://github.com/TelegramBots/Telegram.Bot.Framework/issues/18
-                .MapWhen(
-                    context => !context.Items.ContainsKey(nameof(UserProfile)),
-                    builder => { }
-                )
+
                 // for new messages...
-                .MapWhen(When.NewMessage, msgBranch => msgBranch
-                    // accept locations as a location or a text coordinates(OSM)
-                    .MapWhen<LocationHandler>(LocationHandler.HasLocationOrCoordinates)
+                .UseWhen(When.NewMessage, msgBranch => msgBranch
                     // for new text messages...
-                    .MapWhen(When.NewTextMessage, txtBranch => txtBranch
+                    .UseWhen(When.NewTextMessage, txtBranch => txtBranch
                         // handle new commands
                         .UseCommand<ProfileCommand>("profile")
                         .UseCommand<BusCommand>("bus")
@@ -130,10 +119,11 @@ namespace BusV.Telegram
                     )
                 )
                 // for callback queries...
-                .MapWhen<BusCQHandler>(BusCQHandler.CanHandle)
+                .UseWhen<BusCQHandler>(BusCQHandler.CanHandle)
 //                .MapWhen(When.CallbackQuery, cqBranch => cqBranch
 //                    .MapWhen<PredictionRefreshCqHandler>(When.IsBusPredictionCq)
 //                )
-        ;
+                // ToDo comments
+                .UseWhen<BusPredictionsHandler>(BusPredictionsHandler.CanHandle);
     }
 }

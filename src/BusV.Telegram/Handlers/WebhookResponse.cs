@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Telegram.Bot.Framework.Abstractions;
@@ -13,9 +14,9 @@ namespace BusV.Telegram.Handlers
     /// </summary>
     public class WebhookResponse : IUpdateHandler
     {
-        public async Task HandleAsync(IUpdateContext context, UpdateDelegate next)
+        public async Task HandleAsync(IUpdateContext context, UpdateDelegate next, CancellationToken cancellationToken)
         {
-            await next(context).ConfigureAwait(false);
+            await next(context, cancellationToken).ConfigureAwait(false);
 
             if (!context.Items.ContainsKey(nameof(WebhookResponse)))
                 return;
@@ -41,12 +42,12 @@ namespace BusV.Telegram.Handlers
 
                 httpContext.Response.StatusCode = 201;
                 httpContext.Response.ContentType = "application/json";
-                await httpContext.Response.WriteAsync(json, Encoding.UTF8)
+                await httpContext.Response.WriteAsync(json, Encoding.UTF8, cancellationToken)
                     .ConfigureAwait(false);
             }
             else
             {
-                await context.Bot.Client.MakeRequestAsync(request)
+                await context.Bot.Client.MakeRequestAsync(request, cancellationToken)
                     .ConfigureAwait(false);
             }
         }

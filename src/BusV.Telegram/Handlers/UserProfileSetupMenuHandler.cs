@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using BusV.Data;
 using BusV.Data.Entities;
@@ -37,7 +38,7 @@ namespace BusV.Telegram.Handlers
         public static bool CanHandle(IUpdateContext context) =>
             context.Update.CallbackQuery?.Data?.StartsWith("ups/") == true;
 
-        public async Task HandleAsync(IUpdateContext context, UpdateDelegate next)
+        public async Task HandleAsync(IUpdateContext context, UpdateDelegate next, CancellationToken cancellationToken)
         {
             string queryData = context.Update.CallbackQuery.Data;
 
@@ -51,13 +52,14 @@ namespace BusV.Telegram.Handlers
                 var userchat = context.Update.ToUserchat();
 
                 string agencyTag = queryData.Substring("ups/a:".Length);
-                Agency agency = await _agencyRepo.GetByTagAsync(agencyTag)
+                Agency agency = await _agencyRepo.GetByTagAsync(agencyTag, cancellationToken)
                     .ConfigureAwait(false);
 
                 var error = await _userService.SetDefaultAgencyAsync(
                     userchat.UserId.ToString(),
                     userchat.ChatId.ToString(),
-                    agency.Tag
+                    agency.Tag,
+                    cancellationToken
                 ).ConfigureAwait(false);
 
                 if (error is null)
@@ -68,7 +70,8 @@ namespace BusV.Telegram.Handlers
                         $"in {agency.Region}, {agency.Country}.\n\n\n" +
                         "💡 *Pro Tip*: You can always view or modify it using the /profile command.",
                         ParseMode.Markdown,
-                        replyMarkup: new ReplyKeyboardRemove()
+                        replyMarkup: new ReplyKeyboardRemove(),
+                        cancellationToken: cancellationToken
                     );
 
                     context.Items[nameof(WebhookResponse)] = new EditMessageReplyMarkupRequest(
