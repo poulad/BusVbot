@@ -18,8 +18,6 @@ namespace BusV.Telegram.Models
             ChatId = chatId;
         }
 
-        public string ToJson() => $@"{{""u"":{UserId},""c"":{ChatId}}}";
-
         public bool Equals(UserChat other)
         {
             return UserId == other.UserId && ChatId == other.ChatId;

@@ -1,13 +1,17 @@
 ﻿using BusV.Telegram.Extensions;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using BusV.Data;
 using BusV.Data.Entities;
 using BusV.Ops;
+using BusV.Telegram.Models;
 using BusV.Telegram.Models.Cache;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using Telegram.Bot;
 using Telegram.Bot.Framework.Abstractions;
+using Telegram.Bot.Requests;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -72,107 +76,125 @@ namespace BusV.Telegram.Handlers
         public async Task HandleAsync(IUpdateContext context, UpdateDelegate next)
         {
             var userchat = context.Update.ToUserchat();
+            var cancellationToken = context.GetCancellationTokenOrDefault();
 
             var userProfile = await _userProfileRepo.GetByUserchatAsync(
                 userchat.UserId.ToString(),
-                userchat.ChatId.ToString()
+                userchat.ChatId.ToString(),
+                cancellationToken
             ).ConfigureAwait(false);
 
-            if (userProfile is null)
+            if (userProfile != null)
             {
-                _logger.LogDebug("User {0} in chat {1} does not have a profile", userchat.UserId, userchat.ChatId);
+                _logger.LogTrace("User already has a profile. Putting the profile in the context.");
+                context.Items[nameof(UserProfile)] = userProfile;
+            }
+            else
+            {
+                _logger.LogTrace("User does not have a profile in the database.");
 
-                var cacheContext = await _cache.GetAsync(userchat)
+                var cachedContext = await _cache.GetUserProfileAsync(userchat, cancellationToken)
                     .ConfigureAwait(false);
 
-                if (cacheContext is null)
+                if (cachedContext?.IsInstructionsSent == true)
                 {
-                    _logger.LogDebug("There is no cached context for this user");
-
-                    await SendInstructionsAsync(context.Bot, userchat.ChatId)
-                        .ConfigureAwait(false);
-
-                    var newContext = new CacheContext
-                    {
-                        ProfileSetup = new UserProfileSetupCache { IsInstructionsSent = true }
-                    };
-                    await _cache.SetAsync(userchat, newContext)
-                        .ConfigureAwait(false);
-                }
-                else
-                {
-                    _logger.LogDebug("User already has seen the instructions");
+                    _logger.LogTrace(
+                        "User has already seen the instructions. Checking whether this is a location update."
+                    );
 
                     if (context.Update.Message?.Location != null)
                     {
-                        await HandleLocationUpdate(
+                        await HandleLocationUpdateAsync(
                             context.Bot,
-                            context.Update.Message.Chat,
-                            context.Update.Message.Location
+                            userchat,
+                            context.Update.Message.Location,
+                            context.Update.Message.MessageId,
+                            cancellationToken
                         ).ConfigureAwait(false);
                     }
                     else if (context.Update.Message?.Text != null)
                     {
-                        // Location might be shared from an app like OSM
+                        _logger.LogTrace("Checking if this text message has location coordinates.");
 
                         var result = _locationService.TryParseLocation(context.Update.Message.Text);
                         if (result.Successful)
                         {
-                            _logger.LogDebug("Location is shared from text");
-
-                            await HandleLocationUpdate(
+                            _logger.LogTrace("Location is shared from text");
+                            await HandleLocationUpdateAsync(
                                 context.Bot,
-                                context.Update.Message.Chat,
-                                new Location { Latitude = result.Lat, Longitude = result.Lon }
+                                userchat,
+                                new Location { Latitude = result.Lat, Longitude = result.Lon },
+                                context.Update.Message.MessageId,
+                                cancellationToken
                             ).ConfigureAwait(false);
                         }
                         else
                         {
                             _logger.LogTrace("Message text does not have a location. Ignoring the update.");
-                            return;
                         }
                     }
-
-// Todo
-//                    else if (context.Update.CallbackQuery != null)
-//                    {
-//                        string callbackQuery = context.Update.CallbackQuery.Data;
-//                        await HandleCallbackQuery(context.Bot, context.Update, callbackQuery)
-//                            .ConfigureAwait(false);
-//                    }
+                    else
+                    {
+                        _logger.LogTrace("Message text does not have a location. Ignoring the update.");
+                    }
                 }
-            }
-            else
-            {
-                _logger.LogDebug("User {0} in chat {1} already has a profile", userchat.UserId, userchat.ChatId);
-                context.Items[nameof(UserProfile)] = userProfile;
+                else
+                {
+                    _logger.LogTrace(
+                        "There is no cached context for this user. Sending the profile setup instructions."
+                    );
+                    await SendInstructionsAsync(context.Bot, userchat, cancellationToken)
+                        .ConfigureAwait(false);
+                }
             }
         }
 
-        private async Task SendInstructionsAsync(IBot bot, ChatId chat)
+        private async Task SendInstructionsAsync(IBot bot, UserChat userchat, CancellationToken cancellationToken)
         {
-            await bot.Client.SendTextMessageAsync(
-                chat,
-                "Select a country and then a region to find your local transit agency",
-                replyMarkup: UserProfileSetupMenuHandler.CreateCountriesInlineKeyboard()
+            var agencySelectionMsg = await bot.Client.MakeRequestWithRetryAsync(
+                new SendMessageRequest(
+                    userchat.ChatId,
+                    "Select a country and then a region to find your local transit agency"
+                )
+                {
+                    ReplyMarkup = UserProfileSetupMenuHandler.CreateCountriesInlineKeyboard()
+                }, cancellationToken
             ).ConfigureAwait(false);
 
-            IReplyMarkup keyboardMarkup = new ReplyKeyboardMarkup(new[]
+            var keyboardMarkup = new ReplyKeyboardMarkup(new[]
             {
                 new KeyboardButton("Share my location") { RequestLocation = true },
             }, true, true);
 
-            await bot.Client.SendTextMessageAsync(
-                chat,
-                "or *Share your location* so I can find it for you",
-                ParseMode.Markdown,
-                replyMarkup: keyboardMarkup
+            var locationSharingMsg = await bot.Client.MakeRequestWithRetryAsync(
+                new SendMessageRequest(userchat.ChatId, "or *Share your location* so I can find it for you")
+                {
+                    ParseMode = ParseMode.Markdown,
+                    ReplyMarkup = keyboardMarkup
+                }, cancellationToken
             ).ConfigureAwait(false);
+
+            _logger.LogTrace("Updating the cache with the profile setup instructions sent.");
+
+            await _cache.SetUserProfileAsync(userchat, new UserProfileContext
+                {
+                    IsInstructionsSent = true,
+                    AgencySelectionMessageId = agencySelectionMsg.MessageId,
+                    LocationSharingMessageId = locationSharingMsg.MessageId,
+                }, cancellationToken)
+                .ConfigureAwait(false);
         }
 
-        private async Task HandleLocationUpdate(IBot bot, ChatId chat, Location location)
+        private async Task HandleLocationUpdateAsync(
+            IBot bot,
+            UserChat userchat,
+            Location location,
+            int locationMessageId,
+            CancellationToken cancellationToken
+        )
         {
-            var agencies = await _locationService.FindAgenciesForLocationAsync(location.Latitude, location.Longitude)
+            var agencies = await _locationService
+                .FindAgenciesForLocationAsync(location.Latitude, location.Longitude, cancellationToken)
                 .ConfigureAwait(false);
 
             string text;
@@ -183,6 +205,7 @@ namespace BusV.Telegram.Handlers
                 text = "Sorry. I didn't find any transit agency nearby.";
                 replyMarkup = null;
             }
+
             else if (agencies.Length == 1)
             {
                 var a = agencies[0];
@@ -216,7 +239,9 @@ namespace BusV.Telegram.Handlers
                 replyMarkup = new InlineKeyboardMarkup(inlineButtons);
             }
 
-            await bot.Client.SendTextMessageAsync(chat, text, ParseMode.Markdown, replyMarkup: replyMarkup)
+            await bot.Client
+                .SendTextMessageAsync(userchat.ChatId, text, ParseMode.Markdown, replyMarkup: replyMarkup,
+                    cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
         }
     }

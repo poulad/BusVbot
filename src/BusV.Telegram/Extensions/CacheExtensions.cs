@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using BusV.Telegram.Models;
 using BusV.Telegram.Models.Cache;
-using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 
 // ReSharper disable once CheckNamespace
@@ -12,74 +11,63 @@ namespace Microsoft.Extensions.Caching.Distributed
     public static class CacheExtensions
     {
         [Obsolete]
-        public static Task<CacheContext> GetAsync(
-            this IDistributedCache cache,
-            UserChat userchat,
-            CancellationToken cancellationToken = default
-        ) =>
-            cache.GetStringAsync(userchat.ToJson(), cancellationToken)
-                .ContinueWith(t =>
-                        t.Result == null
-                            ? null
-                            : JsonConvert.DeserializeObject<CacheContext>(t.Result),
-                    TaskContinuationOptions.OnlyOnRanToCompletion
-                );
-
-        [Obsolete]
-        public static Task SetAsync(
-            this IDistributedCache cache,
-            UserChat userchat,
-            CacheContext context,
-            CancellationToken cancellationToken = default
-        ) =>
-            cache.SetStringAsync(
-                userchat.ToJson(),
-                JsonConvert.SerializeObject(context),
-                new DistributedCacheEntryOptions
-                {
-                    SlidingExpiration = TimeSpan.FromMinutes(30)
-                },
-                cancellationToken
-            );
-
-        [Obsolete]
         public static Task RemoveAsync(
             this IDistributedCache cache,
             UserChat userchat,
             CancellationToken cancellationToken = default
         ) =>
-            cache.RemoveAsync(userchat.ToJson(), cancellationToken);
+            cache.RemoveAsync(GetKey(userchat, ""), cancellationToken);
+
+        public static Task<UserProfileContext> GetUserProfileAsync(
+            this IDistributedCache cache,
+            UserChat userchat,
+            CancellationToken cancellationToken = default
+        ) =>
+            cache.GetStringAsync(GetKey(userchat, "profile"), cancellationToken)
+                .ContinueWith(t =>
+                        t.Result == null
+                            ? null
+                            : JsonConvert.DeserializeObject<UserProfileContext>(t.Result),
+                    TaskContinuationOptions.OnlyOnRanToCompletion
+                );
+
+        public static Task SetUserProfileAsync(
+            this IDistributedCache cache,
+            UserChat userchat,
+            UserProfileContext context,
+            CancellationToken cancellationToken = default
+        ) =>
+            cache.SetStringAsync(
+                GetKey(userchat, "profile"),
+                JsonConvert.SerializeObject(context),
+                new DistributedCacheEntryOptions
+                {
+                    SlidingExpiration = TimeSpan.FromHours(1)
+                },
+                cancellationToken
+            );
 
         public static Task<BusPredictionsContext> GetBusPredictionAsync(
             this IDistributedCache cache,
             UserChat userchat,
             CancellationToken cancellationToken = default
-        )
-        {
-            string key = userchat.ToJson();
-            key = key.Insert(key.Length - 1, @",""k"":""bus""");
-
-            return cache.GetStringAsync(key, cancellationToken)
+        ) =>
+            cache.GetStringAsync(GetKey(userchat, "bus"), cancellationToken)
                 .ContinueWith(t =>
                         t.Result == null
                             ? null
                             : JsonConvert.DeserializeObject<BusPredictionsContext>(t.Result),
                     TaskContinuationOptions.OnlyOnRanToCompletion
                 );
-        }
 
         public static Task SetBusPredictionAsync(
             this IDistributedCache cache,
             UserChat userchat,
             BusPredictionsContext context,
             CancellationToken cancellationToken = default
-        )
-        {
-            string key = userchat.ToJson();
-            key = key.Insert(key.Length - 1, @",""k"":""bus""");
-
-            return cache.SetStringAsync(
-                key,
+        ) =>
+            cache.SetStringAsync(
+                GetKey(userchat, "bus"),
                 JsonConvert.SerializeObject(context),
                 new DistributedCacheEntryOptions
                 {
@@ -87,6 +75,8 @@ namespace Microsoft.Extensions.Caching.Distributed
                 },
                 cancellationToken
             );
-        }
+
+        private static string GetKey(UserChat userchat, string kind) =>
+            $@"{{""u"":{userchat.UserId},""c"":{userchat.ChatId},""k"":""{kind}""}}";
     }
 }
