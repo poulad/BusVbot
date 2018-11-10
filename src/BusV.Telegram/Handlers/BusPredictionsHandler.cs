@@ -3,9 +3,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using BusV.Data;
 using BusV.Data.Entities;
+using BusV.Telegram.Models;
 using BusV.Telegram.Models.Cache;
 using BusV.Telegram.Services;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Telegram.Bot;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Requests;
@@ -16,16 +19,19 @@ namespace BusV.Telegram.Handlers
 {
     public class BusPredictionsHandler : IUpdateHandler
     {
+        private readonly IDistributedCache _cache;
         private readonly IRouteRepo _routeRepo;
         private readonly IRouteMessageFormatter _routeMessageFormatter;
         private readonly ILogger<LocationHandler> _logger;
 
         public BusPredictionsHandler(
+            IDistributedCache cache,
             IRouteRepo routeRepo,
             IRouteMessageFormatter routeMessageFormatter,
             ILogger<LocationHandler> logger
         )
         {
+            _cache = cache;
             _routeRepo = routeRepo;
             _routeMessageFormatter = routeMessageFormatter;
             _logger = logger;
@@ -37,30 +43,37 @@ namespace BusV.Telegram.Handlers
 
         public async Task HandleAsync(IUpdateContext context, UpdateDelegate next, CancellationToken cancellationToken)
         {
-            var userProfile = (UserProfile) context.Items[nameof(UserProfile)];
-            BusPredictionsContext busCacheContext = null;
-            UserLocationContext locationContext = null;
-            {
-                if (context.Items.TryGetValue(nameof(BusPredictionsContext), out var busCacheContextObj))
-                    busCacheContext = (BusPredictionsContext) busCacheContextObj;
-                if (context.Items.TryGetValue(nameof(UserLocationContext), out var locationContextObj))
-                    locationContext = (UserLocationContext) locationContextObj;
-            }
+            var userchat = context.Update.ToUserchat();
 
-            if (busCacheContext != null && locationContext != null)
-            {
-                // all good. send predictions
-            }
-            else if (busCacheContext != null)
-            {
-                // location missing
+            var cachedCtx = await GetCachedContextsAsync(context, userchat, cancellationToken)
+                .ConfigureAwait(false);
 
-                var route = await _routeRepo.GetByTagAsync(
-                    userProfile.DefaultAgencyTag,
-                    busCacheContext.RouteTag,
+            if (cachedCtx.Bus != null && cachedCtx.Location != null)
+            {
+                _logger.LogTrace("Bus route and location is provided. Sending bus predictions.");
+
+                string text = JsonConvert.SerializeObject(cachedCtx);
+
+                await context.Bot.Client.MakeRequestWithRetryAsync(
+                    new SendMessageRequest(context.Update.Message.Chat, $"```\n{text}\n```")
+                    {
+                        ParseMode = ParseMode.Markdown,
+                        ReplyToMessageId = context.Update.Message.MessageId,
+                        ReplyMarkup = new ReplyKeyboardRemove()
+                    },
                     cancellationToken
                 ).ConfigureAwait(false);
-                var direction = route.Directions.Single(d => d.Tag == busCacheContext.DirectionTag);
+            }
+            else if (cachedCtx.Bus != null)
+            {
+                _logger.LogTrace("Location is missing. Asking user to send his location.");
+
+                var route = await _routeRepo.GetByTagAsync(
+                    cachedCtx.Profile.DefaultAgencyTag,
+                    cachedCtx.Bus.RouteTag,
+                    cancellationToken
+                ).ConfigureAwait(false);
+                var direction = route.Directions.Single(d => d.Tag == cachedCtx.Bus.DirectionTag);
 
                 string text = _routeMessageFormatter.GetMessageTextForRouteDirection(route, direction);
 
@@ -80,9 +93,22 @@ namespace BusV.Telegram.Handlers
                     cancellationToken
                 ).ConfigureAwait(false);
             }
-            else if (locationContext != null)
+            else if (cachedCtx.Location != null)
             {
-                // bus missing
+                _logger.LogTrace("Bus route and direction are missing. Asking user to provide them.");
+
+                await context.Bot.Client.MakeRequestWithRetryAsync(
+                    new SendMessageRequest(
+                        context.Update.Message.Chat,
+                        "There you are! What's the bus you want to catch?\n" +
+                        "Send me using 👉 /bus command."
+                    )
+                    {
+                        ReplyToMessageId = context.Update.Message.MessageId,
+                        ReplyMarkup = new ReplyKeyboardRemove()
+                    },
+                    cancellationToken
+                ).ConfigureAwait(false);
             }
 
             // ToDo: Remove keyboard if that was set in /bus command
@@ -141,6 +167,39 @@ namespace BusV.Telegram.Handlers
 //                    replyToMessageId: context.Update.Message.MessageId
 //                ).ConfigureAwait(false);
 //            }
+        }
+
+        private async Task<(
+            UserProfile Profile,
+            BusPredictionsContext Bus,
+            UserLocationContext Location
+            )> GetCachedContextsAsync(IUpdateContext context, UserChat userchat, CancellationToken cancellationToken)
+        {
+            var userProfile = (UserProfile) context.Items[nameof(UserProfile)];
+
+            BusPredictionsContext busCacheContext;
+            if (context.Items.TryGetValue(nameof(BusPredictionsContext), out var busCacheContextObj))
+            {
+                busCacheContext = (BusPredictionsContext) busCacheContextObj;
+            }
+            else
+            {
+                busCacheContext = await _cache.GetBusPredictionAsync(userchat, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            UserLocationContext locationContext;
+            if (context.Items.TryGetValue(nameof(UserLocationContext), out var locationContextObj))
+            {
+                locationContext = (UserLocationContext) locationContextObj;
+            }
+            else
+            {
+                locationContext = await _cache.GetLocationAsync(userchat, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            return (userProfile, busCacheContext, locationContext);
         }
     }
 }

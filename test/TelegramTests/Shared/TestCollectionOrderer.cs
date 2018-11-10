@@ -15,7 +15,8 @@ namespace TelegramTests.Shared
             "/profile command",
             "profile removal",
 
-            "/bus command"
+            "/bus command",
+            "bus predictions",
         };
 
         public TestCollectionOrderer()

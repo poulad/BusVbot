@@ -18,6 +18,7 @@ namespace TelegramTests
 {
     /// <summary>
     /// Tests for <see cref="BusV.Telegram.Handlers.Commands.BusCommand"/>
+    /// and <see cref="BusV.Telegram.Handlers.BusPredictionsHandler"/>
     /// </summary>
     [Collection("/bus command")]
     public class BusCommandTests : IClassFixture<TestsFixture>
@@ -209,7 +210,7 @@ namespace TelegramTests
             // ensure cache is clear
             await _fixture.Cache.RemoveAsync(@"{""u"":789,""c"":789,""k"":""bus""}");
 
-            // should send a message asking for a direction to choose
+            // should send a message asking for user's location
             string text = "South - 6 Bay towards Queens Quay and Sherbourne\n\n" +
                           "*Send your current location* so I can find you the nearest bus stop 🚏 " +
                           "and get the bus predictions for it.";

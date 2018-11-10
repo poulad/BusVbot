@@ -52,7 +52,6 @@ namespace BusV.Telegram
 
             services.AddMessageFormattingServices(Configuration.GetSection("Agencies"));
 
-//
 //            services.AddTransient<ICachingService, CachingService>();
 //
 //            services.AddTransient<ILocationsManager, LocationsManager>();
