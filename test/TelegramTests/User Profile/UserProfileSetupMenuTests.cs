@@ -232,7 +232,6 @@ namespace TelegramTests
 
             // responds to the webhook with a bot API request
             string responseContent = await response.Content.ReadAsStringAsync();
-            Asserts.IsJson(responseContent);
             Asserts.JsonEqual(@"{
                     chat_id: 1234,
                     message_id: 2744,

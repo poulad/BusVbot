@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using BusV.Telegram.Models.Cache;
 using Microsoft.Extensions.Caching.Distributed;
@@ -28,10 +29,8 @@ namespace BusV.Telegram.Handlers
         public static bool CanHandle(IUpdateContext context) =>
             context.Update.CallbackQuery?.Data?.StartsWith("bus/") == true;
 
-        public async Task HandleAsync(IUpdateContext context, UpdateDelegate next)
+        public async Task HandleAsync(IUpdateContext context, UpdateDelegate next, CancellationToken cancellationToken)
         {
-            var cancellationToken = context.GetCancellationTokenOrDefault();
-
             var match = Regex.Match(context.Update.CallbackQuery.Data, "^bus/r:(?<route>.+)/d:(?<direction>.+)$");
             if (match.Success)
             {

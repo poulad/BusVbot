@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BusV.Data;
 using BusV.Telegram.Extensions;
@@ -45,9 +46,8 @@ namespace BusV.Telegram.Handlers
         /// <summary>
         /// Removes the user profile from the database and the cache
         /// </summary>
-        public async Task HandleAsync(IUpdateContext context, UpdateDelegate next)
+        public async Task HandleAsync(IUpdateContext context, UpdateDelegate next, CancellationToken cancellationToken)
         {
-            var cancellationToken = context.GetCancellationTokenOrDefault();
             if (context.Update.Message.Text.Equals("forget me", StringComparison.OrdinalIgnoreCase))
             {
                 _logger.LogTrace("Removing the user profile from the database and the cache");

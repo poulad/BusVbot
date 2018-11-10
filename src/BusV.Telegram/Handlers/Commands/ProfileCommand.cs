@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BusV.Data;
 using Microsoft.EntityFrameworkCore.Internal;
@@ -26,10 +27,13 @@ namespace BusV.Telegram.Handlers.Commands
             _logger = logger;
         }
 
-        public override async Task HandleAsync(IUpdateContext context, UpdateDelegate next, string[] args)
+        public override async Task HandleAsync(
+            IUpdateContext context,
+            UpdateDelegate next,
+            string[] args,
+            CancellationToken cancellationToken
+        )
         {
-            var cancellationToken = context.GetCancellationTokenOrDefault();
-
             if (args.Any() && args[0].Equals("remove", StringComparison.OrdinalIgnoreCase))
             {
                 _logger.LogTrace(@"Removing user profile upon a ""/profile remove"" command.");

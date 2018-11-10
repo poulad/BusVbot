@@ -8,6 +8,7 @@ using Framework;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using Telegram.Bot.Requests;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -167,43 +168,40 @@ namespace TelegramTests
             await userRepo.DeleteAsync("789", "789");
 
             // ensure cache is clear
-            await _fixture.Cache.RemoveAsync(@"{""u"":789,""c"":789}");
+            await _fixture.Cache.RemoveAsync(@"{""u"":789,""c"":789,""k"":""profile""}");
 
             // should send the first message with the country inline buttons
             _fixture.MockBotClient
-                .Setup(botClient => botClient.SendTextMessageAsync(
-                    /* chatId: */ Is.SameJson<ChatId>("789"),
-                    /* text: */ "Select a country and then a region to find your local transit agency",
-                    default, default, default, default,
-                    /* replyMarkup: */
-                    Is.SameJson<IReplyMarkup>(@"{
-                        inline_keyboard: [
-                            [{ text: ""🇨🇦 Canada"", callback_data: ""ups/c:Canada"" }],
-                            [{ text: ""🇺🇸 USA"", callback_data: ""ups/c:USA"" }],
-                            [{ text: ""🏁 Test"", callback_data: ""ups/c:Test"" }]
-                        ]
-                        }"),
-                    default
+                .Setup(botClient => botClient.MakeRequestAsync(
+                    Is.SameJson<SendMessageRequest>($@"{{
+                        chat_id: 789,
+                        text: ""Select a country and then a region to find your local transit agency"",
+                        reply_markup: {{
+                            inline_keyboard: [
+                                [ {{ text: ""🇨🇦 Canada"", callback_data: ""ups/c:Canada"" }} ],
+                                [ {{ text: ""🇺🇸 USA"", callback_data: ""ups/c:USA"" }} ],
+                                [ {{ text: ""🏁 Test"", callback_data: ""ups/c:Test"" }} ]
+                            ]
+                        }}
+                     }}"),
+                    It.IsAny<CancellationToken>()
                 ))
                 .ReturnsAsync(null as Message);
 
             // should send the second message for sharing the location
             _fixture.MockBotClient
-                .Setup(botClient => botClient.SendTextMessageAsync(
-                    /* chatId: */ Is.SameJson<ChatId>("789"),
-                    /* text: */ "or *Share your location* so I can find it for you",
-                    /* parseMode: */
-                    ParseMode.Markdown,
-                    default, default, default,
-                    /* replyMarkup: */
-                    Is.SameJson<IReplyMarkup>(@"{
-                            keyboard: [
-                                [{ text: ""Share my location"", request_location: true }]
-                            ],
+                .Setup(botClient => botClient.MakeRequestAsync(
+                    Is.SameJson<SendMessageRequest>($@"{{
+                        chat_id: 789,
+                        text: ""or *Share your location* so I can find it for you"",
+                        parse_mode: ""Markdown"",
+                        reply_markup: {{
+                            keyboard: [ [ {{ text: ""Share my location"", request_location: true }} ] ],
                             resize_keyboard: true,
                             one_time_keyboard: true
-                        }"),
-                    default
+                        }}
+                     }}"),
+                    It.IsAny<CancellationToken>()
                 ))
                 .ReturnsAsync(null as Message);
 
@@ -216,8 +214,11 @@ namespace TelegramTests
             _fixture.MockBotClient.VerifyAll();
             _fixture.MockBotClient.VerifyNoOtherCalls();
 
-            string cachedContext = await _fixture.Cache.GetStringAsync(@"{""u"":789,""c"":789}");
-            Asserts.JsonEqual(@"{""ProfileSetup"":{""IsInstructionsSent"":true}}", cachedContext);
+            string cachedContext = await _fixture.Cache.GetStringAsync(@"{""u"":1234,""c"":1234,""k"":""profile""}");
+            Asserts.JsonEqual(
+                @"{""instructions_sent"":true,""agency_selection_msg"":3,""location_msg"":4}",
+                cachedContext
+            );
         }
     }
 }
