@@ -4,11 +4,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BusV.Data;
-using BusV.Data.Entities;
 using Microsoft.Extensions.Logging;
 using NextBus.NET;
+using NextBus.NET.Models;
 using Polly;
 using Polly.Retry;
+using RouteDirection = BusV.Data.Entities.RouteDirection;
 
 namespace BusV.Ops
 {
@@ -18,6 +19,7 @@ namespace BusV.Ops
         private readonly INextBusClient _nextbusClient;
         private readonly IAgencyRepo _agencyRepo;
         private readonly IRouteRepo _routeRepo;
+        private readonly IBusStopRepo _busStopRepo;
         private readonly ILogger _logger;
 
         /// <inheritdoc />
@@ -25,12 +27,14 @@ namespace BusV.Ops
             INextBusClient nextbusClient,
             IAgencyRepo agencyRepo,
             IRouteRepo routeRepo,
+            IBusStopRepo busStopRepo,
             ILogger<DataSeeder> logger
         )
         {
             _nextbusClient = nextbusClient;
             _agencyRepo = agencyRepo;
             _routeRepo = routeRepo;
+            _busStopRepo = busStopRepo;
             _logger = logger;
         }
 
@@ -185,6 +189,8 @@ namespace BusV.Ops
                 var mongoDirection = Converter.FromNextBusDirection(nextbusDirection);
 
                 // todo persist its bus stops
+                await AddNewBusStopsAsync(agencyTag, routeTag, nextbusRouteConfig.Stops, cancellationToken)
+                    .ConfigureAwait(false);
 
                 // todo add its directions with refs to the bus stops
 
@@ -199,10 +205,44 @@ namespace BusV.Ops
             return null;
         }
 
+        /// <inheritdoc />
+        public async Task<object> AddNewBusStopsAsync(
+            string agencyTag,
+            string routeTag,
+            IEnumerable<Stop> nextbusStops,
+            CancellationToken cancellationToken = default
+        )
+        {
+            foreach (var nextbusStop in nextbusStops)
+            {
+                var mongoStop = Converter.FromNextBusStop(nextbusStop);
+
+                var error = await _busStopRepo.AddAsync(mongoStop, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (error != null && error.Code != "data.duplicate_key")
+                {
+                    _logger.LogError("Failed to insert bus stop. {0}, {1}.", error.Code, error.Message);
+                    throw new InvalidOperationException(error.Message);
+                }
+            }
+
+//                var q = _dbContext.BusStops.Local.Where(s =>
+//                    s.Tag == nxtbsStop.Tag &&
+//                    //s.StopId == nxtbsStop.StopId
+//                    Math.Abs(s.Latitude - (double) nxtbsStop.Lat) < 0.00001 &&
+//                    Math.Abs(s.Longitude - (double) nxtbsStop.Lon) < 0.00001
+//                ).ToArray();
+            return Task.CompletedTask;
+        }
+
         private RetryPolicy GetNextBusPolicy() => Policy
             .Handle<NextBusException>()
             .WaitAndRetryAsync(
-                new[] { TimeSpan.FromSeconds(21) },
+                new[]
+                {
+                    TimeSpan.FromSeconds(21)
+                },
                 (exception, span) =>
                     _logger.LogWarning(exception, "Hitting NextBus limits. Waiting for {0} seconds", span.Seconds)
             );

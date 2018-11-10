@@ -7,6 +7,7 @@ using BusV.Data;
 using BusV.Data.Entities;
 using BusV.Ops;
 using BusV.Telegram.Extensions;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Requests;
@@ -22,16 +23,19 @@ namespace BusV.Telegram.Handlers
     {
         private readonly IUserService _userService;
         private readonly IAgencyRepo _agencyRepo;
+        private readonly IDistributedCache _cache;
         private readonly ILogger _logger;
 
         public UserProfileSetupMenuHandler(
             IUserService userService,
             IAgencyRepo agencyRepo,
+            IDistributedCache cache,
             ILogger<UserProfileSetupMenuHandler> logger
         )
         {
             _userService = userService;
             _agencyRepo = agencyRepo;
+            _cache = cache;
             _logger = logger;
         }
 
@@ -64,6 +68,14 @@ namespace BusV.Telegram.Handlers
 
                 if (error is null)
                 {
+                    _logger.LogTrace("Updating the cache and removing the instructions.");
+
+                    var profileContext = await _cache.GetProfileAsync(userchat, cancellationToken)
+                        .ConfigureAwait(false);
+                    profileContext.IsInstructionsSent = false;
+                    await _cache.SetProfileAsync(userchat, profileContext, cancellationToken)
+                        .ConfigureAwait(false);
+
                     await context.Bot.Client.SendTextMessageAsync(
                         context.Update.CallbackQuery.Message.Chat,
                         $"Great! Your default agency is now set to *{agency.Title}* " +
@@ -73,6 +85,7 @@ namespace BusV.Telegram.Handlers
                         replyMarkup: new ReplyKeyboardRemove(),
                         cancellationToken: cancellationToken
                     );
+
 
                     context.Items[nameof(WebhookResponse)] = new EditMessageReplyMarkupRequest(
                         context.Update.CallbackQuery.Message.Chat,

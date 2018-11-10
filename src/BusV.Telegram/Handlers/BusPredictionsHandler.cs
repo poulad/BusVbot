@@ -3,12 +3,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using BusV.Data;
 using BusV.Data.Entities;
+using BusV.Ops;
 using BusV.Telegram.Models;
 using BusV.Telegram.Models.Cache;
 using BusV.Telegram.Services;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Telegram.Bot;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Requests;
@@ -21,18 +21,21 @@ namespace BusV.Telegram.Handlers
     {
         private readonly IDistributedCache _cache;
         private readonly IRouteRepo _routeRepo;
+        private readonly IPredictionsService _predictionsService;
         private readonly IRouteMessageFormatter _routeMessageFormatter;
         private readonly ILogger<LocationHandler> _logger;
 
         public BusPredictionsHandler(
             IDistributedCache cache,
             IRouteRepo routeRepo,
+            IPredictionsService predictionsService,
             IRouteMessageFormatter routeMessageFormatter,
             ILogger<LocationHandler> logger
         )
         {
             _cache = cache;
             _routeRepo = routeRepo;
+            _predictionsService = predictionsService;
             _routeMessageFormatter = routeMessageFormatter;
             _logger = logger;
         }
@@ -52,13 +55,43 @@ namespace BusV.Telegram.Handlers
             {
                 _logger.LogTrace("Bus route and location is provided. Sending bus predictions.");
 
-                string text = JsonConvert.SerializeObject(cachedCtx);
+                var busStop = await _predictionsService.FindClosestBusStopAsync(
+                    cachedCtx.Profile.DefaultAgencyTag,
+                    cachedCtx.Bus.RouteTag,
+                    cachedCtx.Bus.DirectionTag,
+                    cachedCtx.Location.Longitude,
+                    cachedCtx.Location.Latitude,
+                    cancellationToken
+                ).ConfigureAwait(false);
+
+                var predictions = await _predictionsService.GetPredictionsAsync(
+                    cachedCtx.Profile.DefaultAgencyTag,
+                    cachedCtx.Bus.RouteTag,
+                    busStop.Tag,
+                    cancellationToken
+                ).ConfigureAwait(false);
 
                 await context.Bot.Client.MakeRequestWithRetryAsync(
-                    new SendMessageRequest(context.Update.Message.Chat, $"```\n{text}\n```")
+                    new SendLocationRequest(context.Update.Message.Chat, busStop.Latitude, busStop.Longitude)
+                    {
+                        ReplyToMessageId = cachedCtx.Location.LocationMessageId,
+                        ReplyMarkup = new ReplyKeyboardRemove()
+                    },
+                    cancellationToken
+                ).ConfigureAwait(false);
+
+                string text = "👆 That's the nearest bus stop";
+                if (!string.IsNullOrWhiteSpace(busStop.Title))
+                    text += $", *{busStop.Title}*";
+                text += " 🚏.";
+
+                string message = RouteMessageFormatter.FormatBusPredictionsReplyText(predictions.Predictions);
+                text += "\n\n" + message;
+
+                await context.Bot.Client.MakeRequestWithRetryAsync(
+                    new SendMessageRequest(context.Update.Message.Chat, text)
                     {
                         ParseMode = ParseMode.Markdown,
-                        ReplyToMessageId = context.Update.Message.MessageId,
                         ReplyMarkup = new ReplyKeyboardRemove()
                     },
                     cancellationToken

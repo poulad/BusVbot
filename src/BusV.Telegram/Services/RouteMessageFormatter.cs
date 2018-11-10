@@ -3,8 +3,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BusV.Data;
-using BusV.Data.Entities;
+using NextBus.NET.Models;
 using Telegram.Bot.Types.ReplyMarkups;
+using Route = BusV.Data.Entities.Route;
+using RouteDirection = BusV.Data.Entities.RouteDirection;
 
 namespace BusV.Telegram.Services
 {
@@ -160,6 +162,49 @@ namespace BusV.Telegram.Services
 
             string text = $"There are {routes.Length} routes.\n\n" +
                           string.Join("\n", routes.Select(r => r.Title));
+
+            return text;
+        }
+
+        public static string FormatBusPredictionsReplyText(RoutePrediction[] routePredictions)
+        {
+            string replyText = string.Empty;
+
+            foreach (var dir in routePredictions.SelectMany(rp => rp.Directions))
+            {
+                string pText = string.Empty;
+                foreach (Prediction p in dir.Predictions)
+                {
+                    pText += GetFormattedPrediction(p) + "\n";
+                }
+
+                replyText += $"Bus *{dir.Title}*:\n\n{pText}" + "\n\n\n";
+            }
+
+            return replyText;
+        }
+
+        private static string GetFormattedPrediction(Prediction prediction)
+        {
+            string text;
+
+            string formattedMinutes = prediction.Minutes < 10 ? " " + prediction.Minutes : prediction.Minutes + "";
+            string minuteS = prediction.Minutes < 2 ? "" : "s";
+
+            // ToDo
+            var agencyLocalTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Toronto");
+
+            if (agencyLocalTimeZone == null)
+            {
+                text = $"`{formattedMinutes}` minute{minuteS}";
+            }
+            else
+            {
+                var utcTime = DateTime.UtcNow.AddSeconds(prediction.Seconds);
+                var localTime = TimeZoneInfo.ConvertTime(utcTime, TimeZoneInfo.Utc, agencyLocalTimeZone);
+
+                text = $"`{localTime:hh:mm}` *-* `{formattedMinutes}` minute{minuteS}";
+            }
 
             return text;
         }

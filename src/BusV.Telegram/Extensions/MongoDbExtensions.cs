@@ -34,18 +34,23 @@ namespace BusV.Telegram.Extensions
             );
 
             services.AddTransient<IAgencyRepo, AgencyRepo>();
-            services.AddTransient(provider => provider.GetRequiredService<IMongoDatabase>()
-                .GetCollection<Agency>(BusV.Data.Constants.Collections.Agencies.Name)
+            services.AddTransient(provider =>
+                provider.GetRequiredService<IMongoDatabase>().GetCollection<Agency>("agencies")
             );
 
             services.AddTransient<IRouteRepo, RouteRepo>();
-            services.AddTransient(provider => provider.GetRequiredService<IMongoDatabase>()
-                .GetCollection<Route>(BusV.Data.Constants.Collections.Routes.Name)
+            services.AddTransient(provider =>
+                provider.GetRequiredService<IMongoDatabase>().GetCollection<Route>("routes")
+            );
+
+            services.AddTransient<IBusStopRepo, BusStopRepo>();
+            services.AddTransient(provider =>
+                provider.GetRequiredService<IMongoDatabase>().GetCollection<BusStop>("bus-stops")
             );
 
             services.AddTransient<IUserProfileRepo, UserProfileRepo>();
-            services.AddTransient(provider => provider.GetRequiredService<IMongoDatabase>()
-                .GetCollection<UserProfile>(BusV.Data.Constants.Collections.Users.Name)
+            services.AddTransient(provider =>
+                provider.GetRequiredService<IMongoDatabase>().GetCollection<UserProfile>("users")
             );
 
             MongoInitializer.RegisterClassMaps();

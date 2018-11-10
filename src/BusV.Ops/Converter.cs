@@ -1,10 +1,13 @@
 using BusV.Data.Entities;
+using MongoDB.Driver.GeoJsonObjectModel;
 
 namespace BusV.Ops
 {
     internal static class Converter
     {
-        public static Agency FromNextBusAgency(NextBus.NET.Models.Agency nextbusAgency) =>
+        public static Agency FromNextBusAgency(
+            NextBus.NET.Models.Agency nextbusAgency
+        ) =>
             new Agency
             {
                 Tag = NonEmptyValue(nextbusAgency.Tag),
@@ -37,6 +40,20 @@ namespace BusV.Ops
                 Title = NonEmptyValue(nextbusDirection.Title),
                 Name = NonEmptyValue(nextbusDirection.Name),
                 Stops = nextbusDirection.StopTags,
+            };
+
+        public static BusStop FromNextBusStop(
+            NextBus.NET.Models.Stop nextbusStop
+        ) =>
+            new BusStop
+            {
+                Tag = NonEmptyValue(nextbusStop.Tag),
+                Location = new GeoJsonPoint<GeoJson2DCoordinates>(
+                    new GeoJson2DCoordinates((double) nextbusStop.Lon, (double) nextbusStop.Lat)
+                ),
+                Title = NonEmptyValue(nextbusStop.Title),
+                ShortTitle = NonEmptyValue(nextbusStop.ShortTitle),
+                StopId = nextbusStop.StopId,
             };
 
         private static string NonEmptyValue(string value)

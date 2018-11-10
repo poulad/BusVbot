@@ -95,7 +95,7 @@ namespace BusV.Telegram
                 .UseCommand<StartCommand>("start")
                 .UseCommand<HelpCommand>("help")
 
-                // accept locations as a location or a text coordinates(OSM)
+                // accept locations as a location or text coordinates(OSM)
                 .UseWhen<LocationHandler>(LocationHandler.HasLocationOrCoordinates)
 
                 // update the "Set User Agency" inline keyboard menu

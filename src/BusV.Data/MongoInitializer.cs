@@ -56,6 +56,27 @@ namespace BusV.Data
             }
 
             {
+                // "bus-stops" collection
+                await database.CreateCollectionAsync("bus-stops", cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
+                var busStopsCollection = database.GetCollection<BusStop>("bus-stops");
+
+                // create unique index "tag" on the field "tag"
+                await busStopsCollection.Indexes.CreateOneAsync(new CreateIndexModel<BusStop>(
+                        Builders<BusStop>.IndexKeys.Ascending(s => s.Tag),
+                        new CreateIndexOptions { Name = "tag", Unique = true }),
+                    cancellationToken: cancellationToken
+                ).ConfigureAwait(false);
+
+                // create unique 2dsphere index "location" on the field "location"
+                await busStopsCollection.Indexes.CreateOneAsync(new CreateIndexModel<BusStop>(
+                        Builders<BusStop>.IndexKeys.Geo2DSphere(s => s.Location),
+                        new CreateIndexOptions { Name = "location" }),
+                    cancellationToken: cancellationToken
+                ).ConfigureAwait(false);
+            }
+
+            {
                 // "users" collection
                 await database.CreateCollectionAsync(
                     Constants.Collections.Users.Name,
@@ -119,6 +140,23 @@ namespace BusV.Data
                     map.MapProperty(r => r.MaxLongitude).SetElementName("max_lon").SetIgnoreIfDefault(true);
                     map.MapProperty(r => r.MinLongitude).SetElementName("min_lon").SetIgnoreIfDefault(true);
                     map.MapProperty(r => r.ModifiedAt).SetElementName("modified_at").SetIgnoreIfDefault(true);
+                });
+            }
+
+            if (!BsonClassMap.IsClassMapRegistered(typeof(BusStop)))
+            {
+                BsonClassMap.RegisterClassMap<BusStop>(map =>
+                {
+                    map.MapIdProperty(s => s.Id)
+                        .SetIdGenerator(StringObjectIdGenerator.Instance)
+                        .SetSerializer(new StringSerializer(BsonType.ObjectId));
+                    map.MapProperty(s => s.Tag).SetElementName("tag").SetOrder(1);
+                    map.MapProperty(s => s.Location).SetElementName("location").SetOrder(3);
+                    map.MapProperty(s => s.CreatedAt).SetElementName("created_at");
+                    map.MapProperty(s => s.Title).SetElementName("title").SetOrder(2).SetIgnoreIfDefault(true);
+                    map.MapProperty(s => s.ShortTitle).SetElementName("short_title").SetIgnoreIfDefault(true);
+                    map.MapProperty(s => s.StopId).SetElementName("stop_id").SetIgnoreIfDefault(true);
+                    map.MapProperty(s => s.ModifiedAt).SetElementName("modified_at").SetIgnoreIfDefault(true);
                 });
             }
 
