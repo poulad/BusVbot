@@ -230,8 +230,9 @@ namespace BusV.Ops
                 else
                 {
                     _logger.LogError("Failed to insert bus stops: {0}", errors.Select(e => e.Message));
-                    throw new InvalidOperationException("Failed to insert bus stops.");
                 }
+
+                throw new InvalidOperationException("Failed to insert bus stops.");
             }
 
             return Task.CompletedTask;

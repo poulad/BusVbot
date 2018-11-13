@@ -62,12 +62,12 @@ namespace BusV.Data
                     .ConfigureAwait(false);
                 var busStopsCollection = database.GetCollection<BusStop>("bus_stops");
 
-                // create unique index "tag" on the field "tag"
-                await busStopsCollection.Indexes.CreateOneAsync(new CreateIndexModel<BusStop>(
-                        Builders<BusStop>.IndexKeys.Ascending(s => s.Tag),
-                        new CreateIndexOptions { Name = "tag", Unique = true }),
-                    cancellationToken: cancellationToken
-                ).ConfigureAwait(false);
+//                // create unique index "tag" on the field "tag"
+//                await busStopsCollection.Indexes.CreateOneAsync(new CreateIndexModel<BusStop>(
+//                        Builders<BusStop>.IndexKeys.Ascending(s => s.Tag),
+//                        new CreateIndexOptions { Name = "tag", Unique = true }),
+//                    cancellationToken: cancellationToken
+//                ).ConfigureAwait(false);
 
                 // create unique 2dsphere index "location" on the field "location"
                 await busStopsCollection.Indexes.CreateOneAsync(new CreateIndexModel<BusStop>(
