@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Framework
 {
-    public class OrderedFactAttribute : FactAttribute
+    public sealed class OrderedFactAttribute : FactAttribute
     {
         public int LineNumber { get; }
 
@@ -15,6 +15,18 @@ namespace Framework
             if (line < 1)
                 throw new ArgumentOutOfRangeException(nameof(line));
 
+            LineNumber = line;
+        }
+
+        public OrderedFactAttribute(
+            string displayName,
+            [CallerLineNumber] int line = default
+        )
+        {
+            if (line < 1)
+                throw new ArgumentOutOfRangeException(nameof(line));
+
+            DisplayName = displayName;
             LineNumber = line;
         }
     }
