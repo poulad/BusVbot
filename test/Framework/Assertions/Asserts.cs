@@ -1,3 +1,4 @@
+using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -23,6 +24,9 @@ namespace Framework
 
         public static void JsonEqual(string expected, string actual)
         {
+            if (expected == null) throw new ArgumentNullException(nameof(expected));
+            if (actual == null) throw new ArgumentNullException(nameof(actual));
+
             var expectedJ = JToken.Parse(expected);
             var actualJ = JToken.Parse(actual);
             bool equals = JToken.DeepEquals(expectedJ, actualJ);

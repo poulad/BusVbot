@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using BusV.Data.Entities;
 
@@ -16,6 +17,11 @@ namespace BusV.Data
         /// <param name="cancellationToken">The cancellation token to cancel operation</param>
         Task<Error> AddAsync(
             BusStop busStop,
+            CancellationToken cancellationToken = default
+        );
+
+        Task<Error[]> AddAllAsync(
+            IEnumerable<BusStop> busStops,
             CancellationToken cancellationToken = default
         );
 

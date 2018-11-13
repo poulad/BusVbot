@@ -186,7 +186,7 @@ namespace TelegramTests
                      }}"),
                     It.IsAny<CancellationToken>()
                 ))
-                .ReturnsAsync(null as Message);
+                .ReturnsAsync(new Message { MessageId = 3 });
 
             // should send the second message for sharing the location
             _fixture.MockBotClient
@@ -203,7 +203,7 @@ namespace TelegramTests
                      }}"),
                     It.IsAny<CancellationToken>()
                 ))
-                .ReturnsAsync(null as Message);
+                .ReturnsAsync(new Message { MessageId = 4 });
 
             HttpResponseMessage response = await _fixture.HttpClient.PostWebhookUpdateAsync(update);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -214,7 +214,7 @@ namespace TelegramTests
             _fixture.MockBotClient.VerifyAll();
             _fixture.MockBotClient.VerifyNoOtherCalls();
 
-            string cachedContext = await _fixture.Cache.GetStringAsync(@"{""u"":1234,""c"":1234,""k"":""profile""}");
+            string cachedContext = await _fixture.Cache.GetStringAsync(@"{""u"":789,""c"":789,""k"":""profile""}");
             Asserts.JsonEqual(
                 @"{""instructions_sent"":true,""agency_selection_msg"":3,""location_msg"":4}",
                 cachedContext

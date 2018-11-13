@@ -1,4 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using BusV.Data.Entities;
@@ -44,6 +46,39 @@ namespace BusV.Data
             }
 
             return error;
+        }
+
+        /// <inheritdoc />
+        public async Task<Error[]> AddAllAsync(
+            IEnumerable<BusStop> busStops,
+            CancellationToken cancellationToken = default
+        )
+        {
+            var errors = new List<Error>();
+            try
+            {
+                await _collection.InsertManyAsync(busStops, cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (MongoBulkWriteException e)
+            {
+                foreach (var writeError in e.WriteErrors)
+                {
+                    Error error;
+                    if (writeError.Category == ServerErrorCategory.DuplicateKey)
+                    {
+                        error = new Error("data.duplicate_key", writeError.Message);
+                    }
+                    else
+                    {
+                        error = new Error("data", writeError.Message);
+                    }
+
+                    errors.Add(error);
+                }
+            }
+
+            return errors.Any() ? errors.ToArray() : null;
         }
 
         /// <inheritdoc />

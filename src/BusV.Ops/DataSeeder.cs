@@ -213,26 +213,27 @@ namespace BusV.Ops
             CancellationToken cancellationToken = default
         )
         {
-            foreach (var nextbusStop in nextbusStops)
+            var mongoStops = nextbusStops
+                .Select(Converter.FromNextBusStop)
+                .ToArray();
+
+            var errors = await _busStopRepo.AddAllAsync(mongoStops, cancellationToken)
+                .ConfigureAwait(false);
+
+//            if (errors != null && error.Code != "data.duplicate_key")
+            if (errors != null)
             {
-                var mongoStop = Converter.FromNextBusStop(nextbusStop);
-
-                var error = await _busStopRepo.AddAsync(mongoStop, cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (error != null && error.Code != "data.duplicate_key")
+                if (errors.All(e => e.Code == "data.duplicate_key"))
                 {
-                    _logger.LogError("Failed to insert bus stop. {0}, {1}.", error.Code, error.Message);
-                    throw new InvalidOperationException(error.Message);
+                    _logger.LogWarning("There were {0} duplicate bus stops.", errors.Length);
+                }
+                else
+                {
+                    _logger.LogError("Failed to insert bus stops: {0}", errors.Select(e => e.Message));
+                    throw new InvalidOperationException("Failed to insert bus stops.");
                 }
             }
 
-//                var q = _dbContext.BusStops.Local.Where(s =>
-//                    s.Tag == nxtbsStop.Tag &&
-//                    //s.StopId == nxtbsStop.StopId
-//                    Math.Abs(s.Latitude - (double) nxtbsStop.Lat) < 0.00001 &&
-//                    Math.Abs(s.Longitude - (double) nxtbsStop.Lon) < 0.00001
-//                ).ToArray();
             return Task.CompletedTask;
         }
 

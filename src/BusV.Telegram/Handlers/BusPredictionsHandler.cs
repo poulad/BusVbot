@@ -9,6 +9,7 @@ using BusV.Telegram.Models.Cache;
 using BusV.Telegram.Services;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using MongoDB.Driver.GeoJsonObjectModel;
 using Telegram.Bot;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Requests;
@@ -22,6 +23,7 @@ namespace BusV.Telegram.Handlers
         private readonly IDistributedCache _cache;
         private readonly IRouteRepo _routeRepo;
         private readonly IPredictionsService _predictionsService;
+        private readonly IBusPredictionRepo _predictionRepo;
         private readonly IRouteMessageFormatter _routeMessageFormatter;
         private readonly ILogger<LocationHandler> _logger;
 
@@ -29,6 +31,7 @@ namespace BusV.Telegram.Handlers
             IDistributedCache cache,
             IRouteRepo routeRepo,
             IPredictionsService predictionsService,
+            IBusPredictionRepo predictionRepo,
             IRouteMessageFormatter routeMessageFormatter,
             ILogger<LocationHandler> logger
         )
@@ -36,6 +39,7 @@ namespace BusV.Telegram.Handlers
             _cache = cache;
             _routeRepo = routeRepo;
             _predictionsService = predictionsService;
+            _predictionRepo = predictionRepo;
             _routeMessageFormatter = routeMessageFormatter;
             _logger = logger;
         }
@@ -88,13 +92,34 @@ namespace BusV.Telegram.Handlers
                 string message = RouteMessageFormatter.FormatBusPredictionsReplyText(predictions.Predictions);
                 text += "\n\n" + message;
 
-                await context.Bot.Client.MakeRequestWithRetryAsync(
+                var predictionsMessage = await context.Bot.Client.MakeRequestWithRetryAsync(
                     new SendMessageRequest(context.Update.Message.Chat, text)
                     {
                         ParseMode = ParseMode.Markdown,
-                        ReplyMarkup = new ReplyKeyboardRemove()
+                        ReplyMarkup = (InlineKeyboardMarkup) InlineKeyboardButton.WithCallbackData("Update", "pred/"),
                     },
                     cancellationToken
+                ).ConfigureAwait(false);
+
+                var prediction = new BusPrediction
+                {
+                    AgencyTag = cachedCtx.Profile.DefaultAgencyTag,
+                    RouteTag = cachedCtx.Bus.RouteTag,
+                    DirectionTag = cachedCtx.Bus.DirectionTag,
+                    BusStopTag = busStop.Tag,
+                    UserLocation = new GeoJsonPoint<GeoJson2DCoordinates>(
+                        new GeoJson2DCoordinates(cachedCtx.Location.Longitude, cachedCtx.Location.Latitude)),
+                };
+
+                await _predictionRepo.AddAsync(prediction, cancellationToken)
+                    .ConfigureAwait(false);
+
+                await context.Bot.Client.MakeRequestWithRetryAsync(
+                    new EditMessageReplyMarkupRequest(
+                        predictionsMessage.Chat,
+                        predictionsMessage.MessageId,
+                        InlineKeyboardButton.WithCallbackData("Update", $"pred/id:{prediction.Id}")
+                    ), cancellationToken
                 ).ConfigureAwait(false);
             }
             else if (cachedCtx.Bus != null)

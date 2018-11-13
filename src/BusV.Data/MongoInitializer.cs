@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BusV.Data.Entities;
 using MongoDB.Bson;
@@ -56,10 +57,10 @@ namespace BusV.Data
             }
 
             {
-                // "bus-stops" collection
-                await database.CreateCollectionAsync("bus-stops", cancellationToken: cancellationToken)
+                // "bus_stops" collection
+                await database.CreateCollectionAsync("bus_stops", cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
-                var busStopsCollection = database.GetCollection<BusStop>("bus-stops");
+                var busStopsCollection = database.GetCollection<BusStop>("bus_stops");
 
                 // create unique index "tag" on the field "tag"
                 await busStopsCollection.Indexes.CreateOneAsync(new CreateIndexModel<BusStop>(
@@ -94,6 +95,27 @@ namespace BusV.Data
                         key,
                         new CreateIndexOptions
                             { Name = Constants.Collections.Users.Indexes.UserChat, Unique = true }),
+                    cancellationToken: cancellationToken
+                ).ConfigureAwait(false);
+            }
+
+            {
+                // "bus_predictions" collection
+                await database.CreateCollectionAsync("bus_predictions", cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
+                var busStopsCollection = database.GetCollection<BusPrediction>("bus_predictions");
+
+                // create 2dsphere index "user_location" on the field "user_location"
+                await busStopsCollection.Indexes.CreateOneAsync(new CreateIndexModel<BusPrediction>(
+                        Builders<BusPrediction>.IndexKeys.Geo2DSphere(p => p.UserLocation),
+                        new CreateIndexOptions { Name = "user_location" }),
+                    cancellationToken: cancellationToken
+                ).ConfigureAwait(false);
+
+                // create index "created_at" on the field "created_at" with 1 day of TTL
+                await busStopsCollection.Indexes.CreateOneAsync(new CreateIndexModel<BusPrediction>(
+                        Builders<BusPrediction>.IndexKeys.Ascending(p => p.CreatedAt),
+                        new CreateIndexOptions { Name = "created_at", ExpireAfter = TimeSpan.FromDays(1) }),
                     cancellationToken: cancellationToken
                 ).ConfigureAwait(false);
             }
@@ -183,6 +205,24 @@ namespace BusV.Data
                     map.MapProperty(u => u.DefaultAgencyTag).SetElementName("agency");
                     map.MapProperty(u => u.CreatedAt).SetElementName("created_at");
                     map.MapProperty(u => u.ModifiedAt).SetElementName("modified_at").SetIgnoreIfDefault(true);
+                });
+            }
+
+            if (!BsonClassMap.IsClassMapRegistered(typeof(BusPrediction)))
+            {
+                BsonClassMap.RegisterClassMap<BusPrediction>(map =>
+                {
+                    map.MapIdProperty(s => s.Id)
+                        .SetIdGenerator(StringObjectIdGenerator.Instance)
+                        .SetSerializer(new StringSerializer(BsonType.ObjectId));
+                    map.MapProperty(p => p.AgencyTag).SetElementName("agency");
+                    map.MapProperty(p => p.RouteTag).SetElementName("route");
+                    map.MapProperty(p => p.DirectionTag).SetElementName("direction");
+                    map.MapProperty(p => p.BusStopTag).SetElementName("stop");
+                    map.MapProperty(p => p.User).SetElementName("user");
+                    map.MapProperty(p => p.UserLocation).SetElementName("user_location");
+                    map.MapProperty(s => s.CreatedAt).SetElementName("created_at");
+                    map.MapProperty(s => s.UpdatedAt).SetElementName("updated_at");
                 });
             }
         }

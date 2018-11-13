@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using MongoDB.Driver;
 
 namespace BusV.Data.Entities
 {
