@@ -35,6 +35,7 @@ namespace BusV.Telegram
                 .AddScoped<WebhookResponse>()
                 .AddScoped<StartCommand>()
                 .AddScoped<HelpCommand>()
+                .AddScoped<CancelCommand>()
                 .AddScoped<LocationHandler>()
                 .AddScoped<UserProfileSetupHandler>()
                 .AddScoped<UserProfileSetupMenuHandler>()
@@ -94,6 +95,7 @@ namespace BusV.Telegram
                 // global commands. these don't require loading the user profile
                 .UseCommand<StartCommand>("start")
                 .UseCommand<HelpCommand>("help")
+                .UseCommand<CancelCommand>("cancel")
 
                 // accept locations as a location or text coordinates(OSM)
                 .UseWhen<LocationHandler>(LocationHandler.HasLocationOrCoordinates)

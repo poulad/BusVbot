@@ -47,6 +47,13 @@ namespace Microsoft.Extensions.Caching.Distributed
                 cancellationToken
             );
 
+        public static Task RemoveProfileAsync(
+            this IDistributedCache cache,
+            UserChat userchat,
+            CancellationToken cancellationToken = default
+        ) =>
+            cache.RemoveAsync(GetKey(userchat, "profile"), cancellationToken);
+
         public static Task<BusPredictionsContext> GetBusPredictionAsync(
             this IDistributedCache cache,
             UserChat userchat,
@@ -76,6 +83,13 @@ namespace Microsoft.Extensions.Caching.Distributed
                 cancellationToken
             );
 
+        public static Task RemoveBusPredictionAsync(
+            this IDistributedCache cache,
+            UserChat userchat,
+            CancellationToken cancellationToken = default
+        ) =>
+            cache.RemoveAsync(GetKey(userchat, "bus"), cancellationToken);
+
         public static Task<UserLocationContext> GetLocationAsync(
             this IDistributedCache cache,
             UserChat userchat,
@@ -104,6 +118,13 @@ namespace Microsoft.Extensions.Caching.Distributed
                 },
                 cancellationToken
             );
+
+        public static Task RemoveLocationAsync(
+            this IDistributedCache cache,
+            UserChat userchat,
+            CancellationToken cancellationToken = default
+        ) =>
+            cache.RemoveAsync(GetKey(userchat, "location"), cancellationToken);
 
         private static string GetKey(UserChat userchat, string kind) =>
             $@"{{""u"":{userchat.UserId},""c"":{userchat.ChatId},""k"":""{kind}""}}";
