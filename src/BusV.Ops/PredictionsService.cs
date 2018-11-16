@@ -13,18 +13,21 @@ namespace BusV.Ops
         private readonly INextBusClient _nextBusClient;
         private readonly IRouteRepo _routeRepo;
         private readonly IBusStopRepo _busStopRepo;
+        private readonly IBusPredictionRepo _busPredictionRepo;
         private readonly ILogger<PredictionsService> _logger;
 
         public PredictionsService(
             INextBusClient nextBusClient,
             IRouteRepo routeRepo,
             IBusStopRepo busStopRepo,
+            IBusPredictionRepo busPredictionRepo,
             ILogger<PredictionsService> logger
         )
         {
             _nextBusClient = nextBusClient;
             _routeRepo = routeRepo;
             _busStopRepo = busStopRepo;
+            _busPredictionRepo = busPredictionRepo;
             _logger = logger;
         }
 
@@ -67,6 +70,34 @@ namespace BusV.Ops
             ).ConfigureAwait(false);
 
             return (routePredictions.ToArray(), null);
+        }
+
+        public async Task<(RoutePrediction[] Predictions, Error Error)> RefreshPreviousPredictionsAsync(
+            string predictionId,
+            CancellationToken cancellationToken
+        )
+        {
+            var busPrediction = await _busPredictionRepo.GetByIdAsync(predictionId, cancellationToken)
+                .ConfigureAwait(false);
+
+            (RoutePrediction[] Predictions, Error Error) result;
+            if (busPrediction != null)
+            {
+                result = await GetPredictionsAsync(
+                    busPrediction.AgencyTag,
+                    busPrediction.RouteTag,
+                    busPrediction.BusStopTag,
+                    cancellationToken
+                ).ConfigureAwait(false);
+            }
+            else
+            {
+                // ToDo include more info
+                _logger.LogTrace("Invalid bus predictions");
+                result = (null, new Error(ErrorCodes.InvalidParameters));
+            }
+
+            return result;
         }
 
 //        public bool ValidateRouteFormat(string routeTag)

@@ -44,7 +44,7 @@ namespace BusV.Telegram
                 .AddScoped<BusCommand>()
                 .AddScoped<BusCQHandler>()
                 .AddScoped<BusPredictionsHandler>()
-//                .AddScoped<PredictionRefreshCqHandler>()
+                .AddScoped<PredictionRefreshHandler>()
 //                .AddScoped<LocationHandler>()
 //                .AddScoped<SaveCommand>()
 //                .AddScoped<SavedLocationHandler>()
@@ -125,6 +125,7 @@ namespace BusV.Telegram
 //                    .MapWhen<PredictionRefreshCqHandler>(When.IsBusPredictionCq)
 //                )
                 // ToDo comments
-                .UseWhen<BusPredictionsHandler>(BusPredictionsHandler.CanHandle);
+                .UseWhen<BusPredictionsHandler>(BusPredictionsHandler.CanHandle)
+                .UseWhen<PredictionRefreshHandler>(PredictionRefreshHandler.CanHandle);
     }
 }

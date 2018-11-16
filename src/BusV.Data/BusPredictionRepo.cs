@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BusV.Data.Entities;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace BusV.Data
@@ -19,6 +20,22 @@ namespace BusV.Data
         )
         {
             _collection = collection;
+        }
+
+        /// <inheritdoc />
+        public async Task<BusPrediction> GetByIdAsync(
+            string id,
+            CancellationToken cancellationToken = default
+        )
+        {
+            var filter = Filter.Eq("_id", ObjectId.Parse(id));
+
+            BusPrediction busPrediction = await _collection
+                .Find(filter)
+                .SingleOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return busPrediction;
         }
 
         /// <inheritdoc />

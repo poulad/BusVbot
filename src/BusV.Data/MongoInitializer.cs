@@ -112,10 +112,10 @@ namespace BusV.Data
                     cancellationToken: cancellationToken
                 ).ConfigureAwait(false);
 
-                // create index "created_at" on the field "created_at" with 1 day of TTL
+                // create index "created_at" on the field "created_at" with 8 days of TTL
                 await busStopsCollection.Indexes.CreateOneAsync(new CreateIndexModel<BusPrediction>(
                         Builders<BusPrediction>.IndexKeys.Ascending(p => p.CreatedAt),
-                        new CreateIndexOptions { Name = "created_at", ExpireAfter = TimeSpan.FromDays(1) }),
+                        new CreateIndexOptions { Name = "created_at", ExpireAfter = TimeSpan.FromDays(8) }),
                     cancellationToken: cancellationToken
                 ).ConfigureAwait(false);
             }

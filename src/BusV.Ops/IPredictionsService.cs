@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using BusV.Data.Entities;
 using NextBus.NET.Models;
 
 namespace BusV.Ops
@@ -19,6 +20,11 @@ namespace BusV.Ops
             string agencyTag,
             string routeTag,
             string busStopTag,
+            CancellationToken cancellationToken
+        );
+
+        Task<(RoutePrediction[] Predictions, Error Error)> RefreshPreviousPredictionsAsync(
+            string predictionId,
             CancellationToken cancellationToken
         );
     }
