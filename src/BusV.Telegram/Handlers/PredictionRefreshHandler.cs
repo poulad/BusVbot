@@ -34,7 +34,7 @@ namespace BusV.Telegram.Handlers
                     .RefreshPreviousPredictionsAsync(predictionId, cancellationToken)
                     .ConfigureAwait(false);
 
-                if (predictionsResult.Error != null)
+                if (predictionsResult.Error is null)
                 {
                     string text = $"_updated at {DateTime.Now:hh:mm:ss tt}_\n\n";
                     text += RouteMessageFormatter.FormatBusPredictionsReplyText(predictionsResult.Predictions);

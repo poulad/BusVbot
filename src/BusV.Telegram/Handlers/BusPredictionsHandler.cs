@@ -111,7 +111,7 @@ namespace BusV.Telegram.Handlers
                         new GeoJson2DCoordinates(cachedCtx.Location.Longitude, cachedCtx.Location.Latitude)),
                 };
 
-                await _predictionRepo.AddAsync(prediction, cancellationToken)
+                await _predictionRepo.AddAsync(cachedCtx.Profile.Id, prediction, cancellationToken)
                     .ConfigureAwait(false);
 
                 await context.Bot.Client.MakeRequestWithRetryAsync(

@@ -22,9 +22,11 @@ namespace BusV.Data
         /// <summary>
         /// Creates a new prediction document
         /// </summary>
+        /// <param name="userId">Unique identifier for the user document</param>
         /// <param name="prediction">Prediction to be added</param>
         /// <param name="cancellationToken">The cancellation token to cancel operation</param>
         Task<Error> AddAsync(
+            string userId,
             BusPrediction prediction,
             CancellationToken cancellationToken = default
         );

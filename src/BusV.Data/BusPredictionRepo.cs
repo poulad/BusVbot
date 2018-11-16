@@ -40,10 +40,13 @@ namespace BusV.Data
 
         /// <inheritdoc />
         public async Task<Error> AddAsync(
+            string userId,
             BusPrediction prediction,
             CancellationToken cancellationToken = default
         )
         {
+            prediction.User = new MongoDBRef("users", userId);
+
             Error error;
             try
             {
