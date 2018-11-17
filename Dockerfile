@@ -1,17 +1,17 @@
 FROM microsoft/dotnet:2.1-aspnetcore-runtime AS base
 WORKDIR /app/
+RUN echo "Installing FFmpeg..." \
+    && apt-get update \
+    && apt-get install --assume-yes --quiet --no-install-recommends ffmpeg \
+    && apt-get clean \
+    && apt-get autoremove --assume-yes --quiet \
+    && rm -rvf /var/lib/apt/lists/*
 
 
-FROM microsoft/dotnet:2.1-sdk AS web-app-build
-ARG configuration=Debug
-WORKDIR /project/
+FROM microsoft/dotnet:2.1-sdk AS publish
+ARG configuration=Release
 COPY src src
-RUN dotnet build src/BusV.Telegram/BusV.Telegram.csproj --configuration ${configuration}
-
-
-FROM web-app-build AS publish
-WORKDIR /project/
-RUN dotnet publish src/BusV.Telegram/BusV.Telegram.csproj --configuration Release --output /app/
+RUN dotnet publish src/BusV.Telegram/BusV.Telegram.csproj --configuration ${configuration} --output /app/
 
 
 FROM base AS final
