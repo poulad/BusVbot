@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Framework", "test\Framework
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TelegramTests", "test\TelegramTests\TelegramTests.csproj", "{EFF83D11-D708-4188-A203-70658EB017E3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wit.Ai.Client", "src\Wit.Ai.Client\Wit.Ai.Client.csproj", "{D0F0AC07-BAC5-467C-8F5E-B6A2E9FD5C6F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,10 @@ Global
 		{EFF83D11-D708-4188-A203-70658EB017E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EFF83D11-D708-4188-A203-70658EB017E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EFF83D11-D708-4188-A203-70658EB017E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0F0AC07-BAC5-467C-8F5E-B6A2E9FD5C6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0F0AC07-BAC5-467C-8F5E-B6A2E9FD5C6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0F0AC07-BAC5-467C-8F5E-B6A2E9FD5C6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0F0AC07-BAC5-467C-8F5E-B6A2E9FD5C6F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -67,6 +73,7 @@ Global
 		{E7CA79C3-ACCE-4637-85F2-BA07C0F97A5F} = {053EEB30-7CD0-427E-9066-A78FA6F489F1}
 		{A50FD33D-4CB5-4888-A697-BEBEBDB29272} = {5892FF9C-B28D-4AD0-A2ED-B435AB406D30}
 		{EFF83D11-D708-4188-A203-70658EB017E3} = {5892FF9C-B28D-4AD0-A2ED-B435AB406D30}
+		{D0F0AC07-BAC5-467C-8F5E-B6A2E9FD5C6F} = {053EEB30-7CD0-427E-9066-A78FA6F489F1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8E2C8345-B1D3-444A-81CD-F03BF60B02C6}

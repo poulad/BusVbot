@@ -26,7 +26,7 @@ namespace BusV.Telegram
         {
             services.AddMongoDb(Configuration.GetSection("Mongo"));
             services.AddRedisCache(Configuration.GetSection("Redis"));
-
+            services.AddWitAi(Configuration.GetSection("Wit.ai"));
             services.AddOperationServices();
 
             services.AddTransient<BusVbot>()
@@ -45,6 +45,7 @@ namespace BusV.Telegram
                 .AddScoped<BusCQHandler>()
                 .AddScoped<BusPredictionsHandler>()
                 .AddScoped<PredictionRefreshHandler>()
+                .AddScoped<VoiceHandler>()
 //                .AddScoped<LocationHandler>()
 //                .AddScoped<SaveCommand>()
 //                .AddScoped<SavedLocationHandler>()
@@ -105,6 +106,8 @@ namespace BusV.Telegram
                 // ensure the user has a profile loaded for the rest of the handlers
                 .UseWhen<UserProfileSetupHandler>(UserProfileSetupHandler.CanHandle)
 
+                // ToDo comments
+                .UseWhen<VoiceHandler>(VoiceHandler.IsVoiceMessage)
                 // for new messages...
                 .UseWhen(When.NewMessage, msgBranch => msgBranch
                     // for new text messages...
