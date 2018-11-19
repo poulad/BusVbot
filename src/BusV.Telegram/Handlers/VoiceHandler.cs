@@ -1,40 +1,24 @@
 ﻿using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using BusV.Data.Entities;
-using BusV.Telegram.Models.Cache;
-using BusV.Telegram.Services;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
-using Telegram.Bot;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Requests;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BusV.Telegram.Handlers
 {
     public class VoiceHandler : IUpdateHandler
     {
         private readonly Ops.INlpService _nlpService;
-        private readonly Ops.IAgencyRouteParser _agencyParser;
-        private readonly IRouteMessageFormatter _routeMessageFormatter;
-        private readonly IDistributedCache _cache;
         private readonly ILogger _logger;
 
         public VoiceHandler(
             Ops.INlpService nlpService,
-            Ops.IAgencyRouteParser agencyParser,
-            IRouteMessageFormatter routeMessageFormatter,
-            IDistributedCache cache,
             ILogger<VoiceHandler> logger
         )
         {
             _nlpService = nlpService;
-            _agencyParser = agencyParser;
-            _routeMessageFormatter = routeMessageFormatter;
-            _cache = cache;
             _logger = logger;
         }
 
@@ -69,107 +53,30 @@ namespace BusV.Telegram.Handlers
                     ? meaning.Entities["direction_ttc"][0]["value"]
                     : null;
 
-                if (intent == "bus_predictions" && route != null && direction != null)
+                if (intent == "bus_predictions")
                 {
-                    string agencyTag = context.GetUserProfile().DefaultAgencyTag;
-
-                    var result = await _agencyParser
-                        .FindMatchingRouteDirectionsAsync(agencyTag, $"{route} {direction}", cancellationToken)
-                        .ConfigureAwait(false);
-
-                    if (result.Error == null)
-                    {
-                        if (result.Matches.Length == 1)
-                        {
-                            _logger.LogTrace(
-                                "The exact route and the direction are found. Inserting them into the cache."
-                            );
-                            var match = result.Matches.Single();
-                            var busContext = new BusPredictionsContext
-                            {
-                                RouteTag = match.Route.Tag,
-                                DirectionTag = match.Direction.Tag,
-                            };
-                            await _cache.SetBusPredictionAsync(context.Update.ToUserchat(), busContext,
-                                    cancellationToken)
-                                .ConfigureAwait(false);
-
-                            context.Items[nameof(BusPredictionsContext)] = busContext;
-
-                            await next(context, cancellationToken).ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            _logger.LogTrace(
-                                "There are multiple matching route-direction combinations. Asking user to choose one."
-                            );
-                            await AskUserToChooseOneRouteDirectionAsync(context, result.Matches, cancellationToken)
-                                .ConfigureAwait(false);
-                        }
-
-                        await next(context, cancellationToken).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        context.Items[nameof(WebhookResponse)] = new SendChatActionRequest(
-                            context.Update.Message.Chat,
-                            ChatAction.RecordVideo
-                        );
-                    }
+                    context.Items["bus route query"] = $"{route} {direction}";
+                    await next(context, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
+                    string text = "Sorry, what?👂 ";
+                    if (!string.IsNullOrWhiteSpace(meaning.Text))
+                    {
+                        text += "I heard:\n" +
+                                $"```\n{meaning.Text}\n```";
+                    }
+
                     context.Items[nameof(WebhookResponse)] = new SendMessageRequest(
                         context.Update.Message.Chat,
-                        "Sorry! I can't work with the voices longer than 10 seconds. 😶"
+                        text
                     )
                     {
-                        DisableNotification = true,
+                        ParseMode = ParseMode.Markdown,
                         ReplyToMessageId = context.Update.Message.MessageId,
+                        DisableNotification = true,
                     };
                 }
-            }
-        }
-
-        private async Task AskUserToChooseOneRouteDirectionAsync(
-            IUpdateContext context,
-            (Route Route, RouteDirection Direction)[] matches,
-            CancellationToken cancellationToken
-        )
-        {
-            bool areAllSameRoute = matches
-                                       .Select(m => m.Route.Tag)
-                                       .Distinct()
-                                       .Count() == 1;
-
-            if (areAllSameRoute)
-            {
-                _logger.LogTrace("The exact route is found. Ask user for the direction to take.");
-
-                var messageInfo = _routeMessageFormatter.CreateMessageForRoute(matches[0].Route);
-
-                await context.Bot.Client.MakeRequestWithRetryAsync(
-                    new SendMessageRequest(
-                        context.Update.Message.Chat,
-                        messageInfo.Text
-                    )
-                    {
-                        ReplyToMessageId = context.Update.Message.MessageId,
-                        ReplyMarkup = messageInfo.Keyboard,
-                    }, cancellationToken
-                ).ConfigureAwait(false);
-            }
-            else
-            {
-                // ToDo instruct on choosing one of the matching routes. inline keyboard maybe
-                // ToDo Test this scenario
-                await context.Bot.Client.SendTextMessageAsync(
-                    context.Update.Message.Chat,
-                    "Found multiple matching routes: " + matches.Length,
-                    replyToMessageId: context.Update.Message.MessageId,
-                    replyMarkup: new ReplyKeyboardRemove(),
-                    cancellationToken: cancellationToken
-                ).ConfigureAwait(false);
             }
         }
     }

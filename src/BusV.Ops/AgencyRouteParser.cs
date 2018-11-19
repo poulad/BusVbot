@@ -141,7 +141,7 @@ namespace BusV.Ops
             else
             {
                 // todo try partial matches on the tag/title/short_title text
-                result = (null, new Error("")); // ToDo
+                result = (null, new Error(ErrorCodes.RouteNotFound)); // ToDo
             }
 
             return result;

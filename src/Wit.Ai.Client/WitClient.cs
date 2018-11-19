@@ -53,7 +53,9 @@ namespace Wit.Ai.Client
             }
             else
             {
-                httpRequest.RequestUri = new Uri($"{httpRequest.RequestUri.OriginalString}?v={ApiVersion}");
+                httpRequest.RequestUri = new Uri(
+                    $"{httpRequest.RequestUri.OriginalString}?v={ApiVersion}", UriKind.Relative
+                );
             }
 
             httpRequest.Headers.Add("Accept", "application/json");

@@ -290,6 +290,7 @@ namespace TelegramTests
                     Is.SameJson<SendMessageRequest>($@"{{
                         chat_id: 789,
                         text: ""{text.Stringify()}"",
+                        parse_mode: ""Markdown"",
                         reply_to_message_id: 2,
                         disable_notification: true,
                         reply_markup: {{ remove_keyboard: true }}
@@ -353,12 +354,14 @@ namespace TelegramTests
             // ToDo ensure empty cache
 
             // should send a message acknowledging the error in finding the route
-            string text = "Sorry! Something went wrong while I was looking for the bus routes.";
+            string text = "Sorry! Something went wrong while I was looking for the bus routes.\n" +
+                          "*Please try again later.*";
             _fixture.MockBotClient
                 .Setup(botClient => botClient.MakeRequestAsync(
                     Is.SameJson<SendMessageRequest>($@"{{
                         chat_id: 789,
                         text: ""{text.Stringify()}"",
+                        parse_mode: ""Markdown"",
                         reply_to_message_id: 2,
                         disable_notification: true,
                         reply_markup: {{ remove_keyboard: true }}

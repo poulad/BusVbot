@@ -25,7 +25,7 @@ namespace BusV.Telegram.Handlers
         private readonly IPredictionsService _predictionsService;
         private readonly IBusPredictionRepo _predictionRepo;
         private readonly IRouteMessageFormatter _routeMessageFormatter;
-        private readonly ILogger<LocationHandler> _logger;
+        private readonly ILogger _logger;
 
         public BusPredictionsHandler(
             IDistributedCache cache,
@@ -33,7 +33,7 @@ namespace BusV.Telegram.Handlers
             IPredictionsService predictionsService,
             IBusPredictionRepo predictionRepo,
             IRouteMessageFormatter routeMessageFormatter,
-            ILogger<LocationHandler> logger
+            ILogger<BusPredictionsHandler> logger
         )
         {
             _cache = cache;

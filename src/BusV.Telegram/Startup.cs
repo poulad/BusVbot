@@ -43,6 +43,7 @@ namespace BusV.Telegram
                 .AddScoped<ProfileCommand>()
                 .AddScoped<BusCommand>()
                 .AddScoped<BusCQHandler>()
+                .AddScoped<BusRouteQueryParser>()
                 .AddScoped<BusPredictionsHandler>()
                 .AddScoped<PredictionRefreshHandler>()
                 .AddScoped<VoiceHandler>()
@@ -128,6 +129,7 @@ namespace BusV.Telegram
 //                    .MapWhen<PredictionRefreshCqHandler>(When.IsBusPredictionCq)
 //                )
                 // ToDo comments
+                .UseWhen<BusRouteQueryParser>(BusRouteQueryParser.CanHandle)
                 .UseWhen<BusPredictionsHandler>(BusPredictionsHandler.CanHandle)
                 .UseWhen<PredictionRefreshHandler>(PredictionRefreshHandler.CanHandle);
     }
