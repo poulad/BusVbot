@@ -1,13 +1,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Wit.Ai.Client;
+using Wit.Ai.Client.Types;
 
 namespace BusV.Ops
 {
@@ -22,7 +19,7 @@ namespace BusV.Ops
             _witClient = witClient;
         }
 
-        public async Task<string> ProcessVoiceAsync(
+        public async Task<Meaning> ProcessVoiceAsync(
             string filePath,
             string mimeType,
             CancellationToken cancellationToken
@@ -56,14 +53,17 @@ namespace BusV.Ops
 
                 if (process.ExitCode == 0)
                 {
-                    string json;
+                    Meaning meaning;
                     using (var voiceFile = File.OpenRead(waveFileName))
                     {
-                        json = await _witClient.SendAudioAsync(voiceFile, "audio/wave", cancellationToken)
-                            .ConfigureAwait(false);
+                        meaning = await _witClient.SendAudioAsync(
+                            voiceFile,
+                            "audio/wave",
+                            cancellationToken: cancellationToken
+                        ).ConfigureAwait(false);
                     }
 
-                    return json;
+                    return meaning;
                 }
                 else
                 {
