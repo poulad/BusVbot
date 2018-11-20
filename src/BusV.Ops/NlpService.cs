@@ -1,8 +1,8 @@
-using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Wit.Ai.Client;
 using Wit.Ai.Client.Types;
 
@@ -11,69 +11,79 @@ namespace BusV.Ops
     public class NlpService : INlpService
     {
         private readonly IWitClient _witClient;
+        private readonly ILogger _logger;
 
         public NlpService(
-            IWitClient witClient
+            IWitClient witClient,
+            ILogger<NlpService> logger
         )
         {
             _witClient = witClient;
+            _logger = logger;
         }
 
+        public Task<Meaning> ProcessTextAsync(string text, CancellationToken cancellationToken)
+            => _witClient.GetSentenceMeaningAsync(text, cancellationToken: cancellationToken);
+
         public async Task<Meaning> ProcessVoiceAsync(
-            string filePath,
+            Stream audioStream,
             string mimeType,
             CancellationToken cancellationToken
         )
         {
-            // ToDo if (mimeType == "audio/ogg")
+            Meaning meaning;
 
-            // ToDo remove this wav file at the end
-            string waveFileName = Path.GetTempFileName();
-
-            string args = $"-f ogg -i \"{filePath}\" -nostdin -nostats -loglevel error -y -f wav \"{waveFileName}\"";
-            var process = new Process
+            if (mimeType.Contains("ogg"))
             {
-                StartInfo = new ProcessStartInfo("ffmpeg", args)
-                {
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    RedirectStandardInput = false,
-                    UseShellExecute = false,
-                },
-            };
+                var ffMpegProcess = ConvertUsingFFMpeg(audioStream, "ogg", "wav");
 
-            // ToDo try-finally -> dispose process
-            process.Start();
-            await Task.Run(() => process.WaitForExit(3_500), cancellationToken)
-                .ConfigureAwait(false);
-            if (process.HasExited)
-            {
-                string output = process.StandardOutput.ReadToEnd();
-                string error = process.StandardError.ReadToEnd();
-
-                if (process.ExitCode == 0)
+                using (ffMpegProcess)
                 {
-                    Meaning meaning;
-                    using (var voiceFile = File.OpenRead(waveFileName))
-                    {
-                        meaning = await _witClient.SendAudioAsync(
-                            voiceFile,
-                            "audio/wave",
-                            cancellationToken: cancellationToken
-                        ).ConfigureAwait(false);
-                    }
-
-                    return meaning;
-                }
-                else
-                {
-                    throw new NotImplementedException();
+                    meaning = await _witClient.GetAudioMeaningAsync(
+                        ffMpegProcess.StandardOutput.BaseStream,
+                        "audio/wave",
+                        cancellationToken: cancellationToken
+                    ).ConfigureAwait(false);
                 }
             }
             else
             {
-                throw new NotImplementedException();
+                meaning = await _witClient.GetAudioMeaningAsync(
+                    audioStream,
+                    mimeType,
+                    cancellationToken: cancellationToken
+                ).ConfigureAwait(false);
             }
+
+            return meaning;
+        }
+
+        private Process ConvertUsingFFMpeg(
+            Stream inputStream,
+            string inputFormat,
+            string outputFormat
+        )
+        {
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo(
+                    "ffmpeg",
+                    $"-f {inputFormat} -i pipe:0 -loglevel error -f {outputFormat} -"
+                )
+                {
+                    RedirectStandardInput = true,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                }
+            };
+            process.Start();
+
+            inputStream.CopyTo(process.StandardInput.BaseStream);
+            process.StandardInput.Flush();
+            process.StandardInput.Close();
+
+            return process;
         }
     }
 }

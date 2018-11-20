@@ -28,6 +28,8 @@ namespace BusV.Data.Entities
         [Required]
         public GeoJsonPoint<GeoJson2DCoordinates> UserLocation { get; set; }
 
+        public string Origin { get; set; }
+
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

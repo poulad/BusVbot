@@ -75,11 +75,23 @@ namespace BusV.Telegram.Handlers
                     cancellationToken
                 ).ConfigureAwait(false);
 
+                IReplyMarkup locationReplyMarkup;
+                if (string.IsNullOrWhiteSpace(cachedCtx.Bus.Origin))
+                {
+                    locationReplyMarkup = new ReplyKeyboardRemove();
+                }
+                else
+                {
+                    locationReplyMarkup = new InlineKeyboardMarkup(
+                        InlineKeyboardButton.WithCallbackData("🚩 Remember this location", "loc/save")
+                    );
+                }
+
                 await context.Bot.Client.MakeRequestWithRetryAsync(
-                    new SendLocationRequest(context.Update.Message.Chat, busStop.Latitude, busStop.Longitude)
+                    new SendLocationRequest(userchat.ChatId, busStop.Latitude, busStop.Longitude)
                     {
                         ReplyToMessageId = cachedCtx.Location.LocationMessageId,
-                        ReplyMarkup = new ReplyKeyboardRemove()
+                        ReplyMarkup = locationReplyMarkup,
                     },
                     cancellationToken
                 ).ConfigureAwait(false);
@@ -93,7 +105,7 @@ namespace BusV.Telegram.Handlers
                 text += "\n\n" + message;
 
                 var predictionsMessage = await context.Bot.Client.MakeRequestWithRetryAsync(
-                    new SendMessageRequest(context.Update.Message.Chat, text)
+                    new SendMessageRequest(userchat.ChatId, text)
                     {
                         ParseMode = ParseMode.Markdown,
                         ReplyMarkup = (InlineKeyboardMarkup) InlineKeyboardButton.WithCallbackData("Update", "pred/"),
@@ -107,6 +119,7 @@ namespace BusV.Telegram.Handlers
                     RouteTag = cachedCtx.Bus.RouteTag,
                     DirectionTag = cachedCtx.Bus.DirectionTag,
                     BusStopTag = busStop.Tag,
+                    Origin = cachedCtx.Bus.Origin,
                     UserLocation = new GeoJsonPoint<GeoJson2DCoordinates>(
                         new GeoJson2DCoordinates(cachedCtx.Location.Longitude, cachedCtx.Location.Latitude)),
                 };
@@ -137,12 +150,14 @@ namespace BusV.Telegram.Handlers
 
                 text += "\n\n*Send your current location* so I can find you the nearest bus stop 🚏 " +
                         "and get the bus predictions for it.";
-
+                int replyToMessage = context.Update.Message?.MessageId
+                                     ?? context.Update.CallbackQuery?.Message?.MessageId
+                                     ?? 0;
                 await context.Bot.Client.MakeRequestWithRetryAsync(
-                    new SendMessageRequest(context.Update.Message.Chat, text)
+                    new SendMessageRequest(userchat.ChatId, text)
                     {
                         ParseMode = ParseMode.Markdown,
-                        ReplyToMessageId = context.Update.Message.MessageId,
+                        ReplyToMessageId = replyToMessage,
                         ReplyMarkup = new ReplyKeyboardMarkup(new[]
                         {
                             KeyboardButton.WithRequestLocation("Share my location")
@@ -157,7 +172,7 @@ namespace BusV.Telegram.Handlers
 
                 await context.Bot.Client.MakeRequestWithRetryAsync(
                     new SendMessageRequest(
-                        context.Update.Message.Chat,
+                        userchat.ChatId,
                         "There you are! What's the bus you want to catch?\n" +
                         "Send me using 👉 /bus command."
                     )

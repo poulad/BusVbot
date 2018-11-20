@@ -12,13 +12,24 @@ namespace Wit.Ai.Client
             CancellationToken cancellationToken = default
         );
 
-        Task<Meaning> SendAudioAsync(
+        Task<Meaning> GetSentenceMeaningAsync(
+            string query,
+            Context context = default,
+            string messageId = default,
+            string threadId = default,
+            int n = default,
+            bool verbose = false,
+            CancellationToken cancellationToken = default
+        );
+
+        Task<Meaning> GetAudioMeaningAsync(
             Stream audioStream,
             string contentType,
             Context context = default,
             string messageId = default,
             string threadId = default,
             int n = default,
+            bool verbose = false,
             CancellationToken cancellationToken = default
         );
     }

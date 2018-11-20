@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -18,6 +19,8 @@ namespace Wit.Ai.Client.Types
 
         public int N { get; set; }
 
+        public bool Verbose { get; set; }
+
         public string Version { get; set; }
 
         public string AccessToken { get; set; }
@@ -34,12 +37,13 @@ namespace Wit.Ai.Client.Types
                 if (MessageId != null) queryString["msg_id"] = MessageId;
                 if (ThreadId != null) queryString["thread_id"] = ThreadId;
                 if (N != 0) queryString["n"] = N.ToString();
+                if (Verbose) queryString["verbose"] = true.ToString();
 
                 if (queryString.HasKeys())
                     url += $"?{queryString}";
             }
 
-            var request = new HttpRequestMessage(HttpMethod.Post, url)
+            var request = new HttpRequestMessage(HttpMethod.Post, new Uri(url, UriKind.Relative))
             {
                 Content = new StreamContent(AudioStream),
             };

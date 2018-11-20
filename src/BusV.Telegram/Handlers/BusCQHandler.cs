@@ -1,27 +1,32 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using BusV.Data;
+using BusV.Data.Entities;
 using BusV.Telegram.Models.Cache;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot.Framework.Abstractions;
 using Telegram.Bot.Requests;
-using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BusV.Telegram.Handlers
 {
     // ReSharper disable once InconsistentNaming
     public class BusCQHandler : IUpdateHandler
     {
+        private readonly IRouteRepo _routeRepo;
         private readonly IDistributedCache _cache;
         private readonly ILogger _logger;
 
         public BusCQHandler(
+            IRouteRepo routeRepo,
             IDistributedCache cache,
             ILogger<BusCQHandler> logger
         )
         {
+            _routeRepo = routeRepo;
             _cache = cache;
             _logger = logger;
         }
@@ -35,91 +40,46 @@ namespace BusV.Telegram.Handlers
             if (match.Success)
             {
                 string routeTag = match.Groups["route"].Value;
-                // ToDo not exactly the direction tag
-                string directionTag = match.Groups["direction"].Value;
+                string directionName = match.Groups["direction"].Value;
+                string directionTag;
+                {
+                    _logger.LogTrace("Getting direction tag from the direction name.");
+                    var userProfile = (UserProfile) context.Items[nameof(UserProfile)];
+                    // ToDo this query might be from a different(previously selected) agency tag
+                    var route = await _routeRepo
+                        .GetByTagAsync(userProfile.DefaultAgencyTag, routeTag, cancellationToken)
+                        .ConfigureAwait(false);
+                    directionTag = route.Directions.First(d => d.Name == directionName).Tag;
+                }
 
+                BusPredictionsContext busContext;
                 {
                     _logger.LogTrace("Updating the route and direction tags in the cache for this userchat");
                     var userchat = context.Update.ToUserchat();
-                    var busContext = await _cache.GetBusPredictionAsync(userchat, cancellationToken)
+                    busContext = await _cache.GetBusPredictionAsync(userchat, cancellationToken)
                         .ConfigureAwait(false);
-
                     busContext = busContext ?? new BusPredictionsContext();
-
+                    busContext.RouteTag = routeTag;
                     busContext.DirectionTag = directionTag;
+                    busContext.Interfaces = busContext.Interfaces ?? new List<string>();
+                    busContext.Interfaces.Add("callback_query");
                     await _cache.SetBusPredictionAsync(userchat, busContext, cancellationToken)
                         .ConfigureAwait(false);
                 }
 
-                await context.Bot.Client.MakeRequestAsync(new EditMessageTextRequest(
+                await context.Bot.Client.MakeRequestAsync(
+                    new EditMessageTextRequest(
                         context.Update.CallbackQuery.Message.Chat,
                         context.Update.CallbackQuery.Message.MessageId,
-                        context.Update.CallbackQuery.Message.Text + "\n" + directionTag
+                        context.Update.CallbackQuery.Message.Text + "\n" + directionName
                     ), cancellationToken
                 ).ConfigureAwait(false);
 
-                await context.Bot.Client.MakeRequestAsync(new SendMessageRequest(
-                        context.Update.CallbackQuery.Message.Chat,
-                        "Got it! Now, *send your current location* so I can find you the nearest bus stop 🚏 " +
-                        "and get the bus predictions for it."
-                    )
-                    {
-                        ParseMode = ParseMode.Markdown,
-                        ReplyToMessageId = context.Update.CallbackQuery.Message.MessageId,
-                        ReplyMarkup = new ReplyKeyboardMarkup(new[]
-                        {
-                            KeyboardButton.WithRequestLocation("Share my location")
-                        }, true, true)
-                    },
-                    cancellationToken
-                ).ConfigureAwait(false);
+                context.Items[nameof(BusPredictionsContext)] = busContext;
+                await next(context, cancellationToken).ConfigureAwait(false);
             }
 
             context.Items[nameof(WebhookResponse)] = new AnswerCallbackQueryRequest(context.Update.CallbackQuery.Id);
         }
     }
 }
-
-
-//using BusV.Telegram.Extensions;
-//using System.Threading.Tasks;
-//using BusV.Telegram.Models.Cache;
-//using BusV.Telegram.Services;
-//using Telegram.Bot.Framework.Abstractions;
-//
-//namespace BusV.Telegram.Handlers
-//{
-//    public class BusDirectionCallbackQueryHandler : IUpdateHandler
-//    {
-//        private readonly IPredictionsManager _predictionsManager;
-//
-//        public BusDirectionCallbackQueryHandler(IPredictionsManager predictionsManager)
-//        {
-//            _predictionsManager = predictionsManager;
-//        }
-//
-//        public async Task HandleAsync(IUpdateContext context, UpdateDelegate next)
-//        {
-//            await context.Bot.Client.AnswerCallbackQueryAsync(context.Update.GetCallbackQueryId(), cacheTime: 5)
-//                .ConfigureAwait(false);
-//            var directionName = context.Update.CallbackQuery.Data.Replace(
-//                Constants.CallbackQueries.BusCommand.BusDirectionPrefix, string.Empty);
-//
-//            var userchat = (UserChat)context.Update;
-//            var cachedContext = await _predictionsManager.GetCachedRouteDirectionAsync(userchat)
-//                .ConfigureAwait(false);
-//            cachedContext.Direction = directionName;
-//            await _predictionsManager.CacheRouteDirectionAsync(userchat, cachedContext.RouteTag, directionName)
-//                .ConfigureAwait(false);
-//
-//            await context.Bot.Client.DeleteMessageAsync(userchat.ChatId, context.Update.CallbackQuery.Message.MessageId)
-//                .ConfigureAwait(false);
-//
-//            await _predictionsManager.TryReplyWithPredictionsAsync(
-//                context.Bot,
-//                userchat,
-//                context.Update.CallbackQuery.Message.ReplyToMessage.MessageId
-//            ).ConfigureAwait(false);
-//        }
-//    }
-//}

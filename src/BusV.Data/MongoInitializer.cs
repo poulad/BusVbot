@@ -221,6 +221,7 @@ namespace BusV.Data
                     map.MapProperty(p => p.BusStopTag).SetElementName("stop");
                     map.MapProperty(p => p.User).SetElementName("user");
                     map.MapProperty(p => p.UserLocation).SetElementName("user_location");
+                    map.MapProperty(s => s.Origin).SetElementName("origin").SetIgnoreIfDefault(true);
                     map.MapProperty(s => s.CreatedAt).SetElementName("created_at");
                     map.MapProperty(s => s.UpdatedAt).SetElementName("updated_at").SetIgnoreIfDefault(true);
                 });

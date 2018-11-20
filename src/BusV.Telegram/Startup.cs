@@ -46,6 +46,7 @@ namespace BusV.Telegram
                 .AddScoped<BusRouteQueryParser>()
                 .AddScoped<BusPredictionsHandler>()
                 .AddScoped<PredictionRefreshHandler>()
+                .AddScoped<TextHandler>()
                 .AddScoped<VoiceHandler>()
 //                .AddScoped<LocationHandler>()
 //                .AddScoped<SaveCommand>()
@@ -107,8 +108,6 @@ namespace BusV.Telegram
                 // ensure the user has a profile loaded for the rest of the handlers
                 .UseWhen<UserProfileSetupHandler>(UserProfileSetupHandler.CanHandle)
 
-                // ToDo comments
-                .UseWhen<VoiceHandler>(VoiceHandler.IsVoiceMessage)
                 // for new messages...
                 .UseWhen(When.NewMessage, msgBranch => msgBranch
                     // for new text messages...
@@ -121,7 +120,11 @@ namespace BusV.Telegram
                         // try to handle a frequent location (from reply markup keyboard)
 //                        .UseWhen<SavedLocationHandler>(When.HasSavedLocationPrefix)
                         .UseWhen<UserProfileRemovalHandler>(UserProfileRemovalHandler.CanHandle)
+                        // ToDo comments
+                        .Use<TextHandler>()
                     )
+                    // ToDo comments
+                    .UseWhen<VoiceHandler>(VoiceHandler.IsVoiceMessage)
                 )
                 // for callback queries...
                 .UseWhen<BusCQHandler>(BusCQHandler.CanHandle)

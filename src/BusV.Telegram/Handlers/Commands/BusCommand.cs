@@ -1,5 +1,7 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using BusV.Telegram.Models.Cache;
 using BusV.Telegram.Services;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
@@ -44,7 +46,11 @@ namespace BusV.Telegram.Handlers.Commands
                 _logger.LogTrace(
                     "Passing the command args, the bus route/direction query, to the rest of the pipeline."
                 );
-                context.Items["bus route query"] = args[0];
+                context.Items[nameof(BusPredictionsContext)] = new BusPredictionsContext
+                {
+                    Query = args[0],
+                    Interfaces = new List<string>(new[] { "command" }),
+                };
                 await next(context, cancellationToken).ConfigureAwait(false);
             }
         }

@@ -34,15 +34,23 @@ namespace BusV.Telegram.Handlers
             _logger = logger;
         }
 
-        public static bool CanHandle(IUpdateContext context) => context.Items.ContainsKey("bus route query");
+        public static bool CanHandle(IUpdateContext context) =>
+            context.Items.ContainsKey(nameof(BusPredictionsContext));
 
         public async Task HandleAsync(IUpdateContext context, UpdateDelegate next, CancellationToken cancellationToken)
         {
-            string query = (string) context.Items["bus route query"];
+            var busContext = (BusPredictionsContext) context.Items[nameof(BusPredictionsContext)];
             string agencyTag = context.GetUserProfile().DefaultAgencyTag;
 
-            var result = await _agencyParser.FindMatchingRouteDirectionsAsync(agencyTag, query, cancellationToken)
-                .ConfigureAwait(false);
+            string query = busContext.Interfaces[0] == "command"
+                ? busContext.Query
+                : $"{busContext.RouteTag} {busContext.DirectionTag}";
+
+            var result = await _agencyParser.FindMatchingRouteDirectionsAsync(
+                agencyTag,
+                query,
+                cancellationToken
+            ).ConfigureAwait(false);
 
             if (result.Error == null)
             {
@@ -52,15 +60,12 @@ namespace BusV.Telegram.Handlers
                         "The exact route and the direction are found. Inserting them into the cache."
                     );
                     var match = result.Matches.Single();
-                    var busContext = new BusPredictionsContext
-                    {
-                        RouteTag = match.Route.Tag,
-                        DirectionTag = match.Direction.Tag,
-                    };
+
+                    busContext.RouteTag = match.Route.Tag;
+                    busContext.DirectionTag = match.Direction.Tag;
+
                     await _cache.SetBusPredictionAsync(context.Update.ToUserchat(), busContext, cancellationToken)
                         .ConfigureAwait(false);
-
-                    context.Items[nameof(BusPredictionsContext)] = busContext;
 
                     await next(context, cancellationToken).ConfigureAwait(false);
                 }

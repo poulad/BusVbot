@@ -124,7 +124,9 @@ namespace BusV.Ops
                 .ExecuteAsync(_ => _nextbusClient.GetRoutesForAgency(agencyTag), cancellationToken)
                 .ConfigureAwait(false);
 
-            var nextbusRoutes = nextbusResponse.ToArray();
+            var nextbusRoutes = nextbusResponse
+//                .Where(r => new[] { "6", "110", "85", "985", }.Contains(r.Tag))
+                .ToArray();
 
             _logger.LogInformation("{0} routes for {1} are loaded from NextBus", nextbusRoutes.Length, agencyTag);
 

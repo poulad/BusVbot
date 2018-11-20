@@ -67,64 +67,74 @@ namespace BusV.Ops
                     // direction is optional in the regex
                     if (match.Groups["direction"].Success)
                     {
-                        string directionName = match.Groups["direction"].Value;
+                        string direction = match.Groups["direction"].Value;
 
-                        switch (directionName.ToLower())
+                        // try match by direction tag
+                        var singleMatchingDirection = route.Directions.SingleOrDefault(d => d.Tag == direction);
+                        if (singleMatchingDirection != null)
                         {
-                            case "n":
-                            case "northbound":
-                                directionName = "north";
-                                break;
-                            case "s":
-                            case "southbound":
-                                directionName = "south";
-                                break;
-                            case "w":
-                            case "westbound":
-                                directionName = "west";
-                                break;
-                            case "e":
-                            case "eastbound":
-                                directionName = "east";
-                                break;
-                        }
-
-                        var matchingDirections = route.Directions
-                            .Where(d => d.Name.Equals(directionName, StringComparison.OrdinalIgnoreCase))
-                            .ToArray();
-
-                        if (matchingDirections.Any())
-                        {
-                            bool areAllTheSameDirection = matchingDirections
-                                                              .Select(d => d.Name)
-                                                              .Distinct(StringComparer.OrdinalIgnoreCase)
-                                                              .Count() == 1;
-
-                            (Route route, RouteDirection)[] matches;
-                            if (areAllTheSameDirection)
-                            {
-                                matches = new[]
-                                {
-                                    (route, matchingDirections[0])
-                                };
-                            }
-                            else
-                            {
-                                matches = matchingDirections
-                                    .Select(d => (route, d))
-                                    .ToArray();
-                            }
-
-                            result = (matches, null);
+                            result = (new[] { (route, singleMatchingDirection) }, null);
                         }
                         else
                         {
-                            _logger.LogTrace("There was no matching direction. Sending all the directions for route.");
+                            switch (direction.ToLower())
+                            {
+                                case "n":
+                                case "northbound":
+                                    direction = "north";
+                                    break;
+                                case "s":
+                                case "southbound":
+                                    direction = "south";
+                                    break;
+                                case "w":
+                                case "westbound":
+                                    direction = "west";
+                                    break;
+                                case "e":
+                                case "eastbound":
+                                    direction = "east";
+                                    break;
+                            }
 
-                            var matches = route.Directions
-                                .Select(d => (route, d))
+                            var matchingDirections = route.Directions
+                                .Where(d => d.Name.Equals(direction, StringComparison.OrdinalIgnoreCase))
                                 .ToArray();
-                            result = (matches, null);
+
+                            if (matchingDirections.Any())
+                            {
+                                bool areAllTheSameDirection = matchingDirections
+                                                                  .Select(d => d.Name)
+                                                                  .Distinct(StringComparer.OrdinalIgnoreCase)
+                                                                  .Count() == 1;
+
+                                (Route route, RouteDirection)[] matches;
+                                if (areAllTheSameDirection)
+                                {
+                                    matches = new[]
+                                    {
+                                        (route, matchingDirections[0])
+                                    };
+                                }
+                                else
+                                {
+                                    matches = matchingDirections
+                                        .Select(d => (route, d))
+                                        .ToArray();
+                                }
+
+                                result = (matches, null);
+                            }
+                            else
+                            {
+                                _logger.LogTrace(
+                                    "There was no matching direction. Sending all the directions for route.");
+
+                                var matches = route.Directions
+                                    .Select(d => (route, d))
+                                    .ToArray();
+                                result = (matches, null);
+                            }
                         }
                     }
                     else

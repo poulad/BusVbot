@@ -89,13 +89,33 @@ namespace Wit.Ai.Client
             return response;
         }
 
-        public Task<Meaning> SendAudioAsync(
+        public Task<Meaning> GetSentenceMeaningAsync(
+            string query,
+            Context context = default,
+            string messageId = default,
+            string threadId = default,
+            int n = default,
+            bool verbose = false,
+            CancellationToken cancellationToken = default
+        ) =>
+            SendRequestAsync(new GetMessageRequest
+            {
+                Q = query,
+                Context = context,
+                MessageId = messageId,
+                ThreadId = threadId,
+                N = n,
+                Verbose = verbose,
+            }, cancellationToken);
+
+        public Task<Meaning> GetAudioMeaningAsync(
             Stream audioStream,
             string contentType,
             Context context = default,
             string messageId = default,
             string threadId = default,
             int n = default,
+            bool verbose = false,
             CancellationToken cancellationToken = default
         ) =>
             SendRequestAsync(new SendSpeechRequest
@@ -106,6 +126,7 @@ namespace Wit.Ai.Client
                 MessageId = messageId,
                 ThreadId = threadId,
                 N = n,
+                Verbose = verbose,
             }, cancellationToken);
     }
 }
